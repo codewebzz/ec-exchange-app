@@ -4,16 +4,21 @@ import CustomTextInput from "../../../components/CustomTextInput";
 import { COLORS } from "../../../assets/colors";
 import { scale } from "react-native-size-matters";
 
-export const ContactAndAdditionalFields = ({ values, errors, touched, handleChange, dropdownStates, setFieldValue }:any) => (
+export const ContactAndAdditionalFields = ({ values, errors, touched, handleChange, dropdownStates, setFieldValue, inputRefs, focusedField, setFocusedField }:any) => {
+  const { grantorNameRef, mobileRef, addressRef, distributorDropdownRef, agentDropdownRef, limitTypeDropdownRef } = inputRefs;
+  return (
   <>
     <View >
       <View style={style.flexSingleColumb}>
         <CustomDropdown
+          ref={distributorDropdownRef}
           label="Distributor"
           open={dropdownStates.openDropdownDistributor}
           value={dropdownStates.dropdownValueDistributor}
           items={dropdownStates.dropdownItemsDistributor}
           setOpen={dropdownStates.setOpenDropdownDistributor}
+          isFocused={focusedField === 'distributor'}
+          onOpen={() => setFocusedField('distributor')}
           setValue={(val:any) => {
             const selectedValue = typeof val === 'function' ? val() : val;
             dropdownStates.setDropdownValueDistributor(selectedValue);
@@ -22,15 +27,23 @@ export const ContactAndAdditionalFields = ({ values, errors, touched, handleChan
           setItems={dropdownStates.setDropdownItemsDistributor}
           error={errors.distributor}
           placeholder={dropdownStates.distributorLoading ? "Loading distributors..." : "Select Distributor"}
+          onChangeValue={(val: any) => {
+            if (val) {
+              setFocusedField('agent');
+            }
+          }}
         />
       </View>
       <View style={style.flexSingleColumb}>
         <CustomDropdown
+          ref={agentDropdownRef}
           label="Agent"
           open={dropdownStates.openDropdown3}
           value={dropdownStates.dropdownValue3}
           items={dropdownStates.dropdownItems3}
           setOpen={dropdownStates.setOpenDropdown3}
+          isFocused={focusedField === 'agent'}
+          onOpen={() => setFocusedField('agent')}
           setValue={(val:any) => {
             const selectedValue = typeof val === 'function' ? val() : val;
             console.log('Agent dropdown selected value:', selectedValue);
@@ -45,50 +58,76 @@ export const ContactAndAdditionalFields = ({ values, errors, touched, handleChan
           setItems={dropdownStates.setDropdownItems3}
           error={errors.agent}
           placeholder={dropdownStates.agentLoading ? "Loading agents..." : "Select Agent"}
+          onChangeValue={(val: any) => {
+            if (val) {
+              setFocusedField('limit');
+            }
+          }}
         />
       </View>
     </View>
 
     <CustomDropdown
+      ref={limitTypeDropdownRef}
       label="Limit Type"
       open={dropdownStates.openDropdownLimit}
       value={dropdownStates.dropdownValueLimit}
       items={dropdownStates.dropdownItemsLimit}
       setOpen={dropdownStates.setOpenDropdownLimit}
+      isFocused={focusedField === 'limit'}
+      onOpen={() => setFocusedField('limit')}
       setValue={(val:any) => {
         dropdownStates.setDropdownValueLimit(val());
         setFieldValue('limit', val());
       }}
       setItems={dropdownStates.setDropdownItemsLimit}
       error={errors.limit}
+      onChangeValue={(val: any) => {
+        if (val) {
+          setFocusedField(null);
+          grantorNameRef.current?.focus();
+        }
+      }}
     />
 
     <CustomTextInput
+      ref={grantorNameRef}
       label="Garantor Name"
       value={values.grantorName}
       onChangeText={handleChange('grantorName')}
       error={touched.grantorName && typeof errors.grantorName === 'string' ? errors.grantorName : undefined}
+      returnKeyType="next"
+      onSubmitEditing={() => mobileRef.current?.focus()}
+      onFocus={() => setFocusedField(null)}
     />
 
     <CustomTextInput
+      ref={mobileRef}
       label="Mobile"
       value={values.mobile}
       onChangeText={handleChange('mobile')}
       error={touched.mobile && typeof errors.mobile === 'string' ? errors.mobile : undefined}
       keyboardType="numeric"
       maxLength={10}
+      returnKeyType="next"
+      onSubmitEditing={() => addressRef.current?.focus()}
+      onFocus={() => setFocusedField(null)}
     />
 <View style={{marginBottom:15}}>
 
     <CustomTextInput
+      ref={addressRef}
       label="Address"
       value={values.address}
       onChangeText={handleChange('address')}
       error={touched.address && typeof errors.address === 'string' ? errors.address : undefined}
+      returnKeyType="done"
+      onFocus={() => setFocusedField(null)}
     />
 </View>
   </>
 );
+};
 
 const style = StyleSheet.create({
   flexSingleColumb: {

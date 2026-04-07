@@ -117,6 +117,7 @@ const Ledger = ({ navigation }: any) => {
   const [getData, setData] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const passwordFetchedRef = React.useRef<string | null>(null);
   // console.log(getData,"[getData][getData][getData][getData][getData][")
   const [openDropdown, setOpenDropdown] = React.useState(false);
@@ -139,6 +140,43 @@ const Ledger = ({ navigation }: any) => {
     { label: 'Whatsapp', value: '2' },
     { label: 'Calling', value: '3' },
   ]);
+  // Text Input Refs for focus jumping
+  const leadgerNameRef = React.useRef<TextInput>(null);
+  const realNameRef = React.useRef<TextInput>(null);
+  const cappingRef = React.useRef<TextInput>(null);
+  const dhaniRateRef = React.useRef<TextInput>(null);
+  const commissionRef = React.useRef<TextInput>(null);
+  const harupRateRef = React.useRef<TextInput>(null);
+  const harupCommissionRef = React.useRef<TextInput>(null);
+  const wapsiRef = React.useRef<TextInput>(null);
+  const grantorNameRef = React.useRef<TextInput>(null);
+  const mobileRef = React.useRef<TextInput>(null);
+  const addressRef = React.useRef<TextInput>(null);
+
+  // Dropdown Refs
+  const groupDropdownRef = React.useRef<View>(null);
+  const distributorDropdownRef = React.useRef<View>(null);
+  const agentDropdownRef = React.useRef<View>(null);
+  const limitTypeDropdownRef = React.useRef<View>(null);
+
+  const inputRefs = {
+    leadgerNameRef,
+    realNameRef,
+    cappingRef,
+    dhaniRateRef,
+    commissionRef,
+    harupRateRef,
+    harupCommissionRef,
+    wapsiRef,
+    grantorNameRef,
+    mobileRef,
+    addressRef,
+    groupDropdownRef,
+    distributorDropdownRef,
+    agentDropdownRef,
+    limitTypeDropdownRef,
+  };
+
   const [dropdownValue3, setDropdownValue3] = React.useState<string | null>(
     null,
   );
@@ -701,6 +739,8 @@ const Ledger = ({ navigation }: any) => {
                 onChange={handleSheetChanges}
                 backdropComponent={renderBackdrop}
                 enablePanDownToClose={true}
+                keyboardBehavior="extend"
+                keyboardBlurBehavior="restore"
                 onClose={() => {
                   // Modal is being closed - reset edit state only when user manually closes
                   setIsOpenBottomSheet(false);
@@ -711,9 +751,12 @@ const Ledger = ({ navigation }: any) => {
               >
                 <BottomSheetScrollView
                   style={{
-                    padding: 16,
                     backgroundColor: COLORS.BGFILESCOLOR,
                     flex: 1,
+                  }}
+                  contentContainerStyle={{ 
+                    paddingHorizontal: 16,
+                    paddingBottom: scale(350) // Drastically increase padding to ensure last inputs can be scrolled up
                   }}
                   keyboardShouldPersistTaps="handled"
                 >
@@ -1031,6 +1074,9 @@ const Ledger = ({ navigation }: any) => {
                                     label="Ledger Name"
                                     value={values.leadgerName}
                                     onChangeText={handleChange('leadgerName')}
+                                    onFocus={() => setFocusedField(null)}
+                                    returnKeyType="done"
+                                    onSubmitEditing={() => handleSubmit()}
                                   />
                                 </View>
                               )}
@@ -1046,6 +1092,8 @@ const Ledger = ({ navigation }: any) => {
                                     touched={touched}
                                     handleChange={handleChange}
                                     formLogic={formLogic}
+                                    inputRefs={inputRefs}
+                                    setFocusedField={setFocusedField}
                                   />
 
                                   <TPCommissionSection
@@ -1065,6 +1113,8 @@ const Ledger = ({ navigation }: any) => {
                                     handleChange={handleChange}
                                     tpWapsi={tpWapsi}
                                     formLogic={formLogic}
+                                    inputRefs={inputRefs}
+                                    setFocusedField={setFocusedField}
                                   />
 
                                   <PattiSection
@@ -1078,13 +1128,16 @@ const Ledger = ({ navigation }: any) => {
 
                               {activeTab === 3 && (
                                 <View>
-                                  <CustomTextInput
-                                    label="Password"
-                                    value={values.password}
-                                    onChangeText={handleChange('password')}
-                                    secureTextEntry={false}
-                                    editable={!passwordLoading}
-                                  />
+                                   <CustomTextInput
+                                     label="Password"
+                                     value={values.password}
+                                     onChangeText={handleChange('password')}
+                                     secureTextEntry={false}
+                                     editable={!passwordLoading}
+                                     onFocus={() => setFocusedField(null)}
+                                     returnKeyType="done"
+                                     onSubmitEditing={() => handleSubmit()}
+                                   />
                                   {passwordLoading && (
                                     <View style={{ marginTop: scale(10), alignItems: 'center' }}>
                                       <ActivityIndicator size="small" color={COLORS.BLACK} />
@@ -1196,14 +1249,19 @@ const Ledger = ({ navigation }: any) => {
                                 touched={touched}
                                 handleChange={handleChange}
                                 dropdownProps={{ ...dropdownStates, setFieldValue }}
+                                inputRefs={inputRefs}
+                                focusedField={focusedField}
+                                setFocusedField={setFocusedField}
                               />
 
-                              <RateCommissionFields
+                               <RateCommissionFields
                                 values={values}
                                 errors={errors}
                                 touched={touched}
                                 handleChange={handleChange}
                                 formLogic={formLogic}
+                                inputRefs={inputRefs}
+                                setFocusedField={setFocusedField}
                               />
 
                               <TPCommissionSection
@@ -1223,6 +1281,8 @@ const Ledger = ({ navigation }: any) => {
                                 handleChange={handleChange}
                                 tpWapsi={tpWapsi}
                                 formLogic={formLogic}
+                                inputRefs={inputRefs}
+                                setFocusedField={setFocusedField}
                               />
 
                               <PattiSection
@@ -1239,6 +1299,9 @@ const Ledger = ({ navigation }: any) => {
                                 handleChange={handleChange}
                                 dropdownStates={dropdownStates}
                                 setFieldValue={setFieldValue}
+                                inputRefs={inputRefs}
+                                focusedField={focusedField}
+                                setFocusedField={setFocusedField}
                               />
                             </>
                           )}

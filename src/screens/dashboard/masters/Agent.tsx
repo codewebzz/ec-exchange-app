@@ -59,7 +59,9 @@ const Agent = ({ navigation }: any) => {
     // { label: 'Bhasker-Agent', value: '2' },
     // { label: 'Jitin-Agent', value: '3' },
   ]);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
+  const agentNameRef = React.useRef<any>(null);
   const handleSheetChanges = (index: number) => {
     Keyboard.dismiss();
     if (index === -1) {
@@ -339,7 +341,7 @@ const Agent = ({ navigation }: any) => {
             />
           </ScrollView>
           {isOpenBottomSheet && (
-            <BottomSheet
+             <BottomSheet
               backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
               ref={bottomSheetRef}
               style={{ borderWidth: 1, borderRadius: scale(10) }}
@@ -349,6 +351,8 @@ const Agent = ({ navigation }: any) => {
               onChange={handleSheetChanges}
               backdropComponent={renderBackdrop}
               enablePanDownToClose={true}
+              keyboardBehavior="extend"
+              keyboardBlurBehavior="restore"
               onClose={() => {
                 setIsOpenBottomSheet(false);
                 setIsEditing(false);
@@ -356,9 +360,12 @@ const Agent = ({ navigation }: any) => {
             >
               <BottomSheetScrollView
                 style={{
-                  padding: 16,
                   backgroundColor: COLORS.BGFILESCOLOR,
                   flex: 1,
+                }}
+                contentContainerStyle={{
+                  paddingHorizontal: 16,
+                  paddingBottom: scale(250)
                 }}
                 keyboardShouldPersistTaps="handled"
               >
@@ -384,6 +391,7 @@ const Agent = ({ navigation }: any) => {
                   }) => (
                     <View>
                       <CustomTextInput
+                        ref={agentNameRef}
                         label="Agent Name"
                         value={values.agent}
                         onChangeText={handleChange('agent')}
@@ -393,30 +401,38 @@ const Agent = ({ navigation }: any) => {
                             ? errors.agent
                             : undefined
                         }
+                        onFocus={() => setFocusedField(null)}
+                        onSubmitEditing={() => setFocusedField('mainAgentName')}
                       />
 
-                      <CustomDropdown
+                       <CustomDropdown
                         label="Main Agent Name"
                         open={openDropdown}
                         value={dropdownValue}
                         items={dropdownItems}
                         setOpen={setOpenDropdown}
+                        isFocused={focusedField === 'mainAgent'}
+                        onOpen={() => setFocusedField('mainAgent')}
                         setValue={(val: any) => {
                           setDropdownValue(val());
                           setFieldValue('mainAgent', val());
+                          setFocusedField(null);
                         }}
                         setItems={setDropdownItems}
                         error={errors.mainAgent}
                       />
-                      <CustomDropdown
+                       <CustomDropdown
                         label="Parent Agent Name"
                         open={openDropdown2}
                         value={dropdownValue2}
                         items={dropdownItems2}
                         setOpen={setOpenDropdown2}
+                        isFocused={focusedField === 'parentAgent'}
+                        onOpen={() => setFocusedField('parentAgent')}
                         setValue={(val: any) => {
                           setDropdownValue2(val());
                           setFieldValue('parentAgent', val());
+                          setFocusedField(null);
                         }}
                         setItems={setDropdownItems2}
                         error={errors.parentAgent}

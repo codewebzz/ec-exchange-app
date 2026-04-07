@@ -18,47 +18,46 @@ function createAxiosInstance(baseURL = DEFAULT_BASE_URL): AxiosInstance {
     timeout: 10000,
     headers: {
       'Content-Type': 'application/json',
-        Accept: 'application/json',
+      Accept: 'application/json',
     },
-      withCredentials: true,
   });
 
-// Request interceptor
-instance.interceptors.request.use(
-  config => {
-    // show loader for each outgoing request
-    pendingRequestCount += 1;
-    GlobalLoaderController.show('Loading...');
-    const token = store.getState().authorization?.token;
+  // Request interceptor
+  instance.interceptors.request.use(
+    config => {
+      // show loader for each outgoing request
+      pendingRequestCount += 1;
+      GlobalLoaderController.show('Loading...');
+      const token = store.getState().authorization?.token;
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
 
-    __DEV__ &&
-      console.log(`[Request] ${config.method?.toUpperCase()} ${config.url}`, {
-        headers: config.headers,
-        params: config.params,
-        data: config.data,
+      __DEV__ &&
+        console.log(`[Request] ${config.method?.toUpperCase()} ${config.url}`, {
+          headers: config.headers,
+          params: config.params,
+          data: config.data,
+        });
+
+      return config;
+    },
+    error => {
+      // decrement count on error before request is sent
+      pendingRequestCount = Math.max(0, pendingRequestCount - 1);
+      if (pendingRequestCount === 0) {
+        GlobalLoaderController.hide();
+      }
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: error?.data?.message || 'Request error',
+        position: 'bottom',
       });
-
-    return config;
-  },
-  error => {
-    // decrement count on error before request is sent
-    pendingRequestCount = Math.max(0, pendingRequestCount - 1);
-    if (pendingRequestCount === 0) {
-      GlobalLoaderController.hide();
+      return Promise.reject(error);
     }
-    Toast.show({
-      type: 'error',
-      text1: 'Error',
-      text2: error?.data?.message || 'Request error',
-      position: 'bottom',
-    });
-    return Promise.reject(error);
-  }
-);
+  );
 
 
   // Response interceptor
@@ -87,18 +86,28 @@ instance.interceptors.request.use(
       }
 
       return response;
-     },
+    },
     error => {
       // decrement and possibly hide on error
       pendingRequestCount = Math.max(0, pendingRequestCount - 1);
       if (pendingRequestCount === 0) {
         GlobalLoaderController.hide();
       }
-      const msg = error.response?.data?.message;
+
+      let msg = error.response?.data?.message || error.response?.data?.Description;
+
+      if (!msg) {
+        if (error.message === 'Network Error') {
+          msg = 'Network Error: Please check your internet connection or server availability.';
+        } else {
+          msg = error.message || 'Something went wrong';
+        }
+      }
+
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: msg || 'Something went wrong',
+        text2: msg,
         position: 'bottom',
       });
       return Promise.reject(error);
@@ -165,7 +174,7 @@ class AxiosService {
     const response: AxiosResponse<T> = await axiosInstance.delete(url, { ...config, data });
     return response.data;
   }
-  
+
   static async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
     const response: AxiosResponse<T> = await axiosInstance.patch(url, data, config);
     return response.data;

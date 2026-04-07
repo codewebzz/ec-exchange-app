@@ -71,9 +71,11 @@ const Shift = ({ navigation }: any) => {
   // Tabs and auto-open toggle
   const [activeTab, setActiveTab] = useState<number>(0); // 0: Info, 1: Time, 2: Config
   const [autoOpen, setAutoOpen] = useState<boolean>(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
 
   const bottomSheetRef = React.useRef<BottomSheet>(null);
+  const shiftNameRef = React.useRef<any>(null);
 
   const handleSheetChanges = (index: number) => {
     Keyboard.dismiss();
@@ -382,7 +384,7 @@ const Shift = ({ navigation }: any) => {
             </ScrollView>
 
             {isOpenBottomSheet && (
-              <BottomSheet
+                <BottomSheet
                 backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
                 ref={bottomSheetRef}
                 style={{ borderWidth: 1, borderRadius: scale(10) }}
@@ -392,6 +394,8 @@ const Shift = ({ navigation }: any) => {
                 onChange={handleSheetChanges}
                 backdropComponent={renderBackdrop}
                 enablePanDownToClose={true}
+                keyboardBehavior="extend"
+                keyboardBlurBehavior="restore"
                 onClose={() => {
                   setIsOpenBottomSheet(false);
                   setIsEditing(false);
@@ -399,9 +403,12 @@ const Shift = ({ navigation }: any) => {
               >
                 <BottomSheetScrollView
                   style={{
-                    padding: 16,
                     backgroundColor: COLORS.BGFILESCOLOR,
                     flex: 1,
+                  }}
+                  contentContainerStyle={{
+                    paddingHorizontal: 16,
+                    paddingBottom: scale(250)
                   }}
                   keyboardShouldPersistTaps="handled"
                 >
@@ -466,6 +473,7 @@ const Shift = ({ navigation }: any) => {
                         {(!isEditing || activeTab === 0) && (
                           <View>
                             <CustomTextInput
+                              ref={shiftNameRef}
                               label="Shift Name"
                               value={values.name}
                               onChangeText={handleChange('name')}
@@ -474,6 +482,9 @@ const Shift = ({ navigation }: any) => {
                                   ? errors.name
                                   : undefined
                               }
+                              onFocus={() => setFocusedField(null)}
+                              returnKeyType="next"
+                              onSubmitEditing={() => setFocusedField('nextDay')}
                             />
 
                             {/* Open Date and Next Day (disabled when autoOpen) */}
@@ -484,10 +495,13 @@ const Shift = ({ navigation }: any) => {
                                 value={dropdownValue}
                                 items={dropdownItems}
                                 setOpen={autoOpen ? () => { } : setOpenDropdown}
+                                isFocused={focusedField === 'nextDay'}
+                                onOpen={() => setFocusedField('nextDay')}
                                 setValue={(val: any) => {
                                   const selectedValue = typeof val === 'function' ? val() : val;
                                   setDropdownValue(selectedValue);
                                   setFieldValue('nextDay', selectedValue);
+                                  setFocusedField(null);
                                 }}
                                 setItems={setDropdownItems}
                                 error={touched.nextDay && errors.nextDay}
@@ -514,10 +528,13 @@ const Shift = ({ navigation }: any) => {
                               value={dropdownValue1}
                               items={dropdownItems1}
                               setOpen={setOpenDropdown1}
+                              isFocused={focusedField === 'shiftMode'}
+                              onOpen={() => setFocusedField('shiftMode')}
                               setValue={(val: any) => {
                                 const selectedValue = typeof val === 'function' ? val() : val;
                                 setDropdownValue1(selectedValue);
                                 setFieldValue('shiftWorkingFor', selectedValue);
+                                setFocusedField(null);
                               }}
                               setItems={setDropdownItems1}
                               error={
@@ -637,6 +654,9 @@ const Shift = ({ navigation }: any) => {
                               value={values.roundOff}
                               onChangeText={handleChange('roundOff')}
                               keyboardType="numeric"
+                              onFocus={() => setFocusedField(null)}
+                              returnKeyType="done"
+                              onSubmitEditing={() => handleSubmit()}
                             />
                           </View>
                         )}

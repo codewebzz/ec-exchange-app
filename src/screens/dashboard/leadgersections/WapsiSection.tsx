@@ -1,10 +1,11 @@
-import { Text, TouchableOpacity, View } from "react-native";
+import { Keyboard, Text, TouchableOpacity, View } from "react-native";
 import CustomTextInput from "../../../components/CustomTextInput";
 import { COLORS } from "../../../assets/colors";
 import { WapsiTable } from "../Leadgertables/WapsiTable";
 import { scale } from "react-native-size-matters";
 
-export const WapsiSection = ({ values, errors, touched, handleChange, tpWapsi, formLogic }:any) => {
+export const WapsiSection = ({ values, errors, touched, handleChange, tpWapsi, formLogic, inputRefs, setFocusedField }:any) => {
+  const { wapsiRef } = inputRefs;
   const handleTPWapsiClick = () => {
     if (!formLogic.validateWapsiAccess()) return;
     
@@ -18,6 +19,7 @@ export const WapsiSection = ({ values, errors, touched, handleChange, tpWapsi, f
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 12 }}>
         <View style={{ width: '60%' }}>
           <CustomTextInput
+            ref={wapsiRef}
             label="Wapsi"
             value={values.wapsi}
             onChangeText={handleChange('wapsi')}
@@ -27,6 +29,12 @@ export const WapsiSection = ({ values, errors, touched, handleChange, tpWapsi, f
                 ? errors.wapsi
                 : undefined
             }
+            returnKeyType="next"
+            onSubmitEditing={() => {
+              Keyboard.dismiss();
+              setFocusedField('distributor');
+            }}
+            onFocus={() => setFocusedField(null)}
           />
         </View>
 

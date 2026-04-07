@@ -128,6 +128,12 @@ const Staff = ({ navigation }: any) => {
     { label: 'Deleted', value: 'Deleted' },
     // { label: 'Locked', value: 'Locked' },
   ];
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const staffNameRef = React.useRef<any>(null);
+  const usernameRef = React.useRef<any>(null);
+  const passwordRef = React.useRef<any>(null);
+  const mobileRef = React.useRef<any>(null);
+  const addressRef = React.useRef<any>(null);
   const { query, setQuery, filteredItems } = useSearchBar<any>(getData, {
     selector: (item) => String(item?.staff_name ?? ''),
     debounceMs: 200,
@@ -536,7 +542,7 @@ const Staff = ({ navigation }: any) => {
               />)}
             </ScrollView>
             {isOpenBottomSheet && (
-              <BottomSheet
+                 <BottomSheet
                 backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
                 ref={bottomSheetRef}
                 style={{ borderWidth: 1, borderRadius: scale(10) }}
@@ -546,6 +552,8 @@ const Staff = ({ navigation }: any) => {
                 onChange={handleSheetChanges}
                 backdropComponent={renderBackdrop}
                 enablePanDownToClose={true}
+                keyboardBehavior="extend"
+                keyboardBlurBehavior="restore"
                 onClose={() => {
                   setIsOpenBottomSheet(false);
                   setIsEditing(false);
@@ -553,9 +561,12 @@ const Staff = ({ navigation }: any) => {
               >
                 <BottomSheetScrollView
                   style={{
-                    padding: 16,
                     backgroundColor: COLORS.BGFILESCOLOR,
                     flex: 1,
+                  }}
+                  contentContainerStyle={{
+                    paddingHorizontal: 16,
+                    paddingBottom: scale(250)
                   }}
                   keyboardShouldPersistTaps="handled"
                 >
@@ -587,6 +598,7 @@ const Staff = ({ navigation }: any) => {
                         {!isEditing ? (
                           <View>
                             <CustomTextInput
+                              ref={staffNameRef}
                               label="Shaff Name"
                               value={values.staffName}
                               onChangeText={handleChange('staffName')}
@@ -596,73 +608,94 @@ const Staff = ({ navigation }: any) => {
                                   ? errors.staffName
                                   : undefined
                               }
+                              onFocus={() => setFocusedField(null)}
+                              returnKeyType="next"
+                              onSubmitEditing={() => setFocusedField('role')}
                             />
 
-                            <CustomDropdown
+                             <CustomDropdown
                               label="Role"
                               open={openDropdown}
                               value={dropdownValue}
                               items={dropdownItems}
                               setOpen={setOpenDropdown}
+                              isFocused={focusedField === 'role'}
+                              onOpen={() => setFocusedField('role')}
                               setValue={(val: any) => {
                                 setDropdownValue(val());
                                 setFieldValue('role', val());
+                                setFocusedField(null);
                               }}
                               setItems={setDropdownItems}
                               error={errors.role}
                             />
 
                             <View style={style.flexSingleColumb}>
-                              <CustomDropdown
+                               <CustomDropdown
                                 label="W-Mode"
                                 open={openDropdown2}
                                 value={dropdownValue2}
                                 items={dropdownItems2}
                                 setOpen={setOpenDropdown2}
+                                isFocused={focusedField === 'wMode'}
+                                onOpen={() => setFocusedField('wMode')}
                                 setValue={(val: any) => {
                                   setDropdownValue2(val());
                                   setFieldValue('wMode', val());
+                                  setFocusedField(null);
                                 }}
                                 setItems={setDropdownItems2}
                                 error={errors.wMode}
                               />
                             </View>
-                            <View style={style.flexSingleColumb}>
+                             <View style={style.flexSingleColumb}>
                               <CustomTextInput
+                                ref={usernameRef}
                                 label="UserName"
                                 value={values.username}
                                 onChangeText={handleChange('username')}
                                 error={typeof errors.username === 'string' ? errors.username : undefined}
+                                onFocus={() => setFocusedField(null)}
+                                returnKeyType="next"
+                                onSubmitEditing={() => passwordRef.current?.focus()}
                               />
                             </View>
 
 
 
-                            <View style={style.flexSingleColumb}>
+                             <View style={style.flexSingleColumb}>
                               <CustomTextInput
+                                ref={passwordRef}
                                 label="Password"
                                 value={values.password}
                                 onChangeText={handleChange('password')}
                                 error={typeof errors.password === 'string' ? errors.password : undefined}
+                                onFocus={() => setFocusedField(null)}
+                                returnKeyType="next"
+                                onSubmitEditing={() => setOpenDropdown3(true)}
                               />
                             </View>
                             <View style={style.flexSingleColumb}>
-                              <CustomDropdown
+                               <CustomDropdown
                                 label="Agent"
                                 open={openDropdown3}
                                 value={dropdownValue3}
                                 items={dropdownItems3}
                                 setOpen={setOpenDropdown3}
+                                isFocused={focusedField === 'agent'}
+                                onOpen={() => setFocusedField('agent')}
                                 setValue={(val: any) => {
                                   setDropdownValue3(val());
                                   setFieldValue('agent', val());
+                                  setFocusedField(null);
                                 }}
                                 setItems={setDropdownItems3}
                                 error={errors.agent}
                               />
                             </View>
 
-                            <CustomTextInput
+                             <CustomTextInput
+                              ref={mobileRef}
                               label="Mobile"
                               value={values.mobile}
                               onChangeText={handleChange('mobile')}
@@ -674,8 +707,12 @@ const Staff = ({ navigation }: any) => {
                               }
                               keyboardType="numeric"
                               maxLength={10}
+                              onFocus={() => setFocusedField(null)}
+                              returnKeyType="next"
+                              onSubmitEditing={() => addressRef.current?.focus()}
                             />
-                            <CustomTextInput
+                             <CustomTextInput
+                              ref={addressRef}
                               label="Address"
                               value={values.address}
                               onChangeText={handleChange('address')}
@@ -685,6 +722,9 @@ const Staff = ({ navigation }: any) => {
                                   ? errors.address
                                   : undefined
                               }
+                              onFocus={() => setFocusedField(null)}
+                              returnKeyType="done"
+                              onSubmitEditing={() => handleSubmit()}
                             />
                             <View style={{ marginVertical: scale(20) }}>
 
@@ -723,9 +763,12 @@ const Staff = ({ navigation }: any) => {
                                   value={dropdownValue}
                                   items={dropdownItems}
                                   setOpen={setOpenDropdown}
+                                  isFocused={focusedField === 'role'}
+                                  onOpen={() => setFocusedField('role')}
                                   setValue={(val: any) => {
                                     setDropdownValue(val());
                                     setFieldValue('role', val());
+                                    setFocusedField(null);
                                   }}
                                   setItems={setDropdownItems}
                                   error={errors.role}
@@ -736,9 +779,12 @@ const Staff = ({ navigation }: any) => {
                                   value={dropdownValue2}
                                   items={dropdownItems2}
                                   setOpen={setOpenDropdown2}
+                                  isFocused={focusedField === 'wMode'}
+                                  onOpen={() => setFocusedField('wMode')}
                                   setValue={(val: any) => {
                                     setDropdownValue2(val());
                                     setFieldValue('wMode', val());
+                                    setFocusedField(null);
                                   }}
                                   setItems={setDropdownItems2}
                                   error={errors.wMode}
@@ -749,14 +795,18 @@ const Staff = ({ navigation }: any) => {
                                   value={dropdownValue3}
                                   items={dropdownItems3}
                                   setOpen={setOpenDropdown3}
+                                  isFocused={focusedField === 'agent'}
+                                  onOpen={() => setFocusedField('agent')}
                                   setValue={(val: any) => {
                                     setDropdownValue3(val());
                                     setFieldValue('agent', val());
+                                    setFocusedField(null);
                                   }}
                                   setItems={setDropdownItems3}
                                   error={errors.agent}
                                 />
                                 <CustomTextInput
+                                  ref={mobileRef}
                                   label="Mobile"
                                   value={values.mobile}
                                   onChangeText={handleChange('mobile')}
@@ -768,8 +818,12 @@ const Staff = ({ navigation }: any) => {
                                   }
                                   keyboardType="numeric"
                                   maxLength={10}
+                                  onFocus={() => setFocusedField(null)}
+                                  returnKeyType="next"
+                                  onSubmitEditing={() => addressRef.current?.focus()}
                                 />
-                                <CustomTextInput
+                                 <CustomTextInput
+                                  ref={addressRef}
                                   label="Address"
                                   value={values.address}
                                   onChangeText={handleChange('address')}
@@ -779,6 +833,9 @@ const Staff = ({ navigation }: any) => {
                                       ? errors.address
                                       : undefined
                                   }
+                                  onFocus={() => setFocusedField(null)}
+                                  returnKeyType="done"
+                                  onSubmitEditing={() => handleSubmit()}
                                 />
                                 <CustomButton
                                   title="Save"
@@ -790,12 +847,16 @@ const Staff = ({ navigation }: any) => {
                               </View>
                             ) : (
                               <View>
-                                <CustomTextInput
-                                  label="Password"
-                                  value={values.password}
-                                  onChangeText={handleChange('password')}
-                                  error={errors.password}
-                                />
+                                 <CustomTextInput
+                                   ref={passwordRef}
+                                   label="Password"
+                                   value={values.password}
+                                   onChangeText={handleChange('password')}
+                                   error={errors.password}
+                                   onFocus={() => setFocusedField(null)}
+                                   returnKeyType="done"
+                                   onSubmitEditing={() => handleSubmit()}
+                                 />
                                 <CustomButton
                                   title="Save"
                                   onPress={() => {

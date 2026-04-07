@@ -16,25 +16,38 @@ interface CustomInputProps extends TextInputProps {
   wrapperStyle?: ViewStyle;
 }
 
-const CustomTextInput: React.FC<CustomInputProps> = ({
-  label,
-  error,
-  wrapperStyle,
-  ...rest
-}) => {
-  const { placeholderTextColor = '#999', ...restProps } = rest;
+const CustomTextInput = React.forwardRef<TextInput, CustomInputProps>((
+  { label, error, wrapperStyle, ...rest },
+  ref
+) => {
+  const [isFocused, setIsFocused] = React.useState(false);
+  const { placeholderTextColor = '#999', onFocus, onBlur, ...restProps } = rest;
+
   return (
     <View style={[styles.wrapper, wrapperStyle]}>
       {label && <Text style={styles.label}>{label}</Text>}
       <TextInput
-        style={[styles.input, error ? styles.inputError : null]}
+        ref={ref}
+        style={[
+          styles.input,
+          error ? styles.inputError : null,
+          isFocused ? styles.inputFocused : null,
+        ]}
         placeholderTextColor={placeholderTextColor}
+        onFocus={(e) => {
+          setIsFocused(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setIsFocused(false);
+          onBlur?.(e);
+        }}
         {...restProps}
       />
       {error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   wrapper: {
@@ -66,6 +79,10 @@ const styles = StyleSheet.create({
   inputError: {
     borderColor: '#EF4444',
     borderWidth: 1,
+  },
+  inputFocused: {
+    borderColor: COLORS.BLACK,
+    borderWidth: 1.5,
   },
   error: {
     color: '#EF4444',

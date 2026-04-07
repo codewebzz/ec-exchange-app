@@ -21,9 +21,10 @@ interface DropDownProps {
     onChangeValue?: (value: any) => void;
     disabled?: boolean;
     showClearButton?: boolean;
+    isFocused?: boolean;
 }
 
-const CustomDropdown = ({
+const CustomDropdown = React.forwardRef<View, DropDownProps>(({
     label,
     open,
     value,
@@ -38,9 +39,10 @@ const CustomDropdown = ({
     onOpen,
     onChangeValue,
     disabled = false,
-    showClearButton = false
-}: DropDownProps) => (
-    <View style={[style.container, { zIndex: open ? zIndex : 1 }]}>
+    showClearButton = false,
+    isFocused = false
+}, ref) => (
+    <View ref={ref} style={[style.container, { zIndex: open ? zIndex : 1 }, isFocused ? style.focusedContainer : null]}>
         <Text style={style.label}>{label}</Text>
         <View style={style.dropdownContainer}>
             <DropDownPicker
@@ -52,7 +54,7 @@ const CustomDropdown = ({
                 setItems={setItems}
                 zIndex={zIndex}
                 zIndexInverse={zIndex}
-                style={style.DropDownStyle}
+                style={[style.DropDownStyle, isFocused ? style.focusedDropDownStyle : null]}
                 dropDownContainerStyle={style.dropDownContainerStyle}
                 bottomOffset={bottomOffset}
                 placeholder={placeholder}
@@ -106,13 +108,16 @@ const CustomDropdown = ({
             <Text style={style.error}>{error}</Text>
         )}
     </View>
-);
+));
 
 const style = StyleSheet.create({
     container: {
         marginVertical: scale(3),
         // Ensure container doesn't clip content
         overflow: 'visible',
+    },
+    focusedContainer: {
+        // Placeholder for container-level focus
     },
     dropdownContainer: {
         position: 'relative',
@@ -133,6 +138,10 @@ const style = StyleSheet.create({
         },
         shadowOpacity: 0.1,
         shadowRadius: 3.84,
+    },
+    focusedDropDownStyle: {
+        borderColor: COLORS.BLACK,
+        borderWidth: 1.5,
     },
     dropDownContainerStyle: {
         backgroundColor: '#fff',
