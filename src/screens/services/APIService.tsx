@@ -620,6 +620,15 @@ const APIService = {
             throw err;
           }
         },
+        GetLedgerTransactionModes: async (ledger_id: any): Promise<any> => {
+          try {
+            const res = await AxiosService.get(`api/master/ledger_transaction_mode/${ledger_id}`);
+            return res;
+          } catch (err: any) {
+            console.log('GetLedgerTransactionModes Error:', err?.response?.data || err.message);
+            throw err;
+          }
+        },
 };
 
 export default APIService;

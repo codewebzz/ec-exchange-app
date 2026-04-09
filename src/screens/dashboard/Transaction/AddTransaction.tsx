@@ -60,9 +60,7 @@ const AddTransaction = ({ navigation, route }: any) => {
   const [rate, setRate] = useState<string>('');
   const [limit, setLimit] = useState<string>('');
   const [cap, setCap] = useState<string>('');
-  const [selectedLedgerName, setSelectedLedgerName] = useState<string>('');
-  const [openDate, setOpenDate] = useState<string>(new Date().toLocaleDateString());
-  const [openTime, setOpenTime] = useState<string>('00:00:00');
+  const [selectedLedgerPatti, setSelectedLedgerPatti] = useState<string>("");
 
   // Bottom sheet refs
   const filterBottomSheetRef = React.useRef<BottomSheet>(null);
@@ -73,10 +71,8 @@ const AddTransaction = ({ navigation, route }: any) => {
   const [ledgerData, setLedgerData] = useState<any[]>([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
 
-  const modeData = [
-    { label: 'patti', value: '1' },
-    { label: 'utar', value: '2' }
-  ];
+  const [modeData, setModeData] = useState<any[]>([]);
+  const [modeLoading, setModeLoading] = useState(false);
 
   // Fetch ledger data on component mount
   useEffect(() => {
@@ -124,6 +120,34 @@ const AddTransaction = ({ navigation, route }: any) => {
     }
   };
 
+  // Fetch mode dropdown data
+  const fetchModeData = async (ledgerId: string) => {
+    try {
+      setModeLoading(true);
+      const response = await APIService.GetLedgerTransactionModes(ledgerId);
+      console.log('Mode data response:', response);
+
+      if (response && response.success && response.data && response.data.length > 0) {
+        const transformedModes = response.data.map((item: any) => ({
+          label: item.mode,
+          value: item.id.toString(),
+        }));
+        setModeData(transformedModes);
+        setSelectedMode(response.data[0].id.toString());
+        console.log('Transformed mode items:', transformedModes);
+      } else {
+        console.log('No mode data found or API error');
+        setModeData([]);
+        setSelectedMode('');
+      }
+    } catch (error) {
+      console.error('Error fetching mode data:', error);
+      setModeData([]);
+    } finally {
+      setModeLoading(false);
+    }
+  };
+
   const snapPoints = React.useMemo(() => ['80%'], []);
 
   const renderBackdrop = React.useCallback(
@@ -148,9 +172,9 @@ const AddTransaction = ({ navigation, route }: any) => {
   const updateOrAddTransaction = (newTransaction: any) => {
     setAllTransactions((prev: any[]) => {
       // Just add the new transaction with a timestamp
-      const newTransactionWithTimestamp = { 
-        ...newTransaction, 
-        timestamp: new Date().toLocaleString() 
+      const newTransactionWithTimestamp = {
+        ...newTransaction,
+        timestamp: new Date().toLocaleString()
       };
       console.log('Added new transaction (duplicates allowed):', newTransactionWithTimestamp);
       return [newTransactionWithTimestamp, ...prev];
@@ -266,7 +290,7 @@ const AddTransaction = ({ navigation, route }: any) => {
       // Prefill ledger, mode, shift, and transactions
       setSelectedLedger(transactionData.ledger_id?.toString() || '');
       setSelectedMode(transactionData.mode?.toString() || '');
-      
+
       if (transactionData.transaction_data) {
         setAllTransactions(transactionData.transaction_data.map((t: any) => ({
           ...t,
@@ -341,7 +365,7 @@ const AddTransaction = ({ navigation, route }: any) => {
       setAllTransactions([]);
       setSelectedLedger('');
       setSelectedMode('');
-      setSelectedLedgerName('');
+      setModeData([]);
       setRate('');
       setLimit('');
       setCap('');
@@ -445,16 +469,25 @@ const AddTransaction = ({ navigation, route }: any) => {
                         const found = (ledgerData as any[]).find((it: any) => it.value === selectedVal);
                         const meta = found?.meta || null;
                         if (meta) {
-                          setSelectedLedgerName(meta?.real_name || meta?.name || '');
                           setRate(String(meta?.rate ?? ''));
                           setLimit(String(meta?.limit ?? ''));
                           setCap(String(meta?.capping ?? ''));
+                          setSelectedLedgerPatti(meta?.patti);
                         } else {
-                          setSelectedLedgerName('');
                           setRate('');
                           setLimit('');
                           setCap('');
+                          setSelectedLedgerPatti("");
                         }
+
+                        // Fetch modes for the selected ledger
+                        if (selectedVal) {
+                          fetchModeData(selectedVal);
+                        } else {
+                          setModeData([]);
+                          setSelectedMode('');
+                        }
+
                         // Auto-open mode dropdown after selecting ledger
                         setTimeout(() => setModeOpen(true), 200);
                       }}
@@ -482,11 +515,19 @@ const AddTransaction = ({ navigation, route }: any) => {
                         }
                       }}
                       setItems={() => { }}
-                      placeholder="Select Mode"
+                      placeholder={modeLoading ? "Loading..." : "Select Mode"}
                       zIndex={2000}
                     />
                   </View>
                 </View>
+
+                {selectedLedgerPatti && (
+                  <View style={styles.pattiContainer}>
+                    <Icon name="info-outline" size={scale(14)} color={COLORS.BUTTONBG} />
+                    <Text style={styles.pattiLabel}>Patti: </Text>
+                    <Text style={styles.pattiValue}>{selectedLedgerPatti}</Text>
+                  </View>
+                )}
 
                 <View style={styles.formSection}>
                   <QuickEntryForm
@@ -630,7 +671,7 @@ const AddTransaction = ({ navigation, route }: any) => {
                         <Icon name="calendar-today" size={scale(14)} color={COLORS.WHITE} />
                       </View>
                       <Text style={styles.infoLabel}>Open Date:</Text>
-                      <Text style={[styles.infoValue, { color: '#1D4ED8' }]}>{openDate || '--'}</Text>
+                      <Text style={[styles.infoValue, { color: '#1D4ED8' }]}>{shiftData?.open_date || '--'}</Text>
                     </View>
 
 
@@ -698,6 +739,30 @@ const styles = StyleSheet.create({
     zIndex: 3000,
     flexDirection: 'row',
     alignItems: 'flex-start',
+  },
+  pattiContainer: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(52, 211, 153, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.3)',
+  },
+  pattiLabel: {
+    fontSize: scale(12),
+    fontWeight: '700',
+    color: COLORS.BLACK,
+    marginLeft: 4,
+  },
+  pattiValue: {
+    fontSize: scale(12),
+    fontWeight: '500',
+    color: '#065F46',
+    flex: 1,
   },
   filterButton: {
     backgroundColor: COLORS.BUTTONBG,

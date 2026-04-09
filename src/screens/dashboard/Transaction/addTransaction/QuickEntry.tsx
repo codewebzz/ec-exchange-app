@@ -209,7 +209,6 @@ const QuickEntryForm = React.forwardRef(({ externalTransactions = [], onTransact
     <View style={styles.container}>
       {/* Quick Entry Form */}
       <View style={styles.formContainer}>
-        <Text style={styles.formTitle}>📝 Quick Entry</Text>
 
         <View style={styles.inputRow}>
           <View style={styles.inputContainer}>
