@@ -19,6 +19,7 @@ const ABModal = ({ visible, onClose, onSave, title = "Random" }:any) => {
   const [totalNumbers, setTotalNumbers] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
   const [generatedNumbers, setGeneratedNumbers] = useState([]);
+  const amountRef = React.useRef<TextInput>(null);
 
   // Generate triple digit numbers based on input digits
   const generateTripleNumbers = (digits:any, amountValue:any) => {
@@ -126,6 +127,8 @@ const ABModal = ({ visible, onClose, onSave, title = "Random" }:any) => {
                     placeholder="Enter digits"
                     keyboardType="numeric"
                     maxLength={10} // Max 10 unique digits (0-9)
+                    returnKeyType="next"
+                    onSubmitEditing={() => amountRef.current?.focus()}
                   />
                 </View>
                 
@@ -137,6 +140,9 @@ const ABModal = ({ visible, onClose, onSave, title = "Random" }:any) => {
                     onChangeText={(text) => setAmount(text.replace(/\D/g, ''))}
                     placeholder="AMOUNT"
                     keyboardType="numeric"
+                    ref={amountRef}
+                    returnKeyType="done"
+                    onSubmitEditing={handleSave}
                   />
                 </View>
               </View>

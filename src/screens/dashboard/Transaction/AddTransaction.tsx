@@ -146,34 +146,13 @@ const AddTransaction = ({ navigation, route }: any) => {
   // Helper function to update or add transaction without duplicates
   const updateOrAddTransaction = (newTransaction: any) => {
     setAllTransactions((prev: any[]) => {
-      // Find existing transaction with same number (convert both to numbers for comparison)
-      const newNumber = parseInt(newTransaction.number);
-      const existingIndex = prev.findIndex(t => parseInt(t.number) === newNumber);
-
-      console.log('Deduplication check:', {
-        newTransaction: newTransaction,
-        newNumber: newNumber,
-        existingIndex: existingIndex,
-        existingTransactions: prev.map(t => ({ number: t.number, parsed: parseInt(t.number) }))
-      });
-
-      if (existingIndex >= 0) {
-        // Update existing transaction
-        const updated = [...prev];
-        updated[existingIndex] = {
-          ...newTransaction,
-          timestamp: new Date().toLocaleString(),
-          // Preserve the source if it's from Quick Entry
-          source: newTransaction.source || updated[existingIndex].source
-        };
-        console.log('Updated existing transaction:', updated[existingIndex]);
-        return updated;
-      } else {
-        // Add new transaction
-        const newTransactionWithTimestamp = { ...newTransaction, timestamp: new Date().toLocaleString() };
-        console.log('Added new transaction:', newTransactionWithTimestamp);
-        return [newTransactionWithTimestamp, ...prev];
-      }
+      // Just add the new transaction with a timestamp
+      const newTransactionWithTimestamp = { 
+        ...newTransaction, 
+        timestamp: new Date().toLocaleString() 
+      };
+      console.log('Added new transaction (duplicates allowed):', newTransactionWithTimestamp);
+      return [newTransactionWithTimestamp, ...prev];
     });
   };
 
@@ -263,7 +242,6 @@ const AddTransaction = ({ navigation, route }: any) => {
     setAaModalVisible(true);
   };
 
-  // Prefill state if editMode and transactionData, or from externalTransactions/items
   useEffect(() => {
     const incoming = Array.isArray(externalTransactions)
       ? externalTransactions
@@ -278,7 +256,7 @@ const AddTransaction = ({ navigation, route }: any) => {
           ? t.amount.toString()
           : (t.amount?.value?.toString?.() || '0'),
         timestamp: t.timestamp || new Date().toLocaleString(),
-        source: 'From List',
+        source: t.source || 'From List',
       }));
       setAllTransactions(normalized);
     }
@@ -287,9 +265,7 @@ const AddTransaction = ({ navigation, route }: any) => {
       // Prefill ledger, mode, shift, and transactions
       setSelectedLedger(transactionData.ledger_id?.toString() || '');
       setSelectedMode(transactionData.mode?.toString() || '');
-      // If you want to prefill shiftId, you can set it here if you have a setter
-      // setShiftId(transactionData.shift_id?.toString() || '');
-      // Prefill transactions (assuming transactionData.transaction_data is an array)
+      
       if (transactionData.transaction_data) {
         setAllTransactions(transactionData.transaction_data.map((t: any) => ({
           ...t,

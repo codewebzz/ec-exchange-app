@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
 
 const { width } = Dimensions.get('window');
 
-const CrossModal = ({ visible, onClose, onSave, title = "Cross" }:any) => {
+const CrossModal = ({ visible, onClose, onSave, title = "Cross" }: any) => {
   const [number1, setNumber1] = useState('');
   const [number2, setNumber2] = useState('');
   const [amount, setAmount] = useState('');
@@ -22,28 +22,30 @@ const CrossModal = ({ visible, onClose, onSave, title = "Cross" }:any) => {
   const [crossResults, setCrossResults] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
+  const num2Ref = useRef<TextInput>(null);
+  const amountRef = useRef<TextInput>(null);
 
   // Generate cross combinations
-  const generateCrossCombinations = (num1:any, num2:any, includeJoda:any) => {
+  const generateCrossCombinations = (num1: any, num2: any, includeJoda: any) => {
     if (!num1 || !num2) return [];
-    
+
     const digits1 = num1.toString().split('');
     const digits2 = num2.toString().split('');
-    const combinations:any[] = [];
-    
-    digits1.forEach((digit1:any) => {
-      digits2.forEach((digit2:any) => {
+    const combinations: any[] = [];
+
+    digits1.forEach((digit1: any) => {
+      digits2.forEach((digit2: any) => {
         const combination = digit1 + digit2;
-        
+
         // If Joda is disabled, exclude same digit combinations
         if (!includeJoda && digit1 === digit2) {
           return;
         }
-        
+
         combinations.push(parseInt(combination));
       });
     });
-    
+
     return combinations.sort((a, b) => a - b);
   };
 
@@ -129,9 +131,11 @@ const CrossModal = ({ visible, onClose, onSave, title = "Cross" }:any) => {
                     onChangeText={(text) => setNumber1(text.replace(/\D/g, ''))}
                     placeholder="Enter number 1"
                     keyboardType="numeric"
+                    returnKeyType="next"
+                    onSubmitEditing={() => num2Ref.current?.focus()}
                   />
                 </View>
-                
+
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Number 2</Text>
                   <TextInput
@@ -140,6 +144,9 @@ const CrossModal = ({ visible, onClose, onSave, title = "Cross" }:any) => {
                     onChangeText={(text) => setNumber2(text.replace(/\D/g, ''))}
                     placeholder="Enter number 2"
                     keyboardType="numeric"
+                    returnKeyType="next"
+                    onSubmitEditing={() => amountRef.current?.focus()}
+                    ref={num2Ref}
                   />
                 </View>
               </View>
@@ -153,6 +160,9 @@ const CrossModal = ({ visible, onClose, onSave, title = "Cross" }:any) => {
                     onChangeText={(text) => setAmount(text.replace(/\D/g, ''))}
                     placeholder="Enter amount"
                     keyboardType="numeric"
+                    returnKeyType="done"
+                    onSubmitEditing={handleSave}
+                    ref={amountRef}
                   />
                 </View>
 

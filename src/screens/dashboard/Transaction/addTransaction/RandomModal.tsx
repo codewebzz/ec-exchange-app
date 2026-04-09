@@ -34,6 +34,8 @@ const RandomModal: React.FC<RandomModalProps> = ({
   ]);
   const [amount, setAmount] = useState('');
   const [pltAmount, setPltAmount] = useState('');
+  const amountRef = useRef<TextInput>(null);
+  const pltAmountRef = useRef<TextInput>(null);
   const inputRefs = useRef<{ [key: string]: TextInput | null }>({});
   const newlyAddedId = useRef<string | null>(null);
   const currentFocusedInputId = useRef<string | null>(null);
@@ -250,6 +252,16 @@ const RandomModal: React.FC<RandomModalProps> = ({
                           return;
                         }
                       }}
+                      returnKeyType={index === numberEntries.length - 1 ? "next" : "next"}
+                      onSubmitEditing={() => {
+                        if (index === numberEntries.length - 1) {
+                          amountRef.current?.focus();
+                        } else {
+                          // Focus next number entry
+                          const nextId = numberEntries[index + 1].id;
+                          inputRefs.current[nextId]?.focus();
+                        }
+                      }}
                     />
                     {/* Show delete button on all entries except the newest/last one */}
                     {index !== numberEntries.length - 1 && (
@@ -295,11 +307,14 @@ const RandomModal: React.FC<RandomModalProps> = ({
             <View style={styles.inputGroup}>
               <Text style={styles.label}>AMOUNT</Text>
               <TextInput
+                ref={amountRef}
                 style={styles.input}
                 value={amount}
                 onChangeText={(text) => setAmount((text || '').replace(/\D/g, ''))}
                 placeholder="0"
                 keyboardType="numeric"
+                returnKeyType="next"
+                onSubmitEditing={() => pltAmountRef.current?.focus()}
               />
               <Text style={styles.helpText}>
                 This amount will be applied to all entered numbers
@@ -310,11 +325,14 @@ const RandomModal: React.FC<RandomModalProps> = ({
             <View style={styles.inputGroup}>
               <Text style={styles.label}>PLT-AMOUNT</Text>
               <TextInput
+                ref={pltAmountRef}
                 style={styles.input}
                 value={pltAmount}
                 onChangeText={(text) => setPltAmount((text || '').replace(/\D/g, ''))}
                 placeholder="0"
                 keyboardType="numeric"
+                returnKeyType="done"
+                onSubmitEditing={() => handleSave()}
               />
               <Text style={styles.helpText}>
                 This amount will be assigned to reversed numbers

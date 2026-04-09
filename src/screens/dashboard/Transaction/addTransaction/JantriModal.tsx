@@ -66,6 +66,7 @@ const JantriModal: React.FC<JantriModalProps> = ({
   const [manualNumber, setManualNumber] = useState('');
   const [manualAmount, setManualAmount] = useState('');
   const [amountLess, setAmountLess] = useState('30');
+  const cellRefs = React.useRef<{ [key: string]: TextInput | null }>({});
   const [lessPercentage, setLessPercentage] = useState('10');
   const [extraKhabar, setExtraKhabar] = useState<'NonConsolidate' | 'Consolidate' | 'CutConsolidate' | 'HPL'>('NonConsolidate');
 
@@ -845,26 +846,46 @@ const JantriModal: React.FC<JantriModalProps> = ({
                                         </View>
                                       )}
                                       {cell.editable && !isMainJantri ? (
-                                        <TextInput
-                                          style={[
-                                            styles.cellInput,
-                                            cell.label && styles.cellInputWithLabel,
-                                          ]}
-                                          value={cell.value || ''}
-                                          onChangeText={(value) => {
-                                            handleCellChange(rowIndex, cellIndex, value);
-                                          }}
-                                          onBlur={() => {
-                                            // Auto-save when keyboard closes (onBlur)
-                                            if (quickEntryList.length > 0) {
-                                              console.log('Auto-saving on keyboard close:', { rowIndex, cellIndex });
-                                            }
-                                          }}
-                                          keyboardType="numeric"
-                                          maxLength={undefined} // Allow unlimited digits
-                                          placeholder="0"
-                                          placeholderTextColor="#999"
-                                        />
+                                          <TextInput
+                                            ref={(ref) => {
+                                              const key = `${rowIndex}_${cellIndex}`;
+                                              cellRefs.current[key] = ref;
+                                            }}
+                                            style={[
+                                              styles.cellInput,
+                                              cell.label && styles.cellInputWithLabel,
+                                            ]}
+                                            value={cell.value || ''}
+                                            onChangeText={(value) => {
+                                              handleCellChange(rowIndex, cellIndex, value);
+                                            }}
+                                            onBlur={() => {
+                                              // Auto-save when keyboard closes (onBlur)
+                                              if (quickEntryList.length > 0) {
+                                                console.log('Auto-saving on keyboard close:', { rowIndex, cellIndex });
+                                              }
+                                            }}
+                                            keyboardType="numeric"
+                                            maxLength={undefined} // Allow unlimited digits
+                                            placeholder="0"
+                                            placeholderTextColor="#999"
+                                            returnKeyType="next"
+                                            onSubmitEditing={() => {
+                                              // Try to focus next cell in the same row
+                                              let nextCol = cellIndex + 1;
+                                              let nextRow = rowIndex;
+                                              
+                                              if (nextCol >= 10) {
+                                                nextCol = 0;
+                                                nextRow = rowIndex + 1;
+                                              }
+                                              
+                                              const nextKey = `${nextRow}_${nextCol}`;
+                                              if (cellRefs.current[nextKey]) {
+                                                cellRefs.current[nextKey]?.focus();
+                                              }
+                                            }}
+                                          />
                                       ) : (
                                         <Text
                                           style={[

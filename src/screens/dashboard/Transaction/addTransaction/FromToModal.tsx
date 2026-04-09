@@ -20,6 +20,9 @@ const FromToModal = ({ visible, onClose, onSave, title = "From-To" }: any) => {
   const [pltAmount, setPltAmount] = useState('');
   const [totalNumbers, setTotalNumbers] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
+  const toRef = React.useRef<TextInput>(null);
+  const amountRef = React.useRef<TextInput>(null);
+  const pltAmountRef = React.useRef<TextInput>(null);
 
   // Function to reverse digits of a number
   const reverseNumber = (num: number): number => {
@@ -203,6 +206,8 @@ const FromToModal = ({ visible, onClose, onSave, title = "From-To" }: any) => {
                     placeholder="From"
                     keyboardType="numeric"
                     placeholderTextColor="#999"
+                    returnKeyType="next"
+                    onSubmitEditing={() => toRef.current?.focus()}
                   />
                 </View>
 
@@ -215,6 +220,9 @@ const FromToModal = ({ visible, onClose, onSave, title = "From-To" }: any) => {
                     placeholder="To"
                     keyboardType="numeric"
                     placeholderTextColor="#999"
+                    ref={toRef}
+                    returnKeyType="next"
+                    onSubmitEditing={() => amountRef.current?.focus()}
                   />
                 </View>
 
@@ -227,6 +235,9 @@ const FromToModal = ({ visible, onClose, onSave, title = "From-To" }: any) => {
                     placeholder="Amount"
                     keyboardType="numeric"
                     placeholderTextColor="#999"
+                    ref={amountRef}
+                    returnKeyType="next"
+                    onSubmitEditing={() => pltAmountRef.current?.focus()}
                   />
                 </View>
               </View>
@@ -241,6 +252,9 @@ const FromToModal = ({ visible, onClose, onSave, title = "From-To" }: any) => {
                   placeholder="PLT Amount (for reversed numbers)"
                   keyboardType="numeric"
                   placeholderTextColor="#999"
+                  ref={pltAmountRef}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSave}
                 />
               </View>
             </View>

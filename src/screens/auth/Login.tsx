@@ -78,40 +78,46 @@ const Login = ({ navigation }: any) => {
             handleLogin(values, setSubmitting);
           }}
         >
-          {({ handleChange, handleBlur, handleSubmit, values, errors, submitCount, isSubmitting }) => (
-            <>
+          {({ handleChange, handleBlur, handleSubmit, values, errors, submitCount, isSubmitting }) => {
+            const passwordRef = React.useRef<any>(null);
+            return (
+              <>
+                <CustomTextInput
+                  label='User Name'
+                  style={styles.input}
+                  placeholder="Enter username"
+                  onChangeText={handleChange('username')}
+                  onBlur={handleBlur('username')}
+                  value={values.username}
+                  error={submitCount > 0 ? errors.username : ''}
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                />
+                <CustomTextInput
+                  ref={passwordRef}
+                  label='Password'
+                  style={styles.input}
+                  placeholder="Enter password"
+                  secureTextEntry
+                  onChangeText={handleChange('password')}
+                  onBlur={handleBlur('password')}
+                  value={values.password}
+                  error={submitCount > 0 ? errors.password : ''}
+                  returnKeyType="done"
+                  onSubmitEditing={() => handleSubmit()}
+                />
 
-              <CustomTextInput
-                label='User Name'
-                style={styles.input}
-                placeholder="Enter username"
-                onChangeText={handleChange('username')}
-                onBlur={handleBlur('username')}
-                value={values.username}
-                error={submitCount > 0 ? errors.username : ''}
-              />
-              <CustomTextInput
-                label='Password'
-                style={styles.input}
-                placeholder="Enter password"
-                secureTextEntry
-                onChangeText={handleChange('password')}
-                onBlur={handleBlur('password')}
-                value={values.password}
-                error={submitCount > 0 ? errors.password : ''}
-              />
-
-
-              <CustomButton
-                title={isSubmitting ? 'Signing in...' : 'Submit'}
-                onPress={() => handleSubmit()}
-                backgroundColor={COLORS.BUTTONBG}
-                textColor={COLORS.WHITE}
-                loading={isSubmitting}
-                disabled={isSubmitting}
-              />
-            </>
-          )}
+                <CustomButton
+                  title={isSubmitting ? 'Signing in...' : 'Submit'}
+                  onPress={() => handleSubmit()}
+                  backgroundColor={COLORS.BUTTONBG}
+                  textColor={COLORS.WHITE}
+                  loading={isSubmitting}
+                  disabled={isSubmitting}
+                />
+              </>
+            );
+          }}
         </Formik>
       </View>
     </View>

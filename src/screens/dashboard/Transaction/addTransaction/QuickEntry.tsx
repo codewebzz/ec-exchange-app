@@ -21,6 +21,7 @@ const QuickEntryForm = ({ externalTransactions = [], onTransactionAdd, onTransac
   const [number, setNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [maxLen, setMaxLen] = useState<number>(2);
+  const amountRef = React.useRef<TextInput>(null);
 console.log(externalTransactions,'externalTransactions');
 
   // Use only external transactions (internal ones are handled by parent)
@@ -211,7 +212,9 @@ console.log(externalTransactions,'externalTransactions');
               onChangeText={handleNumberChange}
               placeholder="Enter number"
               keyboardType="numeric"
-            maxLength={maxLen}
+              maxLength={maxLen}
+              returnKeyType="next"
+              onSubmitEditing={() => amountRef.current?.focus()}
             />
           </View>
           
@@ -223,6 +226,9 @@ console.log(externalTransactions,'externalTransactions');
               onChangeText={setAmount}
               placeholder="Enter amount"
               keyboardType="decimal-pad"
+              ref={amountRef}
+              returnKeyType="done"
+              onSubmitEditing={handleAddTransaction}
             />
           </View>
           

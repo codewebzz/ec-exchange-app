@@ -1,17 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  Alert,
-  FlatList,
   Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import { COLORS } from '../../../../assets/colors';
 import { scale } from 'react-native-size-matters';
 const { width: screenWidth } = Dimensions.get('window');
 const CELL_WIDTH = 70;
@@ -61,10 +57,10 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
 }) => {
   console.log('JantriEmbedded received externalTransactions:', externalTransactions);
   console.log('JantriEmbedded isMainJantri:', isMainJantri);
-  
+
   const [gridData, setGridData] = useState<GridCell[][]>([]);
   const [quickEntryList, setQuickEntryList] = useState<QuickEntryItem[]>([]);
-  
+
   // Use ref to track if grid is initialized to prevent infinite loops
   const gridInitializedRef = useRef(false);
   const externalTransactionsProcessedRef = useRef(false);
@@ -79,8 +75,8 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
 
       console.log('Converting display number:', displayNumber);
 
-    if (displayNumber.startsWith('B')) {
-      const position = displayNumber.substring(1);
+      if (displayNumber.startsWith('B')) {
+        const position = displayNumber.substring(1);
         if (position === '0') {
           const result = '1110'; // B0 = 1110
           console.log('B0 section conversion:', { display: displayNumber, result });
@@ -90,8 +86,8 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
           console.log('B section conversion:', { display: displayNumber, position, result });
           return result;
         }
-    } else if (displayNumber.startsWith('A')) {
-      const position = displayNumber.substring(1);
+      } else if (displayNumber.startsWith('A')) {
+        const position = displayNumber.substring(1);
         if (position === '0') {
           const result = '11110'; // A0 = 11110
           console.log('A0 section conversion:', { display: displayNumber, result });
@@ -103,7 +99,7 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
         }
       } else {
         console.log('G section conversion (no change):', displayNumber);
-    return displayNumber;
+        return displayNumber;
       }
     } catch (error) {
       console.error('Error in convertDisplayToNumeric:', error, { displayNumber });
@@ -121,7 +117,7 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
         return { display: '0', section: 'G', position: 1 };
       }
 
-    const num = parseInt(numericNumber);
+      const num = parseInt(numericNumber);
       if (isNaN(num)) {
         console.log('Cannot parse numericNumber to integer:', numericNumber);
         return { display: '0', section: 'G', position: 1 };
@@ -137,8 +133,8 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
       }
 
       // Handle A1-A9 (1111, 2222, 3333, ..., 9999)
-    if (num >= 1111 && num % 1111 === 0) {
-      const position = num / 1111;
+      if (num >= 1111 && num % 1111 === 0) {
+        const position = num / 1111;
         if (position >= 1 && position <= 9) {
           const result = { display: `A${position}`, section: 'A' as const, position };
           console.log('A section result:', result);
@@ -154,16 +150,16 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
       }
 
       // Handle B1-B9 (111, 222, 333, ..., 999)
-    if (num >= 111 && num % 111 === 0) {
-      const position = num / 111;
+      if (num >= 111 && num % 111 === 0) {
+        const position = num / 111;
         if (position >= 1 && position <= 9) {
           const result = { display: `B${position}`, section: 'B' as const, position };
           console.log('B section result:', result);
           return result;
+        }
       }
-    }
 
-    if (num >= 1 && num <= 100) {
+      if (num >= 1 && num <= 100) {
         const position = ((num - 1) % 10) + 1;
         const result = { display: num.toString().padStart(2, '0'), section: 'G' as const, position };
         console.log('G section result:', result);
@@ -210,7 +206,7 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
   const initializeGridData = () => {
     try {
       console.log('Starting initializeGridData...');
-    const initialData: GridCell[][] = [];
+      const initialData: GridCell[][] = [];
 
       // Header row (Row 1) - Column numbers 1-10 + Total
       const headerRow: GridCell[] = [];
@@ -236,23 +232,23 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
       console.log('Header row created:', headerRow.length, 'cells');
 
       // Data rows (Rows 2-11) - Numbers 01-100
-    for (let row = 1; row <= 10; row++) {
-      const rowData: GridCell[] = [];
-      for (let col = 1; col <= 10; col++) {
+      for (let row = 1; row <= 10; row++) {
+        const rowData: GridCell[] = [];
+        for (let col = 1; col <= 10; col++) {
           const number = ((row - 1) * 10 + col).toString().padStart(2, '0');
-        rowData.push({
+          rowData.push({
             key: `G_${row}_${col}`,
             label: number,
-          value: '',
-          amount: '',
-          editable: true,
+            value: '',
+            amount: '',
+            editable: true,
             type: 'normal',
-          section: 'G',
-          position: col,
-          isAmountCell: true,
-          rowType: 'data',
-        });
-      }
+            section: 'G',
+            position: col,
+            isAmountCell: true,
+            rowType: 'data',
+          });
+        }
         // Add row total cell
         rowData.push({
           key: `G_total_${row}`,
@@ -262,21 +258,21 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
           section: 'S',
           rowType: 'rowTotal',
         });
-      initialData.push(rowData);
+        initialData.push(rowData);
         console.log(`Row ${row} created:`, rowData.length, 'cells');
-    }
+      }
 
       // G Section Total Row (Row 12) - All columns show 0
-    const gTotalRow: GridCell[] = [];
-    for (let col = 1; col <= 10; col++) {
-      gTotalRow.push({
+      const gTotalRow: GridCell[] = [];
+      for (let col = 1; col <= 10; col++) {
+        gTotalRow.push({
           key: `G_total_${col}`,
           value: '0',
-        editable: false,
-        type: 'normal',
-        section: 'S',
-        rowType: 'total',
-      });
+          editable: false,
+          type: 'normal',
+          section: 'S',
+          rowType: 'total',
+        });
       }
       gTotalRow.push({
         key: 'G_total_total',
@@ -286,26 +282,26 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
         section: 'S',
         rowType: 'total',
       });
-    initialData.push(gTotalRow);
+      initialData.push(gTotalRow);
       console.log('G Total row created:', gTotalRow.length, 'cells');
 
       // B Series Row (Row 13) - B1, B2, ..., B0
-    const bRow: GridCell[] = [];
-    for (let col = 1; col <= 10; col++) {
+      const bRow: GridCell[] = [];
+      for (let col = 1; col <= 10; col++) {
         const label = col === 10 ? 'B0' : `B${col}`;
-      bRow.push({
+        bRow.push({
           key: `B_1_${col}`,
           label: label,
-        value: '',
-        amount: '',
-        editable: true,
-        type: 'triple',
-        section: 'B',
-        position: col,
-        isAmountCell: true,
-        rowType: 'section',
-      });
-    }
+          value: '',
+          amount: '',
+          editable: true,
+          type: 'triple',
+          section: 'B',
+          position: col,
+          isAmountCell: true,
+          rowType: 'section',
+        });
+      }
       bRow.push({
         key: 'B_total',
         value: '0',
@@ -314,26 +310,26 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
         section: 'S',
         rowType: 'rowTotal',
       });
-    initialData.push(bRow);
+      initialData.push(bRow);
       console.log('B row created:', bRow.length, 'cells');
 
       // A Series Row (Row 14) - A1, A2, ..., A0
-    const aRow: GridCell[] = [];
-    for (let col = 1; col <= 10; col++) {
+      const aRow: GridCell[] = [];
+      for (let col = 1; col <= 10; col++) {
         const label = col === 10 ? 'A0' : `A${col}`;
-      aRow.push({
+        aRow.push({
           key: `A_1_${col}`,
           label: label,
-        value: '',
-        amount: '',
-        editable: true,
-        type: 'four-digit',
-        section: 'A',
-        position: col,
-        isAmountCell: true,
-        rowType: 'section',
-      });
-    }
+          value: '',
+          amount: '',
+          editable: true,
+          type: 'four-digit',
+          section: 'A',
+          position: col,
+          isAmountCell: true,
+          rowType: 'section',
+        });
+      }
       aRow.push({
         key: 'A_total',
         value: '0',
@@ -342,7 +338,7 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
         section: 'S',
         rowType: 'rowTotal',
       });
-    initialData.push(aRow);
+      initialData.push(aRow);
       console.log('A row created:', aRow.length, 'cells');
 
       // Grand Total Row (Row 15) - Dashes + "Grand Total"
@@ -383,10 +379,10 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
         lastRowCells: initialData[initialData.length - 1]?.length
       });
 
-    setGridData(initialData);
+      setGridData(initialData);
       gridInitializedRef.current = true;
       console.log('Grid data set successfully');
-      
+
       // Load existing transaction data immediately after grid initialization
       if (externalTransactions && Array.isArray(externalTransactions) && externalTransactions.length > 0) {
         console.log('Loading external transactions during initialization:', externalTransactions);
@@ -406,14 +402,14 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
       console.log('External transactions type:', typeof externalTransactions);
       console.log('External transactions is array:', Array.isArray(externalTransactions));
       console.log('External transactions length:', externalTransactions?.length);
-      
+
       if (!gridData || !Array.isArray(gridData) || gridData.length === 0) {
         console.log('Grid data is not properly initialized, skipping load');
         return;
       }
 
-    const loadedEntries: QuickEntryItem[] = [];
-    const newGridData = [...gridData];
+      const loadedEntries: QuickEntryItem[] = [];
+      const newGridData = [...gridData];
 
       // Check if externalTransactions exists and is an array
       if (!externalTransactions || !Array.isArray(externalTransactions)) {
@@ -426,7 +422,7 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
       externalTransactions.forEach((transaction: any, index: number) => {
         try {
           console.log(`Processing transaction ${index}:`, transaction);
-          
+
           // Validate transaction object
           if (!transaction || typeof transaction !== 'object') {
             console.log(`Invalid transaction at index ${index}:`, transaction);
@@ -447,7 +443,7 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
           const numberStr = /^\d+$/.test(rawNumberStr)
             ? rawNumberStr
             : convertDisplayToNumeric(rawNumberStr);
-          
+
           if (!numberStr || numberStr.trim() === '') {
             console.log(`Invalid number at index ${index}:`, transaction.number);
             return;
@@ -459,25 +455,25 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
             return;
           }
 
-          console.log('Processing transaction:', { 
-            originalNumber: transaction.number, 
+          console.log('Processing transaction:', {
+            originalNumber: transaction.number,
             normalizedNumber: numberStr,
-            originalAmount: transaction.amount, 
-            amount, 
-            index 
+            originalAmount: transaction.amount,
+            amount,
+            index
           });
 
-        const { display, section, position } = convertNumericToDisplay(numberStr);
+          const { display, section, position } = convertNumericToDisplay(numberStr);
           console.log('Converted to display:', { display, section, position });
 
-        let targetRow = -1;
-        if (section === 'A') {
+          let targetRow = -1;
+          if (section === 'A') {
             targetRow = newGridData.length - 2; // A row is second to last
-        } else if (section === 'B') {
+          } else if (section === 'B') {
             targetRow = newGridData.length - 3; // B row is third to last
-        } else if (section === 'G') {
-          const numberValue = parseInt(numberStr);
-          if (numberValue >= 1 && numberValue <= 100) {
+          } else if (section === 'G') {
+            const numberValue = parseInt(numberStr);
+            if (numberValue >= 1 && numberValue <= 100) {
               // Calculate row: 1-10 goes to row 1, 11-20 goes to row 2, etc.
               // +1 because first row (index 0) is header
               targetRow = Math.floor((numberValue - 1) / 10) + 1;
@@ -489,36 +485,38 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
           if (targetRow >= 0 && targetRow < newGridData.length) {
             const cellIndex = position - 1;
             if (cellIndex >= 0 && cellIndex < newGridData[targetRow].length - 1) { // -1 to exclude total column
-            newGridData[targetRow][cellIndex] = {
-              ...newGridData[targetRow][cellIndex],
-                value: amountStr,
-                amount: amountStr,
-            };
-              console.log('Updated grid cell:', { targetRow, cellIndex, value: amountStr });
+              const existingValue = parseFloat(newGridData[targetRow][cellIndex].value || '0');
+              const totalVal = (existingValue + amount).toString();
+              newGridData[targetRow][cellIndex] = {
+                ...newGridData[targetRow][cellIndex],
+                value: totalVal,
+                amount: totalVal,
+              };
+              console.log('Updated grid cell:', { targetRow, cellIndex, value: totalVal });
             } else {
               console.log('Invalid cell index:', { cellIndex, rowLength: newGridData[targetRow]?.length });
-          }
+            }
           } else {
             console.log('Invalid target row:', { targetRow, gridLength: newGridData.length });
-        }
+          }
 
-        const existingEntryIndex = loadedEntries.findIndex((entry) => entry.number === display);
-        if (existingEntryIndex === -1) {
-          loadedEntries.push({
+          const existingEntryIndex = loadedEntries.findIndex((entry) => entry.number === display);
+          if (existingEntryIndex === -1) {
+            loadedEntries.push({
               id: Date.now().toString() + '_' + index, // Unique ID like QuickEntry.tsx
-            number: display,
-            amount,
-            section,
-            position,
-            timestamp: new Date(),
-          });
+              number: display,
+              amount,
+              section,
+              position,
+              timestamp: new Date(),
+            });
             console.log('Added new entry:', { display, amount, section, position });
           } else {
             console.log('Entry already exists:', { display, existingIndex: existingEntryIndex });
-            // Update existing entry with new amount
+            // Add to existing entry instead of replacing
             loadedEntries[existingEntryIndex] = {
               ...loadedEntries[existingEntryIndex],
-              amount,
+              amount: loadedEntries[existingEntryIndex].amount + amount,
               timestamp: new Date(),
             };
           }
@@ -530,9 +528,9 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
       console.log('Final loaded entries:', loadedEntries);
       console.log('Updated grid data:', newGridData);
 
-    setQuickEntryList(loadedEntries);
-    setGridData(newGridData);
-    updateTotals(newGridData);
+      setQuickEntryList(loadedEntries);
+      setGridData(newGridData);
+      updateTotals(newGridData);
     } catch (error) {
       console.error('Error in loadExternalTransactions:', error);
     }
@@ -540,27 +538,27 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
 
   const handleCellChange = (rowIndex: number, cellIndex: number, value: string) => {
     try {
-    if (isMainJantri) return;
+      if (isMainJantri) return;
 
       console.log('handleCellChange called:', { rowIndex, cellIndex, value });
 
-    const newData = [...gridData];
-    const cell = newData[rowIndex][cellIndex];
+      const newData = [...gridData];
+      const cell = newData[rowIndex][cellIndex];
 
       // Allow unlimited digits for all cells
-    if (value && !/^\d*$/.test(value)) return;
+      if (value && !/^\d*$/.test(value)) return;
 
-    newData[rowIndex][cellIndex] = {
-      ...cell,
-      value,
-      amount: value,
-    };
+      newData[rowIndex][cellIndex] = {
+        ...cell,
+        value,
+        amount: value,
+      };
 
       console.log('Cell updated:', newData[rowIndex][cellIndex]);
 
-    setGridData(newData);
-    updateTotals(newData);
-    updateQuickEntryFromGrid(newData, rowIndex, cellIndex);
+      setGridData(newData);
+      updateTotals(newData);
+      updateQuickEntryFromGrid(newData, rowIndex, cellIndex);
     } catch (error) {
       console.error('Error in handleCellChange:', error);
     }
@@ -573,8 +571,8 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
         return;
       }
 
-    const newData = [...updatedData];
-      
+      const newData = [...updatedData];
+
       // Update row totals for data rows (rows 1-10, excluding header)
       for (let row = 1; row <= 10; row++) {
         if (newData[row] && Array.isArray(newData[row])) {
@@ -598,21 +596,21 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
       // Update column totals (row 11 - G section total)
       const totalRowIndex = 11;
       if (newData[totalRowIndex] && Array.isArray(newData[totalRowIndex])) {
-    for (let col = 0; col < 10; col++) {
-      let columnTotal = 0;
+        for (let col = 0; col < 10; col++) {
+          let columnTotal = 0;
           for (let row = 1; row <= 10; row++) { // Skip header row
             if (newData[row] && newData[row][col]) {
               const amountValue = parseFloat(newData[row][col].value || '0');
-        columnTotal += amountValue;
-      }
+              columnTotal += amountValue;
+            }
           }
           if (newData[totalRowIndex][col]) {
             newData[totalRowIndex][col] = {
               ...newData[totalRowIndex][col],
-          value: columnTotal.toString(),
-        };
-      }
-    }
+              value: columnTotal.toString(),
+            };
+          }
+        }
       }
 
       // Update B row total (row 12)
@@ -675,7 +673,7 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
         };
       }
 
-    setGridData(newData);
+      setGridData(newData);
     } catch (error) {
       console.error('Error in updateTotals:', error, { updatedData });
     }
@@ -687,8 +685,8 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
     cellIndex: number,
   ) => {
     try {
-    const cell = updatedData[rowIndex][cellIndex];
-    const amount = parseFloat(cell.value || '0');
+      const cell = updatedData[rowIndex][cellIndex];
+      const amount = parseFloat(cell.value || '0');
 
       console.log('updateQuickEntryFromGrid called:', {
         rowIndex,
@@ -699,59 +697,59 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
       });
 
       if (cell.section && cell.section !== 'S' && cell.section !== 'H') {
-      const position = cell.position || 1;
+        const position = cell.position || 1;
 
-      let displayNumber = '';
-      if (cell.section === 'G') {
+        let displayNumber = '';
+        if (cell.section === 'G') {
           // Calculate the actual number: row 1 (index 1) = 01-10, row 2 (index 2) = 11-20, etc.
           const baseNumber = (rowIndex - 1) * 10 + position;
           displayNumber = baseNumber.toString().padStart(2, '0');
-      } else if (cell.section === 'B') {
+        } else if (cell.section === 'B') {
           displayNumber = position === 10 ? 'B0' : `B${position}`;
-      } else if (cell.section === 'A') {
+        } else if (cell.section === 'A') {
           displayNumber = position === 10 ? 'A0' : `A${position}`;
-      }
+        }
 
         console.log('Display number calculated:', displayNumber);
 
-      const existingItemIndex = quickEntryList.findIndex((item) => item.number === displayNumber);
+        const existingItemIndex = quickEntryList.findIndex((item) => item.number === displayNumber);
 
-      const newQuickEntryList = [...quickEntryList];
+        const newQuickEntryList = [...quickEntryList];
 
-      if (amount > 0) {
-        const quickEntryItem: QuickEntryItem = {
+        if (amount > 0) {
+          const quickEntryItem: QuickEntryItem = {
             id: existingItemIndex >= 0 ? quickEntryList[existingItemIndex].id : Date.now().toString(),
-          number: displayNumber,
-          amount,
-          section: cell.section as 'G' | 'B' | 'A',
-          position,
+            number: displayNumber,
+            amount,
+            section: cell.section as 'G' | 'B' | 'A',
+            position,
             timestamp: new Date(),
-        };
+          };
 
-        if (existingItemIndex >= 0) {
+          if (existingItemIndex >= 0) {
             console.log('Updating existing entry:', {
               oldAmount: quickEntryList[existingItemIndex].amount,
               newAmount: amount,
               displayNumber
             });
-          newQuickEntryList[existingItemIndex] = quickEntryItem;
-        } else {
+            newQuickEntryList[existingItemIndex] = quickEntryItem;
+          } else {
             console.log('Adding new entry:', {
               displayNumber,
               amount,
               section: cell.section
             });
-          newQuickEntryList.push(quickEntryItem);
-        }
-      } else {
-        if (existingItemIndex >= 0) {
+            newQuickEntryList.push(quickEntryItem);
+          }
+        } else {
+          if (existingItemIndex >= 0) {
             console.log('Removing entry with zero amount:', displayNumber);
-          newQuickEntryList.splice(existingItemIndex, 1);
+            newQuickEntryList.splice(existingItemIndex, 1);
+          }
         }
-      }
 
         console.log('Updated quick entry list:', newQuickEntryList);
-      setQuickEntryList(newQuickEntryList);
+        setQuickEntryList(newQuickEntryList);
       }
     } catch (error) {
       console.error('Error in updateQuickEntryFromGrid:', error);
@@ -762,17 +760,17 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
     try {
       if (!id) {
         console.log('Invalid id in removeQuickEntry:', id);
-      return;
-    }
+        return;
+      }
 
       const itemToRemove = quickEntryList.find((item) => item && item.id === id);
       if (!itemToRemove) {
         console.log('Item not found for removal:', id);
-      return;
-    }
+        return;
+      }
 
       const updatedList = quickEntryList.filter((item) => item && item.id !== id);
-    setQuickEntryList(updatedList);
+      setQuickEntryList(updatedList);
 
       const newGridData = [...gridData];
       let targetRow = -1;
@@ -867,22 +865,22 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
   });
 
   try {
-  return (
-    <View style={styles.container}>
+    return (
+      <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
-          </View>
+        </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           <View style={styles.content}>
-          <View style={styles.gridSection}>
-                          <ScrollView 
-                horizontal 
+            <View style={styles.gridSection}>
+              <ScrollView
+                horizontal
                 showsHorizontalScrollIndicator={true}
                 contentContainerStyle={styles.tableScrollContainer}
                 bounces={false}
               >
-              <View style={styles.table}>
+                <View style={styles.table}>
                   {gridData && Array.isArray(gridData) && gridData.length > 0 ? (
                     gridData.map((row, rowIndex) => {
                       if (!row || !Array.isArray(row)) {
@@ -893,7 +891,7 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
                           </View>
                         );
                       }
-                      
+
                       return (
                         <View key={`row-${rowIndex}`} style={styles.row}>
                           {row.length > 0 ? (
@@ -906,15 +904,15 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
                                   </View>
                                 );
                               }
-                              
+
                               return (
-                      <View
+                                <View
                                   key={cell.key || `cell-${rowIndex}-${cellIndex}`}
-                        style={[
-                          styles.cell,
-                          { backgroundColor: getCellBackgroundColor(cell) },
+                                  style={[
+                                    styles.cell,
+                                    { backgroundColor: getCellBackgroundColor(cell) },
                                     cell.rowType === 'header' && styles.headerCell,
-                          cell.rowType === 'total' && styles.totalCell,
+                                    cell.rowType === 'total' && styles.totalCell,
                                     cell.rowType === 'grandTotal' && styles.grandTotalCell,
                                     cellIndex === 10 && styles.totalColumnCell, // Total column styling
                                     cell.key === 'grand_total_label' && styles.grandTotalLabelCell, // Grand Total label cell
@@ -974,22 +972,22 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
                                         </Text>
                                       )}
                                     </>
-                        )}
-                      </View>
+                                  )}
+                                </View>
                               );
                             })
                           ) : (
                             <Text style={styles.debugText}>Row {rowIndex} has no cells</Text>
                           )}
-                    </View>
+                        </View>
                       );
                     })
                   ) : (
                     <Text style={styles.debugText}>No grid data available</Text>
-                )}
-              </View>
-              </ScrollView>
+                  )}
                 </View>
+              </ScrollView>
+            </View>
           </View>
         </ScrollView>
       </View>
@@ -1007,19 +1005,19 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
             <Text style={{ fontSize: 12, color: '#666', textAlign: 'center', marginBottom: 20 }}>
               There was an error loading the grid. Please try again.
             </Text>
-            <TouchableOpacity 
-              style={[styles.addButton, { backgroundColor: '#E53E3E' }]} 
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: '#E53E3E' }]}
               onPress={() => {
                 console.log('Retrying grid initialization...');
                 initializeGridData();
               }}
             >
               <Text style={styles.addButtonText}>Retry</Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
   }
 };
 
@@ -1279,7 +1277,7 @@ const styles = StyleSheet.create({
     color: '#0f172a',
     textAlign: 'center',
     fontWeight: '600',
-    left:scale(9)
+    left: scale(9)
   },
   cellInput: {
     width: '100%',

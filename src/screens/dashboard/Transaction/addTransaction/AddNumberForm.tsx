@@ -15,6 +15,7 @@ const AddNumbersForm = ({ onNumbersAdd, onTransactionAdd }: any) => {
   const [totalAmount, setTotalAmount] = useState(0);
   const [parsedNumbers, setParsedNumbers] = useState([]);
   const [count, setCount] = useState(0);
+  const amountRef = React.useRef<TextInput>(null);
 
   // Validation function for allowed numbers
   const isValidNumber = (num: any) => {
@@ -171,6 +172,8 @@ const AddNumbersForm = ({ onNumbersAdd, onTransactionAdd }: any) => {
             multiline
             textAlignVertical="top"
             keyboardType="numeric"
+            returnKeyType="next"
+            onSubmitEditing={() => amountRef.current?.focus()}
           />
         </View>
 
@@ -183,6 +186,9 @@ const AddNumbersForm = ({ onNumbersAdd, onTransactionAdd }: any) => {
               onChangeText={handleAmountChange}
               placeholder="0"
               keyboardType="decimal-pad"
+              ref={amountRef}
+              returnKeyType="done"
+              onSubmitEditing={handleSaveNumbers}
             />
           </View>
 
