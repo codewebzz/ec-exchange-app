@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,12 +17,17 @@ interface Transaction {
   source: string;
 }
 
-const QuickEntryForm = ({ externalTransactions = [], onTransactionAdd, onTransactionDelete }:any) => {
+const QuickEntryForm = React.forwardRef(({ externalTransactions = [], onTransactionAdd, onTransactionDelete }: any, ref) => {
   const [number, setNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [maxLen, setMaxLen] = useState<number>(2);
+  const numberRef = React.useRef<TextInput>(null);
   const amountRef = React.useRef<TextInput>(null);
-console.log(externalTransactions,'externalTransactions');
+
+  React.useImperativeHandle(ref, () => ({
+    focus: () => numberRef.current?.focus()
+  }));
+  console.log(externalTransactions, 'externalTransactions');
 
   // Use only external transactions (internal ones are handled by parent)
   const allTransactions = useMemo(() => {
@@ -31,15 +36,15 @@ console.log(externalTransactions,'externalTransactions');
     return copy.sort((a: any, b: any) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
   }, [externalTransactions]);
 
- 
+
   const handleNumberChange = (text: string) => {
     let cleaned = text.replace(/[^0-9]/g, '');
-    
+
     if (cleaned === '' || cleaned === '') {
       setNumber('');
       return;
     }
-    
+
     const length = cleaned.length;
     // Max length control:
     // - same first two digits → allow up to 4 (for 111, 2222 etc.)
@@ -52,7 +57,7 @@ console.log(externalTransactions,'externalTransactions');
     } else {
       setMaxLen(2);
     }
-    
+
     if (length === 1) {
       const digit = parseInt(cleaned);
       // Allow 0–9 as a single digit
@@ -75,7 +80,7 @@ console.log(externalTransactions,'externalTransactions');
 
       const firstDigit = cleaned[0];
       const isValidTriple = cleaned === firstDigit + firstDigit + firstDigit && firstDigit !== '0';
-      
+
       if (isValidTriple) {
         setNumber(cleaned);
       } else {
@@ -86,7 +91,7 @@ console.log(externalTransactions,'externalTransactions');
     } else if (length === 4) {
       const firstDigit = cleaned[0];
       const isValidQuadruple = cleaned === firstDigit + firstDigit + firstDigit + firstDigit && firstDigit !== '0';
-      
+
       if (isValidQuadruple) {
         setNumber(cleaned);
       } else {
@@ -98,12 +103,12 @@ console.log(externalTransactions,'externalTransactions');
       return;
     }
   };
-  
+
   const isValidNumber = (num: string) => {
     if (!num) return false;
     if (!/^[0-9]+$/.test(num)) return false;
     const numInt = parseInt(num);
-    
+
     // One or two digit numbers: 0-99
     if (num.length <= 2 && numInt >= 0 && numInt <= 99) {
       return true;
@@ -113,19 +118,19 @@ console.log(externalTransactions,'externalTransactions');
     if (num === '100') {
       return true;
     }
-    
+
     // Three digit numbers: 111, 222, 333, ..., 999 (same digits)
     if (num.length === 3 && numInt >= 111 && numInt <= 999) {
       const firstDigit = num[0];
       return num[1] === firstDigit && num[2] === firstDigit;
     }
-    
+
     // Four digit numbers: 1111, 2222, 3333, ..., 9999 (same digits)
     if (num.length === 4 && numInt >= 1111 && numInt <= 9999) {
       const firstDigit = num[0];
       return num[1] === firstDigit && num[2] === firstDigit && num[3] === firstDigit;
     }
-    
+
     return false;
   };
 
@@ -164,9 +169,12 @@ console.log(externalTransactions,'externalTransactions');
       onTransactionAdd(newTransaction);
     }
 
-    // Clear form
+    // Clear form and refocus
     setNumber('');
     setAmount('');
+    setTimeout(() => {
+      numberRef.current?.focus();
+    }, 100);
   };
 
   // Add delete button for each transaction
@@ -187,7 +195,7 @@ console.log(externalTransactions,'externalTransactions');
           style={{ marginLeft: 12, backgroundColor: '#FF3B30', borderRadius: 6, padding: 4 }}
           onPress={() => handleDeleteTransaction(item.id)}
         >
-         <Ionicons name="trash-outline" size={16} color="white" />
+          <Ionicons name="trash-outline" size={16} color="white" />
         </TouchableOpacity>
       </View>
     </View>
@@ -202,11 +210,12 @@ console.log(externalTransactions,'externalTransactions');
       {/* Quick Entry Form */}
       <View style={styles.formContainer}>
         <Text style={styles.formTitle}>📝 Quick Entry</Text>
-        
+
         <View style={styles.inputRow}>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Number</Text>
             <TextInput
+              ref={numberRef}
               style={styles.input}
               value={number}
               onChangeText={handleNumberChange}
@@ -215,9 +224,10 @@ console.log(externalTransactions,'externalTransactions');
               maxLength={maxLen}
               returnKeyType="next"
               onSubmitEditing={() => amountRef.current?.focus()}
+              blurOnSubmit={false}
             />
           </View>
-          
+
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Amount</Text>
             <TextInput
@@ -229,9 +239,10 @@ console.log(externalTransactions,'externalTransactions');
               ref={amountRef}
               returnKeyType="done"
               onSubmitEditing={handleAddTransaction}
+              blurOnSubmit={false}
             />
           </View>
-          
+
           <TouchableOpacity style={styles.addButton} onPress={handleAddTransaction} disabled={!isValidNumber(number)}>
             <Text style={styles.addButtonText}>+</Text>
           </TouchableOpacity>
@@ -250,7 +261,7 @@ console.log(externalTransactions,'externalTransactions');
             </View>
           )}
         </View>
-        
+
         {allTransactions.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>No transactions yet</Text>
@@ -274,7 +285,7 @@ console.log(externalTransactions,'externalTransactions');
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

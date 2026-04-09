@@ -362,93 +362,11 @@ const styles = StyleSheet.create({
   },
   topRow: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 8, // Reduced from 16
     flexWrap: 'wrap',
-  },
-  cityCard: {
-    flex: 1,
-    minWidth: 260,
-    borderRadius: 18,
-    overflow: 'hidden',
-    backgroundColor: '#fff',
-    elevation: 3,
-    shadowColor: '#00000030',
-    shadowOffset: {width:0, height:6},
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-  },
-  cityCardHeader: {
-    padding: 16,
-    gap: 12,
-  },
-  cityHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  cityTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  cityDate: {
-    color: '#f2f4ff',
-    marginTop: 4,
-    fontSize: 12,
-  },
-  liveChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  liveChipText: {
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  cityStatusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 20,
-    justifyContent: 'space-between',
-  },
-  statusBadge: {
-    backgroundColor: '#ffffff30',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  statusBadgeText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  statusHighlight: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: '700',
   },
   statusHighlightDeclared: {
     color: '#065f46',
-  },
-  cityCardBody: {
-    flexDirection: 'row',
-    padding: 16,
-    gap: 12,
-    backgroundColor: '#fff',
-  },
-  metricBox: {
-    flex: 1,
-    borderRadius: 12,
-    padding: 12,
-  },
-  metricLabel: {
-    color: '#57607a',
-    fontSize: 12,
-    marginBottom: 6,
-  },
-  metricValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1d2238',
   },
   sectionsRow: {
     // flexDirection: 'row',

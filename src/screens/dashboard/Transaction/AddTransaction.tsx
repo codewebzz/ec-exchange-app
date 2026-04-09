@@ -67,6 +67,7 @@ const AddTransaction = ({ navigation, route }: any) => {
   // Bottom sheet refs
   const filterBottomSheetRef = React.useRef<BottomSheet>(null);
   const scrollViewRef = React.useRef<ScrollView>(null);
+  const quickEntryRef = React.useRef<any>(null);
 
   // Dropdown data
   const [ledgerData, setLedgerData] = useState<any[]>([]);
@@ -338,6 +339,16 @@ const AddTransaction = ({ navigation, route }: any) => {
         });
       }
       setAllTransactions([]);
+      setSelectedLedger('');
+      setSelectedMode('');
+      setSelectedLedgerName('');
+      setRate('');
+      setLimit('');
+      setCap('');
+      setLedgerOpen(false);
+      setModeOpen(false);
+      setShowJantri(false);
+
       // Scroll to top after save
       if (scrollViewRef.current) {
         scrollViewRef.current.scrollTo({ y: 0, animated: true });
@@ -444,6 +455,8 @@ const AddTransaction = ({ navigation, route }: any) => {
                           setLimit('');
                           setCap('');
                         }
+                        // Auto-open mode dropdown after selecting ledger
+                        setTimeout(() => setModeOpen(true), 200);
                       }}
                       setItems={() => { }}
                       placeholder={ledgerLoading ? "Loading..." : "Select Ledger"}
@@ -458,7 +471,16 @@ const AddTransaction = ({ navigation, route }: any) => {
                       value={selectedMode}
                       items={modeData}
                       setOpen={setModeOpen}
-                      setValue={setSelectedMode}
+                      setValue={(val: any) => {
+                        const selectedVal = typeof val === 'function' ? val() : val;
+                        setSelectedMode(selectedVal);
+                        // Auto-focus QuickEntry number field after selecting mode
+                        if (selectedVal) {
+                          setTimeout(() => {
+                            quickEntryRef.current?.focus();
+                          }, 300);
+                        }
+                      }}
                       setItems={() => { }}
                       placeholder="Select Mode"
                       zIndex={2000}
@@ -468,6 +490,7 @@ const AddTransaction = ({ navigation, route }: any) => {
 
                 <View style={styles.formSection}>
                   <QuickEntryForm
+                    ref={quickEntryRef}
                     externalTransactions={allTransactions}
                     onTransactionAdd={handleTransactionAdd}
                     onTransactionDelete={handleTransactionDelete}

@@ -60,6 +60,7 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
 
   const [gridData, setGridData] = useState<GridCell[][]>([]);
   const [quickEntryList, setQuickEntryList] = useState<QuickEntryItem[]>([]);
+  const cellRefs = useRef<{ [key: string]: TextInput | null }>({});
 
   // Use ref to track if grid is initialized to prevent infinite loops
   const gridInitializedRef = useRef(false);
@@ -931,6 +932,10 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
                                       )}
                                       {cell.editable ? (
                                         <TextInput
+                                          ref={(ref) => {
+                                            const key = `${rowIndex}_${cellIndex}`;
+                                            cellRefs.current[key] = ref;
+                                          }}
                                           style={[
                                             styles.cellInput,
                                             cell.label && styles.cellInputWithLabel,
@@ -960,6 +965,23 @@ const JantriEmbedded: React.FC<JantriEmbeddedProps> = ({
                                           maxLength={undefined} // Allow unlimited digits
                                           placeholder="0"
                                           placeholderTextColor="#999"
+                                          returnKeyType="next"
+                                          onSubmitEditing={() => {
+                                            // Try to focus next cell in the same row
+                                            let nextCol = cellIndex + 1;
+                                            let nextRow = rowIndex;
+
+                                            if (nextCol >= 10) {
+                                              nextCol = 0;
+                                              nextRow = rowIndex + 1;
+                                            }
+
+                                            const nextKey = `${nextRow}_${nextCol}`;
+                                            if (cellRefs.current[nextKey]) {
+                                              cellRefs.current[nextKey]?.focus();
+                                            }
+                                          }}
+                                          blurOnSubmit={false}
                                         />
                                       ) : (
                                         <Text

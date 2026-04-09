@@ -15,6 +15,7 @@ const AddNumbersForm = ({ onNumbersAdd, onTransactionAdd }: any) => {
   const [totalAmount, setTotalAmount] = useState(0);
   const [parsedNumbers, setParsedNumbers] = useState([]);
   const [count, setCount] = useState(0);
+  const inputRef = React.useRef<TextInput>(null);
   const amountRef = React.useRef<TextInput>(null);
 
   // Validation function for allowed numbers
@@ -144,12 +145,15 @@ const AddNumbersForm = ({ onNumbersAdd, onTransactionAdd }: any) => {
       });
     }
 
-    // Clear form
+    // Clear form and refocus
     setInputText('');
     setAmount('');
     setParsedNumbers([]);
     setCount(0);
     setTotalAmount(0);
+    setTimeout(() => {
+        inputRef.current?.focus();
+    }, 100);
 
     Alert.alert('Success', `${count} numbers saved successfully!`);
   };
@@ -165,6 +169,7 @@ const AddNumbersForm = ({ onNumbersAdd, onTransactionAdd }: any) => {
         <View style={styles.inputSection}>
           <Text style={styles.inputLabel}>Dara Numbers</Text>
           <TextInput
+            ref={inputRef}
             style={styles.numberInput}
             value={inputText}
             onChangeText={handleInputChange}
@@ -174,6 +179,7 @@ const AddNumbersForm = ({ onNumbersAdd, onTransactionAdd }: any) => {
             keyboardType="numeric"
             returnKeyType="next"
             onSubmitEditing={() => amountRef.current?.focus()}
+            blurOnSubmit={false}
           />
         </View>
 
@@ -189,6 +195,7 @@ const AddNumbersForm = ({ onNumbersAdd, onTransactionAdd }: any) => {
               ref={amountRef}
               returnKeyType="done"
               onSubmitEditing={handleSaveNumbers}
+              blurOnSubmit={false}
             />
           </View>
 
