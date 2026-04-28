@@ -56,7 +56,7 @@ const APIService = {
       throw err;
     }
   },
-  UpdateShift: (data: any, shift_id?: number): Promise<any> => 
+  UpdateShift: (data: any, shift_id?: number): Promise<any> =>
     AxiosService.patch<CommonResponse>(`api/update_shift/${shift_id}`, {
       shift_name: data?.shift_name,
       open_date: data?.open_date,
@@ -75,8 +75,8 @@ const APIService = {
 
   ToggleShiftDeActive: (id: number) =>
     AxiosService.put<ToggleUserResponse>(`api/deactivate_shift/${id}`),
-  
-  
+
+
   CreateStaff: (data: any): Promise<CommonResponse> =>
     AxiosService.post<CommonResponse>(`api/create_staff`, {
       staff_name: data?.staff_name || '',
@@ -283,7 +283,7 @@ const APIService = {
       throw err;
     }
   },
-  
+
   UpdateLedger: (data: any, user_id?: number): Promise<CommonResponse> =>
     // Forward only provided fields; do not inject defaults here.
     AxiosService.patch<CommonResponse>(`api/update_user/${user_id}`, data),
@@ -345,9 +345,9 @@ const APIService = {
       remark: data?.remark || "",
       date: data?.date || ""
     }),
-  
+
   DeleteVapsiVoucher: (voucher_id: number): Promise<CommonResponse> =>
-    
+
     AxiosService.delete<CommonResponse>(`api/delete_vapsi_voucher?voucher=${voucher_id}`),
 
   createLimitVoucher: (data: any): Promise<CommonResponse> =>
@@ -418,217 +418,217 @@ const APIService = {
       is_active: true,
       transaction_data: data?.transaction_data || []
     }),
-    DeleteTransaction: (data: any): Promise<CommonResponse> =>
-      AxiosService.delete<CommonResponse>(`api/delete_transaction?transaction_id=${data?.transaction_id}`),
-      CopyTransactionData: async (copy_id?: any, copy_into_id?: any): Promise<any> => {
-        try {
-          const res = await AxiosService.patch(`api/copy_transaction/${copy_id}/${copy_into_id}`);
-          return res;
-        } catch (err: any) {
-          console.log('CopyTransactionData Error:', err?.response?.data || err.message);
-          throw err;
-        }
-      },
-      UpdateTransactionData: async (transaction_id: any, data: any): Promise<any> => {
-        try {
-          const res = await AxiosService.patch(`/api/update_transaction/${transaction_id}`, data);
-          return res;
-        } catch (err: any) {
-          console.log('UpdateTransactionData Error:', err?.response?.data || err.message);
-          throw err;
-        }
-      },
-      GetShiftDropDownDataData: async (params?: object, transaction_id?: number): Promise<any> => {
-        try {
-          const res = await AxiosService.get(`api/master/get_shift_id_name`);
-          return res;
-        } catch (err: any) {
-          console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
-          throw err;
-        }
-      },
-      GetStaffDropDownDataData: async (params?: object, transaction_id?: number): Promise<any> => {
-        try {
-          const res = await AxiosService.get(`api/master/get_all_staff_name_id`);
-          return res;
-        } catch (err: any) {
-          console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
-          throw err;
-        }
-      },
-      GetAgentDropDownDataData: async (params?: object, transaction_id?: number): Promise<any> => {
-        try {
-          const res = await AxiosService.get(`api/master/get_all_agents_name_id`);
-          return res;
-        } catch (err: any) {
-          console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
-          throw err;
-        }
-      },
-      GetLedgerDropDownDataData: async (params?: object, transaction_id?: number): Promise<any> => {
-        try {
-          const res = await AxiosService.get(`api/master/get_all_ledger_names`);
-          return res;
-        } catch (err: any) {
-          console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
-          throw err;
-        }
-      },
-      GetDistributorDropDownDataData: async (params?: object, transaction_id?: number): Promise<any> => {
-        try {
-          const res = await AxiosService.get(`api/master/ledger_distributer`);
-          return res;
-        } catch (err: any) {
-          console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
-          throw err;
-        }
-      },
-      GetUndeclearedDropDownData: async (params?: object, transaction_id?: number): Promise<any> => {
-        try {
-          const res = await AxiosService.get(`api/get_active_open_and_undeclared_shifts`);
-          return res;
-        } catch (err: any) {
-          console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
-          throw err;
-        }
-      },
-      LockLeadger: (user_id: number) =>
-        AxiosService.put<ToggleUserResponse>(`api/lock_user/${user_id}`),
-      UnlockLeadger: (user_id: number) =>
-        AxiosService.put<ToggleUserResponse>(`api/unlock_user/${user_id}`),
-     HideLeadger: (user_id: number) =>
-        AxiosService.put<ToggleUserResponse>(`api/hide_user/${user_id}`),
-      UnHideLeadger: (user_id: number) =>
-        AxiosService.put<ToggleUserResponse>(`api/unhide_user/${user_id}`),
-      DeleteLeadger: (user_id: number) =>
-        AxiosService.put<ToggleUserResponse>(`api/delete_user/${user_id}`),
-      RestoreLeadger: (user_id: number) =>
-        AxiosService.put<ToggleUserResponse>(`api/restore_user/${user_id}`),
-      ToggleUserActive: (user_id: number) =>
-        AxiosService.put<ToggleUserResponse>(`api/activate_user/${user_id}`),
-    
-      ToggleUserDeActive: (user_id: number) =>
-        AxiosService.put<ToggleUserResponse>(`api/deactivate_user/${user_id}`),
-      GetDeletedTransaction: async (params?: object): Promise<any> => {
-        try {
-          const res = await AxiosService.get(`api/get_deleted_transaction`, params);
-          return res;
-        } catch (err: any) {
-          console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
-          throw err;
-        }
-      },
+  DeleteTransaction: (data: any): Promise<CommonResponse> =>
+    AxiosService.delete<CommonResponse>(`api/delete_transaction?transaction_id=${data?.transaction_id}`),
+  CopyTransactionData: async (copy_id?: any, copy_into_id?: any): Promise<any> => {
+    try {
+      const res = await AxiosService.patch(`api/copy_transaction/${copy_id}/${copy_into_id}`);
+      return res;
+    } catch (err: any) {
+      console.log('CopyTransactionData Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  UpdateTransactionData: async (transaction_id: any, data: any): Promise<any> => {
+    try {
+      const res = await AxiosService.patch(`/api/update_transaction/${transaction_id}`, data);
+      return res;
+    } catch (err: any) {
+      console.log('UpdateTransactionData Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetShiftDropDownDataData: async (params?: object, transaction_id?: number): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/master/get_shift_id_name`);
+      return res;
+    } catch (err: any) {
+      console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetStaffDropDownDataData: async (params?: object, transaction_id?: number): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/master/get_all_staff_name_id`);
+      return res;
+    } catch (err: any) {
+      console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetAgentDropDownDataData: async (params?: object, transaction_id?: number): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/master/get_all_agents_name_id`);
+      return res;
+    } catch (err: any) {
+      console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetLedgerDropDownDataData: async (params?: object, transaction_id?: number): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/master/get_all_ledger_names?show_self=1`);
+      return res;
+    } catch (err: any) {
+      console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetDistributorDropDownDataData: async (params?: object, transaction_id?: number): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/master/ledger_distributer`);
+      return res;
+    } catch (err: any) {
+      console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetUndeclearedDropDownData: async (params?: object, transaction_id?: number): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/get_active_open_and_undeclared_shifts`);
+      return res;
+    } catch (err: any) {
+      console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  LockLeadger: (user_id: number) =>
+    AxiosService.put<ToggleUserResponse>(`api/lock_user/${user_id}`),
+  UnlockLeadger: (user_id: number) =>
+    AxiosService.put<ToggleUserResponse>(`api/unlock_user/${user_id}`),
+  HideLeadger: (user_id: number) =>
+    AxiosService.put<ToggleUserResponse>(`api/hide_user/${user_id}`),
+  UnHideLeadger: (user_id: number) =>
+    AxiosService.put<ToggleUserResponse>(`api/unhide_user/${user_id}`),
+  DeleteLeadger: (user_id: number) =>
+    AxiosService.put<ToggleUserResponse>(`api/delete_user/${user_id}`),
+  RestoreLeadger: (user_id: number) =>
+    AxiosService.put<ToggleUserResponse>(`api/restore_user/${user_id}`),
+  ToggleUserActive: (user_id: number) =>
+    AxiosService.put<ToggleUserResponse>(`api/activate_user/${user_id}`),
 
-      //Result 
-      collectionResult: (data: any): Promise<CommonResponse> =>
-        AxiosService.post<CommonResponse>(`api/get_collection`, {
-          shift_id:data?.shift_id,
-          cut_commission: data?.cut_commission || 0,
-          cut_patti: data?.cut_patti || 0,
-          cut_wapsi: data?.cut_wapsi || 0,
-          mix_akh: data?.mix_akh || 0,
-          less_amt: data?.less_amt || 0,
-          less_percentage: data?.less_percentage || 0,
-          round_off_value: data?.round_off_value || 0,
-        date:data?.date
-        }),
-        liveResultByNumber: (data: any,number:any): Promise<CommonResponse> =>
-        AxiosService.post<CommonResponse>(`api/get_live_prediction/${number}`),
-        LiveResult: (data: any,number:any): Promise<CommonResponse> =>  AxiosService.post<CommonResponse>(`api/get_live_prediction`,{
-          shift_id:data?.shift_id,
-          date:data?.date
-        }),
-        roleDropDownAPI: async (params?: object, transaction_id?: number): Promise<any> => {
-          try {
-            const res = await AxiosService.get(`api/master/supported_staff_roles`);
-            return res;
-          } catch (err: any) {
-            console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
-            throw err;
-          }
-        },
-        agentRoleAPI: async (params?: object, transaction_id?: number): Promise<any> => {
-          try {
-            const res = await AxiosService.get(`api/master/get_all_staff_name_id`);
-            return res;
-          } catch (err: any) {
-            console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
-            throw err;
-          }
-        },
-        getMasterLedgerAgent: async (params?: object, transaction_id?: number): Promise<any> => {
-          try {
-            const res = await AxiosService.get(`api/master/ledger_agents`);
-            return res;
-          } catch (err: any) {
-            console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
-            throw err;
-          }
-        },
+  ToggleUserDeActive: (user_id: number) =>
+    AxiosService.put<ToggleUserResponse>(`api/deactivate_user/${user_id}`),
+  GetDeletedTransaction: async (params?: object): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/get_deleted_transaction`, params);
+      return res;
+    } catch (err: any) {
+      console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
 
-        UpdatePermissionData: async (data: any): Promise<any> => {
-          try {
-            const res = await AxiosService.put(`/api/update_permission`, data);
-            return res;
-          } catch (err: any) {
-            console.log('UpdateTransactionData Error:', err?.response?.data || err.message);
-            throw err;
-          }
-        },
-        getPassword: async (params?: object, userName?: any): Promise<any> => {
-          try {
-            const res = await AxiosService.get(`api/get_user_password/${userName}`);
-            return res;
-          } catch (err: any) {
-            console.log('GetPassword Error:', err?.response?.data || err.message);
-            throw err;
-          }
-        },
-        getRecentUser: async (params?: object): Promise<any> => {
-          try {
-            const res = await AxiosService.get(`api/get_recent_users`);
-            return res;
-          } catch (err: any) {
-            console.log('GetRecentUser Error:', err?.response?.data || err.message);
-            throw err;
-          }
-        },
-        getDashboardShiftData: async (params?: object): Promise<any> => {
-          try {
-            const res = await AxiosService.get(`api/get_dashboard_shift_data`);
-            return res;
-          } catch (err: any) {
-            console.log('GetDashboardShiftData Error:', err?.response?.data || err.message);
-            throw err;
-          }
-        },
-        getallundeclaredtransactionsbydateshift: async (params?: object): Promise<any> => {
-          try {
-            const res = await AxiosService.get(`api/get_all_undeclared_transactions_by_date_shift`);
-            return res;
-          } catch (err: any) {
-            console.log('GetAllUndeclaredTransactionsByDateShift Error:', err?.response?.data || err.message);
-            throw err;
-          }
-        },
-        GetShiftById: async (shift_id: any): Promise<any> => {
-          try {
-            const res = await AxiosService.get(`api/get_shift/${shift_id}`);
-            return res;
-          } catch (err: any) {
-            console.log('GetShiftById Error:', err?.response?.data || err.message);
-            throw err;
-          }
-        },
-        GetLedgerTransactionModes: async (ledger_id: any): Promise<any> => {
-          try {
-            const res = await AxiosService.get(`api/master/ledger_transaction_mode/${ledger_id}`);
-            return res;
-          } catch (err: any) {
-            console.log('GetLedgerTransactionModes Error:', err?.response?.data || err.message);
-            throw err;
-          }
-        },
+  //Result 
+  collectionResult: (data: any): Promise<CommonResponse> =>
+    AxiosService.post<CommonResponse>(`api/get_collection`, {
+      shift_id: data?.shift_id,
+      cut_commission: data?.cut_commission || 0,
+      cut_patti: data?.cut_patti || 0,
+      cut_wapsi: data?.cut_wapsi || 0,
+      mix_akh: data?.mix_akh || 0,
+      less_amt: data?.less_amt || 0,
+      less_percentage: data?.less_percentage || 0,
+      round_off_value: data?.round_off_value || 0,
+      date: data?.date
+    }),
+  liveResultByNumber: (data: any, number: any): Promise<CommonResponse> =>
+    AxiosService.post<CommonResponse>(`api/get_live_prediction/${number}`),
+  LiveResult: (data: any, number: any): Promise<CommonResponse> => AxiosService.post<CommonResponse>(`api/get_live_prediction`, {
+    shift_id: data?.shift_id,
+    date: data?.date
+  }),
+  roleDropDownAPI: async (params?: object, transaction_id?: number): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/master/supported_staff_roles`);
+      return res;
+    } catch (err: any) {
+      console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  agentRoleAPI: async (params?: object, transaction_id?: number): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/master/get_all_staff_name_id`);
+      return res;
+    } catch (err: any) {
+      console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  getMasterLedgerAgent: async (params?: object, transaction_id?: number): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/master/ledger_agents`);
+      return res;
+    } catch (err: any) {
+      console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+
+  UpdatePermissionData: async (data: any): Promise<any> => {
+    try {
+      const res = await AxiosService.put(`/api/update_permission`, data);
+      return res;
+    } catch (err: any) {
+      console.log('UpdateTransactionData Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  getPassword: async (params?: object, userName?: any): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/get_user_password/${userName}`);
+      return res;
+    } catch (err: any) {
+      console.log('GetPassword Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  getRecentUser: async (params?: object): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/get_recent_users`);
+      return res;
+    } catch (err: any) {
+      console.log('GetRecentUser Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  getDashboardShiftData: async (params?: object): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/get_dashboard_shift_data`);
+      return res;
+    } catch (err: any) {
+      console.log('GetDashboardShiftData Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  getallundeclaredtransactionsbydateshift: async (params?: object): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/get_all_undeclared_transactions_by_date_shift`);
+      return res;
+    } catch (err: any) {
+      console.log('GetAllUndeclaredTransactionsByDateShift Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetShiftById: async (shift_id: any): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/get_shift/${shift_id}`);
+      return res;
+    } catch (err: any) {
+      console.log('GetShiftById Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetLedgerTransactionModes: async (ledger_id: any): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/master/ledger_transaction_mode/${ledger_id}`);
+      return res;
+    } catch (err: any) {
+      console.log('GetLedgerTransactionModes Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
 };
 
 export default APIService;
