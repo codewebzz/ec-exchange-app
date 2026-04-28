@@ -11,6 +11,7 @@ import toastConfig from './src/helper/toastConfig';
 import SplashScreen from './src/components/SplashScreen';
 import { GlobalLoaderProvider } from './src/context/GlobalLoaderContext';
 import GradientBackground from './src/components/GradientBackground';
+import { SocketProvider } from './src/context/SocketContext';
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -27,13 +28,15 @@ const App = () => {
     <SafeAreaProvider>
       <NavigationContainer>
         <Provider store={store}>
-          <GlobalLoaderProvider>
-            <StatusBar barStyle="light-content" backgroundColor={COLORS.HEADERBG} />
-            <GradientBackground colors={[ "#fdf0d0","#e0efea"]} locations={[0,30]}>
-              <RootStack />
-            </GradientBackground>
-            <Toast config={toastConfig} />
-          </GlobalLoaderProvider>
+          <SocketProvider>
+            <GlobalLoaderProvider>
+              <StatusBar barStyle="light-content" backgroundColor={COLORS.HEADERBG} />
+              <GradientBackground colors={[ "#fdf0d0","#e0efea"]} locations={[0,30]}>
+                <RootStack />
+              </GradientBackground>
+              <Toast config={toastConfig} />
+            </GlobalLoaderProvider>
+          </SocketProvider>
         </Provider>
       </NavigationContainer>
     </SafeAreaProvider>
