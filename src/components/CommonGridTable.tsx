@@ -1,15 +1,39 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { 
-  View, 
-  Text, 
-  ScrollView, 
-  StyleSheet, 
-  TextInput, 
-  TouchableOpacity, 
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
   Modal,
-  Platform,
-  Alert
+  Alert,
+  Animated,
+  NativeModules
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+
+// Lazy load native modules to prevent crash if not yet linked in the binary
+const getViewShotModule = () => {
+  // Check if RNViewShot exists in NativeModules first to avoid internal library crashes
+  if (!NativeModules.RNViewShot) return null;
+  try {
+    return require('react-native-view-shot');
+  } catch (e) {
+    return null;
+  }
+};
+
+const getShareModule = () => {
+  // Check if RNShare exists in NativeModules first to avoid internal library crashes
+  // react-native-share often calls getEnforcing on require, which crashes if missing
+  if (!NativeModules.RNShare) return null;
+  try {
+    return require('react-native-share');
+  } catch (e) {
+    return null;
+  }
+};
 
 interface GridCell {
   key: string;
@@ -27,6 +51,8 @@ interface CommonGridTableProps {
   headers: string[];
   data: GridCell[][];
   footer?: string[];
+  footerData?: GridCell[][];
+  highlightNumbers?: string[];
   quickEntryData?: QuickEntryData;
   onDataChange?: (updatedData: GridCell[][]) => void;
   visible?: boolean;
@@ -41,10 +67,12 @@ const TOTAL_COLUMN_WIDTH = 96;
 const ROW_HEIGHT = 48;
 const TABLE_WIDTH = CELL_WIDTH * 10 + TOTAL_COLUMN_WIDTH;
 
-const CommonGridTable: React.FC<CommonGridTableProps> = ({ 
-  headers, 
-  data: initialData, 
-  footer, 
+const CommonGridTable: React.FC<CommonGridTableProps> = ({
+  headers,
+  data: initialData,
+  footer,
+  footerData,
+  highlightNumbers = [],
   quickEntryData = {},
   onDataChange,
   visible = false,
@@ -54,6 +82,27 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
   rowLabels = []
 }) => {
   const [data, setData] = useState<GridCell[][]>(initialData);
+  const viewShotRef = useRef<any>(null);
+  const pulseAnim = useMemo(() => new Animated.Value(1), []);
+
+  useEffect(() => {
+    if (highlightNumbers.length > 0) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }
+  }, [highlightNumbers]);
 
   // Only update when initialData reference actually changes
   useEffect(() => {
@@ -73,15 +122,29 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
     }, 0);
   }, [stableQuickEntryData]);
 
+  // Calculate column totals
+  const columnTotals = useMemo(() => {
+    if (!data || data.length === 0) return Array(10).fill(0);
+    const totals = Array(10).fill(0);
+    data.forEach(row => {
+      row.forEach((cell, idx) => {
+        if (idx < 10) {
+          totals[idx] += parseFloat(cell.value) || stableQuickEntryData[cell.key] || 0;
+        }
+      });
+    });
+    return totals;
+  }, [data, stableQuickEntryData]);
+
   // Calculate all totals in one useMemo to prevent cascading updates
   const { totals, intermediateTotal, grandTotal } = useMemo(() => {
     if (!data || data.length === 0) {
       return { totals: [], intermediateTotal: 0, grandTotal: 0 };
     }
-    
+
     const newTotals = data.map(row => calculateRowTotal(row));
     const sumTotal = newTotals.reduce((sum, total) => sum + total, 0);
-    
+
     return {
       totals: newTotals,
       intermediateTotal: sumTotal,
@@ -94,21 +157,21 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
     setData(prevData => {
       const newData = [...prevData];
       const cell = newData[rowIndex][cellIndex];
-      
+
       // Validate input based on cell type
       if (cell.type === 'triple' && value.length > 3) return prevData;
       if (cell.type === 'four-digit' && value.length > 4) return prevData;
-      
+
       // Only allow numbers
       if (value && !/^\d*$/.test(value)) return prevData;
-      
+
       newData[rowIndex][cellIndex] = { ...cell, value };
-      
+
       // Call onDataChange outside of setState
       if (onDataChange) {
         setTimeout(() => onDataChange(newData), 0);
       }
-      
+
       return newData;
     });
   }, [onDataChange]);
@@ -117,26 +180,57 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
   const getCellDisplayValue = useCallback((cell: GridCell): string => {
     const baseValue = parseFloat(cell.value) || 0;
     const quickEntryValue = stableQuickEntryData[cell.key] || 0;
-    
+
     if (baseValue > 0) {
       return cell.value;
     }
-    
+
     if (quickEntryValue > 0) {
       return quickEntryValue.toString();
     }
-    
+
     return '0';
   }, [stableQuickEntryData]);
 
-  // Copy functionality
+  // Image Copy/Share functionality
   const handleCopyImage = useCallback(async () => {
     try {
-      const textToCopy = `${title}\n${date ? `Date: ${date}\n` : ''}\nTable Data`;
-      // Note: Clipboard API varies by platform
-      Alert.alert('Success', 'Data copied to clipboard');
+      const viewShotModule = getViewShotModule();
+      const shareModule = getShareModule();
+
+      if (!viewShotModule || !shareModule) {
+        Alert.alert(
+          'Rebuild Required',
+          'To use this feature, please restart your app build (npm run android/ios) so the new native modules can be linked.'
+        );
+        return;
+      }
+
+      if (!viewShotRef.current) {
+        Alert.alert('Error', 'Image capture not initialized');
+        return;
+      }
+
+      // captureRef is a named export or on the module object
+      const captureRef = viewShotModule.captureRef;
+
+      const uri = await captureRef(viewShotRef, {
+        format: 'png',
+        quality: 1,
+        result: 'base64'
+      });
+
+      const shareOptions = {
+        title: 'Jantri Details',
+        message: `${title} - ${date}`,
+        url: `data:image/png;base64,${uri}`,
+        type: 'image/png',
+      };
+
+      await shareModule.default.open(shareOptions);
     } catch (error) {
-      Alert.alert('Error', 'Failed to copy data');
+      console.log('Capture/Share error:', error);
+      Alert.alert('Error', 'Failed to generate image. Ensure you have rebuilt the app after installation.');
     }
   }, [title, date]);
 
@@ -153,8 +247,8 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
   }, []);
 
   const TableContent = useMemo(() => (
-    <ScrollView 
-      horizontal 
+    <ScrollView
+      horizontal
       showsHorizontalScrollIndicator={true}
       contentContainerStyle={styles.tableScrollContainer}
       bounces={false}
@@ -177,68 +271,94 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
         {data.map((row, rowIndex) => (
           <View key={`row-${rowIndex}`} style={styles.row}>
             {row.map((cell, cellIndex) => {
+              const cellValue = parseFloat(getCellDisplayValue(cell)) || 0;
+              const hasValue = cellValue > 0;
               const cellLabel = cell.label;
               const isSeriesCell = cellLabel && (cellLabel.startsWith('B') || cellLabel.startsWith('A'));
-              
+
+              // Highlight check - strictly based on key matching
+              const isHighlighted = highlightNumbers.includes(cell.key);
+
               return (
-                <View 
+                <View
                   key={`${rowIndex}-${cell.key}`}
                   style={[
                     styles.dataCell,
-                    isSeriesCell && styles.seriesCell
+                    isSeriesCell && styles.seriesCell,
+                    isHighlighted && styles.highlightedCell
                   ]}
                 >
                   {cellLabel && (
                     <View style={[
                       styles.numberBadge,
-                      isSeriesCell && styles.seriesBadge
+                      isSeriesCell && styles.seriesBadge,
+                      isHighlighted && styles.highlightedBadge
                     ]}>
                       <Text style={styles.numberBadgeText}>{cellLabel}</Text>
                     </View>
                   )}
-                  
+
+                  {isHighlighted && (
+                    <LinearGradient
+                      colors={['rgba(255,140,0,0.3)', 'rgba(255,69,0,0.3)']}
+                      style={StyleSheet.absoluteFill}
+                    />
+                  )}
+
+                  {hasValue && (
+                    <LinearGradient
+                      colors={['#FFF9C4', '#FBC02D']}
+                      style={styles.peeledCorner}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    />
+                  )}
+
                   {cell.editable ? (
                     <TextInput
                       style={[
-                        styles.input, 
-                        stableQuickEntryData[cell.key] && !cell.value ? styles.quickEntryInput : null
+                        styles.input,
+                        stableQuickEntryData[cell.key] && !cell.value ? styles.quickEntryInput : null,
+                        isHighlighted && styles.highlightedText
                       ]}
                       value={cell.value}
                       onChangeText={(value) => handleCellChange(rowIndex, cellIndex, value)}
                       keyboardType="numeric"
                       maxLength={cell.type === 'triple' ? 3 : cell.type === 'four-digit' ? 4 : undefined}
                       placeholder={stableQuickEntryData[cell.key] ? stableQuickEntryData[cell.key].toString() : "0"}
-                      placeholderTextColor={stableQuickEntryData[cell.key] ? "#10b5a6" : "#999"}
+                      placeholderTextColor={stableQuickEntryData[cell.key] ? "#ffffff" : "#999"}
                     />
                   ) : (
                     <Text style={[
                       styles.cellText,
-                      stableQuickEntryData[cell.key] && !cell.value ? styles.quickEntryText : null
+                      stableQuickEntryData[cell.key] && !cell.value ? styles.quickEntryText : null,
+                      isHighlighted && styles.highlightedText
                     ]}>
                       {getCellDisplayValue(cell)}
                     </Text>
                   )}
-                  
-                  {stableQuickEntryData[cell.key] && cell.value && (
-                    <View style={styles.quickEntryIndicator}>
-                      <Text style={styles.quickEntryIndicatorText}>Q</Text>
-                    </View>
+
+                  {isHighlighted && (
+                    <Animated.View style={[
+                      styles.highlightDot,
+                      { transform: [{ scale: pulseAnim }] }
+                    ]} />
                   )}
                 </View>
               );
             })}
-            
-            <View style={[styles.totalCell, styles.totalColumnCell]}>
-              <Text style={styles.totalCellText}>{totals[rowIndex] || 0}</Text>
+
+            <View style={[styles.totalCellData, styles.totalColumnCell]}>
+              <Text style={styles.totalCellDataText}>{totals[rowIndex] || 0}</Text>
             </View>
           </View>
         ))}
 
-        {/* Summary Row */}
+        {/* Summary Row (Column Totals) */}
         <View style={styles.row}>
-          {headers.map((_, idx) => (
+          {columnTotals.map((total, idx) => (
             <View key={`summary-${idx}`} style={styles.summaryCell}>
-              <Text style={styles.summaryCellText}>0</Text>
+              <Text style={styles.summaryCellText}>{total}</Text>
             </View>
           ))}
           <View style={[styles.summaryCell, styles.totalColumnCell]}>
@@ -246,32 +366,78 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
           </View>
         </View>
 
-        {/* Footer Rows */}
+        {/* Footer Rows (B/A Series) */}
         {footer && footer.length > 0 && footer.map((footerLabel, footerIndex) => {
           const isBSeries = footerLabel.startsWith('B') || footerLabel === 'B';
           const isASeries = footerLabel.startsWith('A') || footerLabel === 'A';
-          
+          const footerRowData = footerData?.[footerIndex];
+
           return (
             <View key={`footer-${footerIndex}`} style={styles.row}>
               {headers.map((_, idx) => {
-                const label = isBSeries || isASeries 
+                const label = isBSeries || isASeries
                   ? `${footerLabel.charAt(0)}${idx + 1 === 10 ? 0 : idx + 1}`
                   : '';
-                
+
+                const cell = footerRowData?.[idx];
+                const cellValue = cell ? (parseFloat(cell.value) || 0) : 0;
+                const hasValue = cellValue > 0;
+
+                // Highlight check for series
+                const isHighlighted = cell ? highlightNumbers.includes(cell.key) : false;
+
                 return (
-                  <View 
+                  <View
                     key={`footer-${footerIndex}-${idx}`}
-                    style={[styles.dataCell, styles.seriesCell]}
+                    style={[
+                      styles.dataCell,
+                      styles.seriesCell,
+                      isHighlighted && styles.highlightedCell
+                    ]}
                   >
-                    <View style={[styles.numberBadge, styles.seriesBadge]}>
+                    <View style={[
+                      styles.numberBadge,
+                      styles.seriesBadge,
+                      isHighlighted && styles.highlightedBadge
+                    ]}>
                       <Text style={styles.numberBadgeText}>{label}</Text>
                     </View>
-                    <Text style={styles.cellText}>0</Text>
+
+                    {isHighlighted && (
+                      <LinearGradient
+                        colors={['rgba(255,140,0,0.3)', 'rgba(255,69,0,0.3)']}
+                        style={StyleSheet.absoluteFill}
+                      />
+                    )}
+
+                    {hasValue && (
+                      <LinearGradient
+                        colors={['#FFF9C4', '#FBC02D']}
+                        style={styles.peeledCorner}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                      />
+                    )}
+                    <Text style={[
+                      styles.cellText,
+                      isHighlighted && styles.highlightedText
+                    ]}>
+                      {cell ? cell.value : '0'}
+                    </Text>
+
+                    {isHighlighted && (
+                      <Animated.View style={[
+                        styles.highlightDot,
+                        { transform: [{ scale: pulseAnim }] }
+                      ]} />
+                    )}
                   </View>
                 );
               })}
-              <View style={[styles.totalCell, styles.totalColumnCell]}>
-                <Text style={styles.totalCellText}>0</Text>
+              <View style={[styles.totalCellData, styles.totalColumnCell]}>
+                <Text style={styles.totalCellDataText}>
+                  {footerRowData ? footerRowData.reduce((sum, c) => sum + (parseFloat(c.value) || 0), 0) : 0}
+                </Text>
               </View>
             </View>
           );
@@ -282,7 +448,7 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
           {headers.map((_, idx) => {
             if (idx === 8) {
               return (
-                <View 
+                <View
                   key={`grand-${idx}`}
                   style={[styles.grandTotalCell, styles.grandTotalLabelCell]}
                 >
@@ -294,7 +460,7 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
               return null;
             }
             return (
-              <View 
+              <View
                 key={`grand-${idx}`}
                 style={styles.grandTotalCell}
               >
@@ -308,9 +474,13 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
         </View>
       </View>
     </ScrollView>
-  ), [headers, data, footer, totals, intermediateTotal, grandTotal, stableQuickEntryData, handleCellChange, getCellDisplayValue]);
+  ), [headers, data, footer, footerData, totals, intermediateTotal, grandTotal, columnTotals, stableQuickEntryData, handleCellChange, getCellDisplayValue, highlightNumbers, pulseAnim]);
 
   if (visible) {
+    const viewShotModule = getViewShotModule();
+    // Resolve the actual component from the module
+    const ViewShotComp = viewShotModule ? (viewShotModule.default || viewShotModule) : null;
+
     return (
       <Modal
         visible={visible}
@@ -320,42 +490,82 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalHeaderContent}>
-                <Text style={styles.modalTitle} numberOfLines={2}>
-                  {title}
-                </Text>
-                {date && (
-                  <Text style={styles.modalDate}>{formatDate(date)}</Text>
-                )}
-              </View>
-              <TouchableOpacity 
-                onPress={onClose} 
-                style={styles.closeButton}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Text style={styles.closeButtonText}>✕</Text>
-              </TouchableOpacity>
-            </View>
+            {/* 
+              Conditionally render ViewShot if available, otherwise fallback to normal View.
+              This prevents the app from crashing if the native module hasn't been built yet.
+            */}
+            {ViewShotComp && typeof ViewShotComp !== 'object' ? (
+              <ViewShotComp ref={viewShotRef} options={{ format: "png", quality: 1.0 }}>
+                <View style={styles.captureWrapper}>
+                  <View style={styles.modalHeader}>
+                    <View style={styles.modalHeaderContent}>
+                      <Text style={styles.modalTitle} numberOfLines={2}>
+                        {title}
+                      </Text>
+                      {date && (
+                        <Text style={styles.modalDate}>Date: {formatDate(date)}</Text>
+                      )}
+                    </View>
+                    <TouchableOpacity
+                      onPress={onClose}
+                      style={styles.closeIcon}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Text style={styles.closeIconText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
 
-            <ScrollView 
-              style={styles.modalContent}
-              contentContainerStyle={styles.modalContentContainer}
-              showsVerticalScrollIndicator={true}
-              nestedScrollEnabled={true}
-            >
-              {TableContent}
-            </ScrollView>
+                  <ScrollView
+                    style={styles.modalContent}
+                    contentContainerStyle={styles.modalContentContainer}
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled={true}
+                  >
+                    {TableContent}
+                  </ScrollView>
+                </View>
+              </ViewShotComp>
+            ) : (
+              <View style={styles.captureWrapper}>
+                <View style={styles.modalHeader}>
+                  <View style={styles.modalHeaderContent}>
+                    <Text style={styles.modalTitle} numberOfLines={2}>
+                      {title}
+                    </Text>
+                    {date && (
+                      <Text style={styles.modalDate}>Date: {formatDate(date)}</Text>
+                    )}
+                  </View>
+                  <TouchableOpacity
+                    onPress={onClose}
+                    style={styles.closeIcon}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Text style={styles.closeIconText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView
+                  style={styles.modalContent}
+                  contentContainerStyle={styles.modalContentContainer}
+                  showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled={true}
+                >
+                  {TableContent}
+                </ScrollView>
+              </View>
+            )}
 
             <View style={styles.bottomButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.copyButton}
                 onPress={handleCopyImage}
               >
-                <Text style={styles.copyButtonText}>📋 Copy Image</Text>
+                <Text style={styles.copyButtonIcon}>📋</Text>
+                <Text style={styles.copyButtonText}>Copy Image</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={styles.closeBottomButton}
                 onPress={onClose}
               >
@@ -374,13 +584,18 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
 const styles = StyleSheet.create({
   tableScrollContainer: {
     minWidth: TABLE_WIDTH,
+    padding: 1,
+  },
+  captureWrapper: {
+    backgroundColor: '#fdf0d0', // Match background in image for the whole capture
+    paddingBottom: 10,
   },
   table: {
     flexDirection: 'column',
-    backgroundColor: '#fdfdfd',
+    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#d8dce8',
-    borderRadius: 12,
+    borderColor: '#2d3e50',
+    borderRadius: 8,
     overflow: 'hidden',
     width: TABLE_WIDTH,
   },
@@ -389,103 +604,142 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   headerCell: {
-    backgroundColor: '#1f2a37',
+    backgroundColor: '#2d3e50',
     width: CELL_WIDTH,
     height: ROW_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2a37',
+    borderWidth: 0.5,
+    borderColor: '#e2e8f0',
     flexShrink: 0,
   },
   headerCellText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#f4f6fd',
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#ffffff',
   },
   dataCell: {
-    backgroundColor: '#f9fafc',
+    backgroundColor: '#f8fafc',
     width: CELL_WIDTH,
     height: ROW_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e3e6f0',
+    borderWidth: 0.5,
+    borderColor: '#cbd5e1',
     flexShrink: 0,
     position: 'relative',
+  },
+  highlightedCell: {
+    backgroundColor: '#ffe4e1', // Light rose background for highlights
+    borderColor: '#ff4500',
+    borderWidth: 2,
+    zIndex: 5,
+  },
+  highlightedBadge: {
+    backgroundColor: '#ff4500', // Orange-red
+    transform: [{ scale: 1.1 }],
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+  },
+  highlightedText: {
+    color: '#8b0000', // Dark red for text in highlighted cells
+    fontWeight: '900',
+  },
+  highlightDot: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#ffffff',
+    zIndex: 10,
   },
   numberBadge: {
     position: 'absolute',
     top: 0,
     left: 0,
-    backgroundColor: '#10b5a6',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 0,
+    backgroundColor: '#1abc9c', // Teal
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderBottomRightRadius: 4,
+    zIndex: 2,
   },
   numberBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#fdfdfd',
+    color: '#ffffff',
+  },
+  peeledCorner: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 20,
+    height: 20,
+    borderBottomLeftRadius: 10,
+    zIndex: 1,
   },
   cellText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#0f172a',
     fontWeight: '600',
+    zIndex: 0,
   },
   summaryCell: {
-    backgroundColor: '#1f2a37',
+    backgroundColor: '#2d3e50',
     width: CELL_WIDTH,
     height: ROW_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2a37',
+    borderWidth: 0.5,
+    borderColor: '#e2e8f0',
     flexShrink: 0,
   },
   summaryCellText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
-    color: '#f4f6fd',
+    color: '#ffffff',
   },
-  totalCell: {
-    backgroundColor: '#1f2a37',
-    width: CELL_WIDTH,
+  totalCellData: {
+    backgroundColor: '#f8fafc',
+    width: TOTAL_COLUMN_WIDTH,
     height: ROW_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2a37',
-    flexShrink: 0,
+    borderWidth: 0.5,
+    borderColor: '#cbd5e1',
   },
-  totalCellText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#f4f6fd',
+  totalCellDataText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
   },
   totalColumnCell: {
     width: TOTAL_COLUMN_WIDTH,
   },
   seriesCell: {
-    backgroundColor: '#fdf6f0',
+    backgroundColor: '#f8fafc',
   },
   seriesBadge: {
-    backgroundColor: '#10b5a6',
+    backgroundColor: '#1abc9c',
   },
   grandTotalCell: {
-    backgroundColor: '#1f2a37',
+    backgroundColor: '#2d3e50',
     width: CELL_WIDTH,
     height: ROW_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2a37',
+    borderWidth: 0.5,
+    borderColor: '#e2e8f0',
     flexShrink: 0,
   },
   grandTotalCellText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
-    color: '#f4f6fd',
+    color: '#ffffff',
   },
   grandTotalLabelCell: {
     width: TOTAL_COLUMN_WIDTH,
@@ -494,150 +748,138 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
   },
   grandTotalLabelText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#f4f6fd',
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#ffffff',
   },
   grandTotalValueCell: {
-    backgroundColor: '#1f2a37',
+    backgroundColor: '#2d3e50',
     width: TOTAL_COLUMN_WIDTH,
     height: ROW_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2a37',
+    borderWidth: 0.5,
+    borderColor: '#e2e8f0',
     flexShrink: 0,
   },
   grandTotalValueText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#f4f6fd',
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#ffffff',
   },
   input: {
     width: '100%',
     height: '100%',
     textAlign: 'center',
-    fontSize: 13,
+    fontSize: 14,
     color: '#0f172a',
     padding: 0,
   },
   quickEntryInput: {
     backgroundColor: '#E8F5E8',
-    color: '#10b5a6',
+    color: '#1abc9c',
     fontWeight: 'bold',
   },
   quickEntryText: {
-    fontSize: 13,
-    color: '#10b5a6',
+    fontSize: 14,
+    color: '#1abc9c',
     fontWeight: '700',
-  },
-  quickEntryIndicator: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    backgroundColor: '#ff6b6b',
-    borderRadius: 6,
-    paddingHorizontal: 3,
-    paddingVertical: 1,
-  },
-  quickEntryIndicatorText: {
-    fontSize: 8,
-    color: '#fff',
-    fontWeight: 'bold',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
     width: '95%',
-    maxWidth: 800,
-    height: '90%',
-    backgroundColor: '#FDF5E6',
+    maxWidth: 900,
+    maxHeight: '90%',
+    backgroundColor: '#fdf0d0', // Match background in image
     borderRadius: 12,
     overflow: 'hidden',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#1f2a37',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 2,
-    borderBottomColor: '#2d4a6f',
+    alignItems: 'flex-start',
+    backgroundColor: '#fdf0d0', // Light background as in image
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   modalHeaderContent: {
     flex: 1,
-    marginRight: 12,
   },
   modalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#2d3e50',
     marginBottom: 4,
   },
   modalDate: {
-    fontSize: 12,
-    color: '#E0E0E0',
-    fontWeight: '500',
+    fontSize: 14,
+    color: '#2d3e50',
+    fontWeight: '600',
   },
-  closeButton: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  closeIcon: {
+    padding: 4,
   },
-  closeButtonText: {
-    fontSize: 20,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+  closeIconText: {
+    fontSize: 24,
+    color: '#2d3e50',
+    fontWeight: '300',
   },
   modalContent: {
-    flex: 1,
-    backgroundColor: '#FDF5E6',
+    maxHeight: 500, // Limit height to ensure it fits in capture
   },
   modalContentContainer: {
-    padding: 12,
+    padding: 16,
     flexGrow: 1,
   },
   bottomButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'transparent',
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: 'rgba(0,0,0,0.05)',
   },
   copyButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1f2a37',
-    paddingHorizontal: 20,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+  },
+  copyButtonIcon: {
+    fontSize: 16,
+    marginRight: 8,
   },
   copyButtonText: {
-    color: '#FFFFFF',
+    color: '#2d3e50',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   closeBottomButton: {
-    backgroundColor: '#6c757d',
+    backgroundColor: '#2d3e50',
     paddingHorizontal: 24,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 6,
   },
   closeBottomButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });
 

@@ -1,39 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
-  Alert,
-  FlatList,
-  Keyboard,
-  ActivityIndicator,
-} from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS } from '../../../assets/colors';
-import { scale, moderateScale } from 'react-native-size-matters';
-import ScreenHeader from '../../../components/ScreenHeader';
-import CustomButton from '../../../components/CustomButton';
-import APIService from '../../services/APIService';
-import JantriModal from './addTransaction/JantriModal';
-import CopyModal from '../../../components/CopyModal';
-import TableGridView from '../../../components/TableGridView';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Keyboard,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { moderateScale, scale } from 'react-native-size-matters';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { COLORS } from '../../../assets/colors';
+import CopyModal from '../../../components/CopyModal';
+import CustomButton from '../../../components/CustomButton';
 import CustomDateTimePicker from '../../../components/CustomDatePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
-import { TextInput } from 'react-native';
-import { useGlobalLoaderContext } from '../../../context/GlobalLoaderContext';
 import GradientBackground from '../../../components/GradientBackground';
+import ScreenHeader from '../../../components/ScreenHeader';
+import TableGridView from '../../../components/TableGridView';
 import useSearchBar from '../../../hooks/useSearchBar';
+import APIService from '../../services/APIService';
+import JantriModal from './addTransaction/JantriModal';
 
 const { width, height } = Dimensions.get('window');
 
 export const Transaction = ({ navigation }: any) => {
-  const { showLoader, hideLoader } = useGlobalLoaderContext();
-  const [showSearchModal, setShowSearchModal] = useState(false);
   const [selectedShift, setSelectedShift] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [searchParty, setSearchParty] = useState('');

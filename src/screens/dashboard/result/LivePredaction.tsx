@@ -1,48 +1,101 @@
-import React, { useState, useRef, useEffect } from 'react';
+import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
+  ScrollView,
   StyleSheet,
   Text,
-  View,
-  TouchableOpacity,
-  ScrollView,
   TextInput,
-  Dimensions,
-  Alert,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { scale } from 'react-native-size-matters';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { COLORS } from '../../../assets/colors';
-import ScreenHeader from '../../../components/ScreenHeader';
-import CustomDropdown from '../../../components/CustomDropdown';
 import CustomDateTimePicker from '../../../components/CustomDatePicker';
-import APIService from '../../services/APIService';
+import CustomDropdown from '../../../components/CustomDropdown';
 import GradientBackground from '../../../components/GradientBackground';
+import ScreenHeader from '../../../components/ScreenHeader';
+import TableGrid from '../../../components/TableGridView';
+import APIService from '../../services/APIService';
+import Toast from 'react-native-toast-message';
 
-const { width: screenWidth } = Dimensions.get('window');
 
 // Result 30 Days Section Component
-const Result30DaysSection = () => {
+const Result30DaysSection = ({ data, onNumberClick }: { data: any, onNumberClick: (num: string) => void }) => {
+  const resultData = data?.data || {};
+  const tableData = Object.keys(resultData).map((key) => ({
+    number: key,
+    ...resultData[key],
+  })).sort((a, b) => Number(a.number) - Number(b.number));
+
+  const columns: any = [
+    { key: 'result_30_days', label: 'Result 30 Days', align: 'center', width: scale(100) },
+    {
+      key: 'number',
+      label: 'Number',
+      align: 'center',
+      width: scale(70),
+      renderAction: (item: any) => (
+        <TouchableOpacity
+          onPress={() => onNumberClick(item.number)}
+          style={styles.numberBadge}
+        >
+          <Text style={styles.numberBadgeText}>
+            {item.number}
+          </Text>
+        </TouchableOpacity>
+      ),
+    },
+    { key: 'total', label: 'Sale', align: 'center', width: scale(80) },
+    {
+      key: 'amount',
+      label: 'P & L',
+      align: 'center',
+      width: scale(80),
+      renderAction: (item: any) => (
+        <Text style={{ color: item.amount >= 0 ? '#4CAF50' : '#F44336', fontWeight: 'bold', fontSize: scale(13) }}>
+          {item.amount}
+        </Text>
+      ),
+    },
+  ];
+
   return (
     <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionHeaderText}>Result 30 Days</Text>
-        <Text style={styles.sectionHeaderText}>Number</Text>
-        <Text style={styles.sectionHeaderText}>Sale</Text>
-        <Text style={styles.sectionHeaderText}>Amount</Text>
-      </View>
-      <View style={styles.sectionContent}>
-        <ScrollView style={styles.scrollableContent} showsVerticalScrollIndicator={false}>
-          <Text style={styles.noResultsText}>No results found.</Text>
-          {/* Add more data items here when available */}
-        </ScrollView>
-      </View>
+      <TableGrid columns={columns} data={tableData} />
     </View>
   );
 };
 
 // P&L Result Section Component
-const PnLResultSection = () => {
+const PnLResultSection = ({ data }: { data: any }) => {
+  const ledgerList = data?.ledger_list || [];
+
+  const columns: any = [
+    { key: 'sr', label: 'Sr', align: 'center', width: scale(50) },
+    { key: 'name', label: 'Party', align: 'left', width: scale(150) },
+    { key: 'total_sale', label: 'Sale', align: 'center', width: scale(80) },
+    {
+      key: 'pl',
+      label: 'P & L',
+      align: 'center',
+      width: scale(80),
+      renderAction: (item: any) => (
+        <Text style={{ color: item.pl >= 0 ? 'green' : 'red', fontWeight: 'bold', fontSize: scale(13) }}>
+          {item.pl}
+        </Text>
+      ),
+    },
+    { key: 'total_clam', label: 'Last-Win', align: 'center', width: scale(80) },
+  ];
+
+  const tableData = ledgerList.map((item: any, index: number) => ({
+    ...item,
+    sr: index + 1,
+  }));
+
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeaderLight}>
@@ -51,62 +104,95 @@ const PnLResultSection = () => {
           <Text style={styles.sectionTitleText}>P&L Result</Text>
         </View>
         <View style={styles.sectionInfo}>
-          <Text style={styles.sectionInfoText}>Number: | Profit:</Text>
+          <Text style={styles.sectionInfoText}>Number: <Text style={{ color: 'blue' }}>{data?.number || '-'}</Text> | Profit: <Text style={{ color: 'green' }}>{data?.total || 0}</Text></Text>
         </View>
       </View>
-      <View style={styles.tableHeader}>
-        <Text style={styles.tableHeaderText}>Sr</Text>
-        <Text style={styles.tableHeaderText}>Party</Text>
-        <Text style={styles.tableHeaderText}>Sale</Text>
-        <Text style={styles.tableHeaderText}>P&L</Text>
-        <Text style={styles.tableHeaderText}>Last-Win</Text>
-      </View>
-      <View style={styles.sectionContent}>
-        <ScrollView style={styles.scrollableContent} showsVerticalScrollIndicator={false}>
-          <Text style={styles.noResultsText}>No results found.</Text>
-          {/* Add more data items here when available */}
-        </ScrollView>
-      </View>
+      <TableGrid columns={columns} data={tableData} />
     </View>
   );
 };
 
 // Declare Result Section Component
-const DeclareResultSection = () => {
+const DeclareResultSection = ({ selectedShift, selectedDate }: { selectedShift: string, selectedDate: Date }) => {
   const [declareNumber, setDeclareNumber] = useState('');
+  const [isDeclaring, setIsDeclaring] = useState(false);
+
+  const handleNumberChange = (text: string) => {
+    // Only allow digits
+    const cleaned = text.replace(/[^0-9]/g, '');
+    if (cleaned === '') {
+      setDeclareNumber('');
+      return;
+    }
+    const num = parseInt(cleaned, 10);
+    if (num <= 99) {
+      setDeclareNumber(cleaned);
+    }
+  };
+
+  const handleDeclare = async () => {
+    try {
+      setIsDeclaring(true);
+      const queryParams = {
+        shift_id: selectedShift,
+        date: selectedDate.toLocaleDateString('en-GB'),
+        number: declareNumber
+      };
+
+      console.log('Declaring shift with:', queryParams);
+      const response: any = await APIService.DeclareShift(queryParams);
+
+      if (response && response.success) {
+        // success toast
+        Toast.show({
+          type: 'success',
+          text1: 'Result declared successfully',
+        });
+        setDeclareNumber('');
+      } else {
+        Alert.alert('Error', response?.message || 'Failed to declare result');
+      }
+    } catch (error) {
+      console.error('Declare API Error:', error?.response);
+      Alert.alert('Error', 'An error occurred while declaring the result');
+    } finally {
+      setIsDeclaring(false);
+    }
+  };
+
+  const columns: any = [
+    { key: 'date', label: 'Date', align: 'center', width: scale(100) },
+    { key: 'result', label: 'Result', align: 'center', width: scale(80) },
+    { key: 'action1', label: 'Action', align: 'center', width: scale(80) },
+    { key: 'action2', label: 'Action', align: 'center', width: scale(80) },
+  ];
 
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeaderLight}>
-        <View style={styles.sectionTitleContainer}>
-          <Ionicons name="checkmark-circle" size={20} color={COLORS.BUTTONBG} />
-          <Text style={styles.sectionTitleText}>Declare Result</Text>
-        </View>
+        <View style={styles.sectionTitleContainer} />
         <View style={styles.declareInputContainer}>
           <TextInput
             style={styles.declareInput}
-            placeholder="Enter number"
+            placeholder="0-99"
             value={declareNumber}
-            onChangeText={setDeclareNumber}
+            onChangeText={handleNumberChange}
+            keyboardType="numeric"
+            maxLength={2}
             placeholderTextColor="#999"
           />
-          <TouchableOpacity style={styles.declareButton}>
-            <Text style={styles.declareButtonText}>Declare</Text>
+          <TouchableOpacity
+            style={[styles.declareButton, (isDeclaring || !selectedShift || !declareNumber) && { backgroundColor: '#ccc', opacity: 0.7 }]}
+            onPress={handleDeclare}
+            disabled={isDeclaring || !selectedShift || !declareNumber}
+          >
+            <Text style={styles.declareButtonText}>
+              {isDeclaring ? '...' : 'Declare'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
-      <View style={styles.tableHeader}>
-        <Text style={styles.tableHeaderText}>Date</Text>
-        <Text style={styles.tableHeaderText}>Result</Text>
-        <Text style={styles.tableHeaderText}>Action</Text>
-        <Text style={styles.tableHeaderText}>Action</Text>
-      </View>
-      <View style={styles.sectionContent}>
-        <ScrollView style={styles.scrollableContent} showsVerticalScrollIndicator={false}>
-          <Text style={styles.noResultsText}>No results found.</Text>
-          {/* Add more data items here when available */}
-        </ScrollView>
-      </View>
+      <TableGrid columns={columns} data={[]} />
     </View>
   );
 };
@@ -116,11 +202,17 @@ const LivePredaction = ({ navigation }: any) => {
   const [isFilterBottomSheetOpen, setIsFilterBottomSheetOpen] = useState(false);
   const filterBottomSheetRef = useRef<any>(null);
 
+  // State for detail bottom sheet
+  const [isDetailBottomSheetOpen, setIsDetailBottomSheetOpen] = useState(false);
+  const detailBottomSheetRef = useRef<any>(null);
+  const [detailData, setDetailData] = useState<any>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+
   // Filter states
   const [selectedShift, setSelectedShift] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLivePrediction, setIsLivePrediction] = useState(true);
-  
+
   // Search and API states
   const [searchNumber, setSearchNumber] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
@@ -175,8 +267,12 @@ const LivePredaction = ({ navigation }: any) => {
 
     try {
       setSearchLoading(true);
-      const response: any = await APIService.liveResultByNumber({}, number);
-      
+      const filters = {
+        shift_id: selectedShift,
+        date: selectedDate instanceof Date ? selectedDate.toLocaleDateString('en-GB') : selectedDate,
+      };
+      const response: any = await APIService.liveResultByNumber(filters, number);
+
       if (response && response.success) {
         setLiveResultData(response.data || response);
         console.log('Live result by number:', response.data || response);
@@ -193,6 +289,33 @@ const LivePredaction = ({ navigation }: any) => {
     }
   };
 
+  // Handle number click to show details
+  const handleNumberClick = async (number: string) => {
+    try {
+      setIsDetailLoading(true);
+
+      const filters = {
+        shift_id: selectedShift,
+        date: selectedDate instanceof Date ? selectedDate.toLocaleDateString('en-GB') : selectedDate,
+      };
+
+
+      const response: any = await APIService.liveResultByNumber(filters, number);
+
+      if (response?.data?.ledger_list) {
+        setDetailData(response?.data);
+        setIsDetailBottomSheetOpen(true);
+      } else {
+        Alert.alert('No Data', 'No ledger details found for this number.');
+      }
+    } catch (error) {
+      console.error('Detail API Error:', error?.response);
+      Alert.alert('Error', 'Failed to fetch prediction details');
+    } finally {
+      setIsDetailLoading(false);
+    }
+  };
+
   // Handle filter submit
   const handleFilterSubmit = async () => {
     // Validate required fields
@@ -203,22 +326,21 @@ const LivePredaction = ({ navigation }: any) => {
 
     try {
       setIsLoading(true);
-      
+
       // Prepare API data
       const apiData = {
         shift_id: selectedShift,
-        date: selectedDate.toLocaleDateString('en-GB'), // Format: dd/mm/yyyy
+        date: selectedDate instanceof Date ? selectedDate.toLocaleDateString('en-GB') : selectedDate, // Format: dd/mm/yyyy
       };
 
       console.log('Filter submitted:', apiData);
 
       // Call LiveResult API
       const response: any = await APIService.LiveResult(apiData, '');
-      
+
       if (response && response.success) {
         setLiveResultData(response.data || response);
         console.log('Live result data received:', response.data || response);
-        Alert.alert('Success', 'Data fetched successfully');
       } else {
         Alert.alert('Error', response?.message || 'Failed to fetch data');
       }
@@ -245,7 +367,7 @@ const LivePredaction = ({ navigation }: any) => {
       setShiftLoading(true);
       const response = await APIService.GetShiftDropDownDataData();
       console.log('Shift data response:', response);
-      
+
       if (response && response.success && response.data) {
         // Transform the API response to match dropdown format
         const transformedShifts = response.data.map((shift: any) => ({
@@ -266,115 +388,112 @@ const LivePredaction = ({ navigation }: any) => {
     }
   };
 
+  console.log(liveResultData, "liveResultData")
+
   return (
-    <GradientBackground colors={[ "#fdf0d0","#e0efea"]} locations={[0,30]}>
-    <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
-      {/* Header */}
-      <ScreenHeader
-        navigation={navigation}
-        title="Live Predaction"
-       
-        hideBackButton={true} showDrawerButton={true}
-      
-      >
-        <TouchableOpacity onPress={() => setIsFilterBottomSheetOpen(true)}>
-          <Ionicons name="filter" size={24} color={COLORS.WHITE} />
-        </TouchableOpacity>
-      </ScreenHeader>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Filter Button */}
-        
-
-        {/* Search Input */}
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder={searchLoading ? "Searching..." : "Search number..."}
-            placeholderTextColor="#999"
-            value={searchNumber}
-            onChangeText={(text) => {
-              setSearchNumber(text);
-              // Debounce the API call
-              if (text.trim()) {
-                setTimeout(() => handleSearchNumber(text), 500);
-              } else {
-                setLiveResultData(null);
-              }
-            }}
-            editable={!searchLoading}
-          />
-          {searchLoading && (
-            <View style={styles.searchLoadingIndicator}>
-              <Ionicons name="search" size={20} color="#999" />
-            </View>
-          )}
-          {liveResultData && (
-            <View style={styles.searchResultIndicator}>
-              <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
-              <Text style={styles.searchResultText}>Data found</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Result 30 Days Section */}
-        <Result30DaysSection />
-
-        {/* P&L Result Section */}
-        <PnLResultSection />
-
-        {/* Declare Result Section */}
-        <DeclareResultSection />
-      </ScrollView>
-
-      {/* Filter Bottom Sheet */}
-      {isFilterBottomSheetOpen && (
-        <BottomSheet
-          backgroundStyle={{ backgroundColor: '#F5F5DC' }}
-          ref={filterBottomSheetRef}
-          style={styles.bottomSheet}
-          index={0}
-          snapPoints={snapPoints}
-          enableDynamicSizing={false}
-          onChange={(index: number) => {
-            if (index === -1) {
-              setIsFilterBottomSheetOpen(false);
-            } else {
-              setIsFilterBottomSheetOpen(true);
-            }
-          }}
-          backdropComponent={renderBackdrop}
-          enablePanDownToClose={true}
-          onClose={() => {
-            setIsFilterBottomSheetOpen(false);
-          }}
+    <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
+      <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
+        {/* Header */}
+        <ScreenHeader
+          navigation={navigation}
+          title="Live Predication"
+          hideBackButton={true} showDrawerButton={true}
         >
-          <View style={styles.bottomSheetHeader}>
-            <Text style={styles.bottomSheetTitle}>Filter</Text>
-            <TouchableOpacity onPress={handleFilterClosePress}>
-              <Ionicons name="close" size={24} color="#333" />
-            </TouchableOpacity>
+          <TouchableOpacity onPress={() => setIsFilterBottomSheetOpen(true)}>
+            <Ionicons name="filter" size={24} color={COLORS.WHITE} />
+          </TouchableOpacity>
+        </ScreenHeader>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Filter Button */}
+
+
+          {/* Search Input */}
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder={searchLoading ? "Searching..." : "Search number..."}
+              placeholderTextColor="#999"
+              value={searchNumber}
+              onChangeText={(text) => {
+                setSearchNumber(text);
+                // Debounce the API call
+                if (text.trim()) {
+                  setTimeout(() => handleSearchNumber(text), 500);
+                } else {
+                  setLiveResultData(null);
+                }
+              }}
+              editable={!searchLoading}
+            />
+            {searchLoading && (
+              <View style={styles.searchLoadingIndicator}>
+                <Ionicons name="search" size={20} color="#999" />
+              </View>
+            )}
+            {liveResultData && (
+              <View style={styles.searchResultIndicator}>
+                <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                <Text style={styles.searchResultText}>Data found</Text>
+              </View>
+            )}
           </View>
 
-          <BottomSheetScrollView style={styles.bottomSheetContent}>
-            {/* Live Prediction Toggle */}
-            <View style={styles.filterSection}>
-              <TouchableOpacity 
-                style={[styles.livePredictionToggle, isLivePrediction && styles.livePredictionToggleActive]}
-                onPress={() => setIsLivePrediction(!isLivePrediction)}
-              >
-                <View style={[styles.toggleDot, isLivePrediction && styles.toggleDotActive]} />
-                <Text style={[styles.livePredictionText, isLivePrediction && styles.livePredictionTextActive]}>
-                  Live Prediction
-                </Text>
+          {/* Result 30 Days Section */}
+          <Result30DaysSection data={liveResultData} onNumberClick={handleNumberClick} />
+
+          {/* Declare Result Section */}
+          <DeclareResultSection selectedShift={selectedShift} selectedDate={selectedDate} />
+        </ScrollView>
+
+        {/* Filter Bottom Sheet */}
+        {isFilterBottomSheetOpen && (
+          <BottomSheet
+            backgroundStyle={{ backgroundColor: '#F5F5DC' }}
+            ref={filterBottomSheetRef}
+            style={styles.bottomSheet}
+            index={0}
+            snapPoints={snapPoints} keyboardBehavior="fillParent" keyboardBlurBehavior="restore"
+            enableDynamicSizing={false}
+            onChange={(index: number) => {
+              if (index === -1) {
+                setIsFilterBottomSheetOpen(false);
+              } else {
+                setIsFilterBottomSheetOpen(true);
+              }
+            }}
+            backdropComponent={renderBackdrop}
+            enablePanDownToClose={true}
+            onClose={() => {
+              setIsFilterBottomSheetOpen(false);
+            }}
+          >
+            <View style={styles.bottomSheetHeader}>
+              <Text style={styles.bottomSheetTitle}>Filter</Text>
+              <TouchableOpacity onPress={handleFilterClosePress}>
+                <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
 
-            {/* Shift Dropdown */}
-            <View style={styles.filterSection}>
-              <View style={[styles.shiftHeaderContainer,{top:30}]}>
-                <Text style={styles.filterLabel}>Shift</Text>
-                {/* <TouchableOpacity 
+            <BottomSheetScrollView style={styles.bottomSheetContent}>
+              {/* Live Prediction Toggle */}
+              <View style={styles.filterSection}>
+                <TouchableOpacity
+                  style={[styles.livePredictionToggle, isLivePrediction && styles.livePredictionToggleActive]}
+                  onPress={() => setIsLivePrediction(!isLivePrediction)}
+                >
+                  <View style={[styles.toggleDot, isLivePrediction && styles.toggleDotActive]} />
+                  <Text style={[styles.livePredictionText, isLivePrediction && styles.livePredictionTextActive]}>
+                    Live Prediction
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Shift Dropdown */}
+              <View style={styles.filterSection}>
+                <View style={[styles.shiftHeaderContainer, { top: 30 }]}>
+                  <Text style={styles.filterLabel}>Shift</Text>
+                  {/* <TouchableOpacity 
                   style={styles.refreshButton} 
                   onPress={fetchShiftData}
                   disabled={shiftLoading}
@@ -385,43 +504,76 @@ const LivePredaction = ({ navigation }: any) => {
                     color={shiftLoading ? "#999" : COLORS.BUTTONBG} 
                   />
                 </TouchableOpacity> */}
+                </View>
+                <CustomDropdown
+                  open={shiftOpen}
+                  value={selectedShift}
+                  items={shiftItems}
+                  setOpen={setShiftOpen}
+                  setValue={setSelectedShift}
+                  setItems={() => { }}
+                  placeholder={shiftLoading ? "Loading shifts..." : "Select Shift"}
+                />
               </View>
-              <CustomDropdown
-                open={shiftOpen}
-                value={selectedShift}
-                items={shiftItems}
-                setOpen={setShiftOpen}
-                setValue={setSelectedShift}
-                setItems={() => {}}
-                placeholder={shiftLoading ? "Loading shifts..." : "Select Shift"}
-              />
+
+              {/* Date Picker */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { top: 30 }]}>Date</Text>
+                <CustomDateTimePicker
+                  value={selectedDate}
+                  setFieldValue={handleDateChange}
+                  fieldName="date"
+                  mode="date"
+                />
+              </View>
+
+              {/* Submit Button */}
+              <TouchableOpacity
+                style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+                onPress={handleFilterSubmit}
+                disabled={isLoading}
+              >
+                <Text style={styles.submitButtonText}>
+                  {isLoading ? 'Loading...' : 'Search'}
+                </Text>
+              </TouchableOpacity>
+            </BottomSheetScrollView>
+          </BottomSheet>
+        )}
+
+        {/* Detail Bottom Sheet */}
+        {isDetailBottomSheetOpen && (
+          <BottomSheet
+            backgroundStyle={{ backgroundColor: '#F5F5DC' }}
+            ref={detailBottomSheetRef}
+            style={styles.bottomSheet}
+            index={0}
+            snapPoints={snapPoints} keyboardBehavior="fillParent" keyboardBlurBehavior="restore"
+            enableDynamicSizing={false}
+            onChange={(index: number) => {
+              if (index === -1) {
+                setIsDetailBottomSheetOpen(false);
+              }
+            }}
+            backdropComponent={renderBackdrop}
+            enablePanDownToClose={true}
+            onClose={() => {
+              setIsDetailBottomSheetOpen(false);
+            }}
+          >
+            <View style={styles.bottomSheetHeader}>
+              <Text style={styles.bottomSheetTitle}>Prediction Details</Text>
+              <TouchableOpacity onPress={() => setIsDetailBottomSheetOpen(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
             </View>
 
-            {/* Date Picker */}
-            <View style={styles.filterSection}>
-              <Text style={[styles.filterLabel,{top:30}]}>Date</Text>
-              <CustomDateTimePicker
-                value={selectedDate}
-                setFieldValue={handleDateChange}
-                fieldName="date"
-                mode="date"
-              />
-            </View>
-
-            {/* Submit Button */}
-            <TouchableOpacity 
-              style={[styles.submitButton, isLoading && styles.submitButtonDisabled]} 
-              onPress={handleFilterSubmit}
-              disabled={isLoading}
-            >
-              <Text style={styles.submitButtonText}>
-                {isLoading ? 'Loading...' : 'Search'}
-              </Text>
-            </TouchableOpacity>
-          </BottomSheetScrollView>
-        </BottomSheet>
-      )}
-    </SafeAreaView>
+            <BottomSheetScrollView style={styles.bottomSheetContent}>
+              <PnLResultSection data={detailData} />
+            </BottomSheetScrollView>
+          </BottomSheet>
+        )}
+      </SafeAreaView>
     </GradientBackground>
   );
 };
@@ -487,22 +639,6 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 20,
   },
-  sectionHeader: {
-    backgroundColor: COLORS.BUTTONBG,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-  },
-  sectionHeaderText: {
-    color: COLORS.WHITE,
-    fontSize: 14,
-    fontWeight: 'bold',
-    flex: 1,
-    textAlign: 'center',
-  },
   sectionHeaderLight: {
     backgroundColor: '#E6F3FF',
     flexDirection: 'row',
@@ -557,34 +693,6 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
     fontSize: 14,
     fontWeight: 'bold',
-  },
-  tableHeader: {
-    backgroundColor: COLORS.BUTTONBG,
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  tableHeaderText: {
-    color: COLORS.WHITE,
-    fontSize: 14,
-    fontWeight: 'bold',
-    flex: 1,
-    textAlign: 'center',
-  },
-  sectionContent: {
-    backgroundColor: COLORS.WHITE,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    minHeight: 100,
-  },
-  scrollableContent: {
-    padding: 16,
-  },
-  noResultsText: {
-    textAlign: 'center',
-    color: '#999',
-    fontSize: 14,
-    fontStyle: 'italic',
   },
   bottomSheet: {
     borderWidth: 1,
@@ -661,6 +769,27 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  numberBadge: {
+    backgroundColor: '#EEF2FF',
+    paddingVertical: scale(4),
+    paddingHorizontal: scale(8),
+    borderRadius: scale(10),
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+    minWidth: scale(45),
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  numberBadgeText: {
+    color: COLORS.BUTTONBG,
+    fontWeight: 'bold',
+    fontSize: scale(13),
   },
   shiftHeaderContainer: {
     flexDirection: 'row',

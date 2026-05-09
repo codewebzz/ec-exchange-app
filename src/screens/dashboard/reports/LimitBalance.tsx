@@ -266,8 +266,8 @@ const LimitBalance = ({ navigation }: any) => {
               { key: 'openning', label: 'Opening', width: 120, align: 'right', numeric: true },
               { key: 'limit', label: 'Limit', width: 120, align: 'right', numeric: true },
               { key: 'tr_consume', label: 'Trans Consume', width: 140, align: 'right', numeric: true },
-              { key: 'tp_amount', label: 'T-Profit', width: 120, align: 'right', numeric: true },
-              { key: 'Payment', label: 'Payment', width: 120, align: 'right', numeric: true },
+              { key: 'pl', label: 'T-Profit', width: 120, align: 'right', numeric: true },
+              { key: 'payment', label: 'Payment', width: 120, align: 'right', numeric: true },
               { key: 'final_limit', label: 'Final Limit', width: 130, align: 'right', numeric: true },
             ]}
             loading={loading}

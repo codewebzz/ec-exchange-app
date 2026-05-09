@@ -1,38 +1,34 @@
-import React, { cache, useState } from 'react';
-import {
-  ScrollView,
-  Button,
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Keyboard,
-  Switch,
-} from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
-import DeclareStatusCard from '../../../components/DeclareStatusCard';
 import BottomSheet, {
   BottomSheetBackdrop,
-  BottomSheetScrollView,
-  BottomSheetView,
+  BottomSheetScrollView
 } from '@gorhom/bottom-sheet';
 import { Formik } from 'formik';
-import CustomDropdown from '../../../components/CustomDropdown';
-import CustomDateTimePicker from '../../../components/CustomDatePicker';
-import * as Yup from 'yup';
-import CustomTextInput from '../../../components/CustomTextInput';
-import CustomButton from '../../../components/CustomButton';
-import { COLORS } from '../../../assets/colors';
-import { scale } from 'react-native-size-matters';
+import moment from 'moment';
+import React, { useState } from 'react';
+import {
+  Keyboard,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View
+} from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ScreenHeader from '../../../components/ScreenHeader';
-import APIService from '../../services/APIService';
-import moment from 'moment';
+import { scale } from 'react-native-size-matters';
 import Toast from 'react-native-toast-message';
+import * as Yup from 'yup';
+import { COLORS } from '../../../assets/colors';
+import CustomButton from '../../../components/CustomButton';
+import CustomDateTimePicker from '../../../components/CustomDatePicker';
+import CustomDropdown from '../../../components/CustomDropdown';
+import CustomTextInput from '../../../components/CustomTextInput';
+import DeclareStatusCard from '../../../components/DeclareStatusCard';
+import GradientBackground from '../../../components/GradientBackground';
+import ScreenHeader from '../../../components/ScreenHeader';
 import TabHeader from '../../../components/TabHeader';
 import useSearchBar from '../../../hooks/useSearchBar';
-import GradientBackground from '../../../components/GradientBackground';
+import APIService from '../../services/APIService';
 const AddShiftSchema = Yup.object().shape({
   name: Yup.string().required('Shift Name is required'),
   openTime: Yup.string()
@@ -51,7 +47,6 @@ const Shift = ({ navigation }: any) => {
     debounceMs: 200,
   });
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
-  const [visible, setVisible] = useState(false);
   const [openDropdown, setOpenDropdown] = React.useState(false);
   const [dropdownValue, setDropdownValue] = React.useState<string | null>('1');
   const [dropdownItems, setDropdownItems] = React.useState([
@@ -70,7 +65,6 @@ const Shift = ({ navigation }: any) => {
 
   // Tabs and auto-open toggle
   const [activeTab, setActiveTab] = useState<number>(0); // 0: Info, 1: Time, 2: Config
-  const [autoOpen, setAutoOpen] = useState<boolean>(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
 
@@ -81,11 +75,9 @@ const Shift = ({ navigation }: any) => {
     Keyboard.dismiss();
     if (index === -1) {
       setIsOpenBottomSheet(false);
-      setVisible(false);
       setIsEditing(false);
     } else {
       setIsOpenBottomSheet(true);
-      setVisible(true);
     }
   };
 
@@ -94,7 +86,6 @@ const Shift = ({ navigation }: any) => {
       bottomSheetRef.current.close();
     }
     setIsOpenBottomSheet(false);
-    setVisible(false);
     setIsEditing(false);
   };
 
@@ -159,8 +150,6 @@ const Shift = ({ navigation }: any) => {
           modeName.includes('web') ? '2' :
             modeName.includes('mobile') ? '3' : '1';
       setDropdownValue1(shiftModeValue);
-      // If backend provides an auto-open flag, set it here; default false
-      setAutoOpen(Boolean(selectedCompany?.auto_open));
     }
   }, [selectedCompany]);
 
@@ -188,7 +177,8 @@ const Shift = ({ navigation }: any) => {
     try {
       const payload = {
         shift_name: values?.name,
-        open_date: values?.openDate,
+        auto_open: values?.auto_open ? 1 : 0,
+        open_date: values?.auto_open ? moment().format('DD/MM/YYYY') : moment(values?.openDate, 'DD/MM/YYYY').format('DD/MM/YYYY'),
         next_day: Number(values?.nextDay),
         shift_mode: Number(values?.shiftWorkingFor),
         super_admin_update_time: values?.superAdmin
@@ -232,7 +222,8 @@ const Shift = ({ navigation }: any) => {
     try {
       const payload = {
         shift_name: values?.name,
-        open_date: values?.openDate,
+        auto_open: values?.auto_open ? 1 : 0,
+        open_date: values?.auto_open ? moment().format('DD/MM/YYYY') : moment(values?.openDate, 'DD/MM/YYYY').format('DD/MM/YYYY'),
         open_time: values?.openTime ? moment(values?.openTime, 'HH:mm').format('hh:mm A')
           : '',
         next_day: Number(values?.nextDay),
@@ -258,7 +249,6 @@ const Shift = ({ navigation }: any) => {
       };
 
       const response = await APIService.UpdateShift(payload, selectedCompany?.id);
-      console.log(response, "[][][][")
       if (response?.success) {
         setIsOpenBottomSheet(false);
         setIsEditing(false);
@@ -272,12 +262,12 @@ const Shift = ({ navigation }: any) => {
         });
         getShift();
       }
-    } catch (error) {
-      console.error('Update shift failed', error);
+    } catch (error: any) {
+      console.error('Update shift failed', error?.response);
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'Failed to update shift',
+        text2: error?.response?.data?.message,
         position: 'bottom',
       });
     }
@@ -384,7 +374,7 @@ const Shift = ({ navigation }: any) => {
             </ScrollView>
 
             {isOpenBottomSheet && (
-                <BottomSheet
+              <BottomSheet
                 backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
                 ref={bottomSheetRef}
                 style={{ borderWidth: 1, borderRadius: scale(10) }}
@@ -456,6 +446,7 @@ const Shift = ({ navigation }: any) => {
                         return '1';
                       })(),
                       roundOff: (selectedCompany as any)?.round_off?.toString?.() || '0',
+                      auto_open: !!selectedCompany?.auto_open,
                     }}
                     validationSchema={AddShiftSchema}
                     onSubmit={handleFormSubmit}
@@ -487,14 +478,38 @@ const Shift = ({ navigation }: any) => {
                               onSubmitEditing={() => setFocusedField('nextDay')}
                             />
 
-                            {/* Open Date and Next Day (disabled when autoOpen) */}
-                            <View style={{ opacity: autoOpen ? 0.6 : 1 }} pointerEvents={autoOpen ? 'none' : 'auto'}>
+                            {/* Auto Open Switch Section - Only shown in Edit */}
+                            {isEditing && (
+                              <View style={style.autoOpenCard}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                  <View style={{ flex: 1, paddingRight: scale(10) }}>
+                                    <Text style={style.autoOpenTitle}>Auto Open Shift</Text>
+                                    <Text style={style.autoOpenDescription}>
+                                      Automatically manage shift opening based on schedule.
+                                    </Text>
+                                  </View>
+                                  <Switch
+                                    onValueChange={(val) => setFieldValue('auto_open', val)}
+                                    value={values.auto_open}
+                                    trackColor={{ false: '#D1D5DB', true: '#3B82F6' }}
+                                    thumbColor={values.auto_open ? '#FFFFFF' : '#f4f3f4'}
+                                  />
+                                </View>
+                                {values.auto_open && (
+                                  <Text style={style.autoOpenActive}>✓ Automatic Management Active</Text>
+                                )}
+                              </View>
+                            )}
+
+                            {/* Open Date and Next Day (only shown when auto_open is OFF) */}
+
+                            <View style={{ marginTop: scale(10) }}>
                               <CustomDropdown
                                 label="Next Day"
                                 open={openDropdown}
                                 value={dropdownValue}
                                 items={dropdownItems}
-                                setOpen={autoOpen ? () => { } : setOpenDropdown}
+                                setOpen={setOpenDropdown}
                                 isFocused={focusedField === 'nextDay'}
                                 onOpen={() => setFocusedField('nextDay')}
                                 setValue={(val: any) => {
@@ -507,19 +522,21 @@ const Shift = ({ navigation }: any) => {
                                 error={touched.nextDay && errors.nextDay}
                               />
 
-                              <CustomDateTimePicker
-                                label="Open Date"
-                                value={values.openDate}
-                                setFieldValue={setFieldValue}
-                                fieldName="openDate"
-                                mode="date"
-                                error={
-                                  touched.openDate &&
-                                    typeof errors.openDate === 'string'
-                                    ? errors.openDate
-                                    : undefined
-                                }
-                              />
+                              {!values.auto_open && (
+                                <CustomDateTimePicker
+                                  label="Open Date"
+                                  value={values.openDate}
+                                  setFieldValue={setFieldValue}
+                                  fieldName="openDate"
+                                  mode="date"
+                                  error={
+                                    touched.openDate &&
+                                      typeof errors.openDate === 'string'
+                                      ? errors.openDate
+                                      : undefined
+                                  }
+                                />
+                              )}
                             </View>
 
                             <CustomDropdown
@@ -559,8 +576,12 @@ const Shift = ({ navigation }: any) => {
                         )}
 
                         {(!isEditing || activeTab === 1) && (
-                          <View style={{ marginVertical: scale(10) }}>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                          <View style={style.timingContainer}>
+                            <View style={style.discriminatorContainer}>
+                              <Text style={style.discriminatorText}>Closing Times</Text>
+                              <View style={style.discriminatorLine} />
+                            </View>
+                            <View style={style.flexDoubleColumb}>
                               <View style={style.flexSingleColumb}>
                                 <CustomDateTimePicker
                                   label="Owner"
@@ -741,6 +762,28 @@ const style = StyleSheet.create({
   autoOpenNote: {
     fontSize: 12,
     color: '#6B7280',
+  },
+  timingContainer: {
+    marginVertical: scale(10),
+  },
+  discriminatorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: scale(15),
+    paddingHorizontal: scale(5),
+  },
+  discriminatorText: {
+    marginRight: scale(12),
+    fontSize: scale(13),
+    fontWeight: '700',
+    color: '#4B5563',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  discriminatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E5E7EB',
   },
 });
 

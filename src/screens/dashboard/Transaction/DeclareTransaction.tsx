@@ -67,8 +67,8 @@ const DeclareTransaction = ({ navigation }: any) => {
   const [shiftLoading, setShiftLoading] = useState(false);
   const [staffItems, setStaffItems] = useState<any[]>([]);
   const [staffLoading, setStaffLoading] = useState(false);
-const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
- const [activeDeleteShift, setactiveDeleteShift] = useState('active');
+  const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
+  const [activeDeleteShift, setactiveDeleteShift] = useState('active');
   // Sample data
   // const staffItems = [
   //   { label: 'Rahul-Staff', value: '1' },
@@ -91,14 +91,14 @@ const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
   const handleJantriView = () => {
     console.log('Jantri View button clicked');
     console.log('Summary table data:', summaryTableData);
-    
+
     // Transform summary table data to match JantriModal expected format
     const transformedData = summaryTableData.map(item => ({
       number: item.number,
       amount: parseFloat(item.amount) || 0,
       timestamp: new Date().toLocaleString()
     }));
-    
+
     setJantriViewTransactions(transformedData);
     setIsJantriViewModalVisible(true);
   };
@@ -110,7 +110,7 @@ const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
     setIsAddButtonActive(value !== '');
     console.log('Add button active:', value !== '');
   };
- const handleActiveDeleteChange = (value: string) => {
+  const handleActiveDeleteChange = (value: string) => {
     console.log('Shift selected:', value);
     setactiveDeleteShift(value);
     // setIsAddButtonActive(value !== '');
@@ -119,7 +119,7 @@ const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
   // Handle date selection
   const handleDateChange = (fieldName: string, value: any) => {
     console.log('Date selected:', value, typeof value);
-    
+
     // The CustomDateTimePicker returns a formatted string (DD/MM/YYYY)
     if (typeof value === 'string') {
       // Parse the DD/MM/YYYY format to Date object
@@ -128,7 +128,7 @@ const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
         const day = parseInt(parts[0], 10);
         const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
         const year = parseInt(parts[2], 10);
-        
+
         if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
           const date = new Date(year, month, day);
           if (!isNaN(date.getTime())) {
@@ -138,7 +138,7 @@ const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
         }
       }
     }
-    
+
     // Fallback: if it's already a Date object
     if (value instanceof Date) {
       setSelectedDate(value);
@@ -147,7 +147,7 @@ const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
 
   // Bottom sheet handlers
   const snapPoints = React.useMemo(() => ['80%'], []);
-  
+
   const renderBackdrop = React.useCallback(
     (props: any) => (
       <View
@@ -173,7 +173,7 @@ const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
       const year = currentDate.getFullYear();
       return `${day}/${month}/${year}`;
     }
-    
+
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
@@ -203,10 +203,10 @@ const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
     { key: 'rate', label: 'Rate', width: 120, align: 'center' as const },
     { key: 'amount', label: 'Amount', width: 100, align: 'right' as const },
     { key: 'groupType', label: 'G. Type', width: 80, align: 'center' as const },
-    { 
-      key: 'addedBy', 
-      label: 'Added By', 
-      width: 120, 
+    {
+      key: 'addedBy',
+      label: 'Added By',
+      width: 120,
       align: 'left' as const,
       renderAction: (item: any) => (
         <View style={styles.userInfoContainer}>
@@ -215,10 +215,10 @@ const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
         </View>
       )
     },
-    { 
-      key: 'updatedBy', 
-      label: 'Updated By', 
-      width: 120, 
+    {
+      key: 'updatedBy',
+      label: 'Updated By',
+      width: 120,
       align: 'left' as const,
       renderAction: (item: any) => (
         <View style={styles.userInfoContainer}>
@@ -293,23 +293,23 @@ const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
       setLoadingDetails(true);
       setSelectedTransaction(item);
       setIsViewingDetails(true);
-      
+
       // Call GetTransactionData API with the transaction ID
       const response = await APIService.GetTransactionData({}, item.id);
       console.log('Transaction Data Response:', response);
-      
+
       if (response && response.success && response.data && response.data.transactions) {
         // Process the detailed transaction data for the second table
         // The transactions array contains the detailed data
         const transactions = response.data.transactions;
-        
+
         if (transactions.length > 0) {
           const detailedData = transactions.map((transaction: any) => ({
             id: transaction.id,
             number: transaction.number || '00',
             amount: transaction.amount?.toString() || '0',
           }));
-          
+
           setSummaryTableData(detailedData);
           console.log('Updated summary table with detailed data:', detailedData);
         } else {
@@ -367,28 +367,28 @@ const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
     // Clear the second table when resetting
     setSummaryTableData([]);
   };
-  
+
   const getTransaction = async () => {
     try {
       setLoadingList(true);
-      // const data={
-      //   declared:0,
-      //   shift_id:selectedShift,
-      //   date:formatDateForAPI(selectedDate),
-      //   ledger_name:searchParty,
-      //   staff:selectedStaff,
-      //   deleted: activeDeleteShift === 'deleted' ? 1 : 0,
-      // }
-      const data = {
-              // declared: 1, // This indicates declared transactions
-              shift_id: selectedShift || 0,
-              // date: formatDateForAPI(selectedDate),
-              // ledger_name: searchParty,
-              // staff_name: selectedStaff,
-            };
-      const res = await APIService.GetDecelearedTransaction(data);
-      console.log('API Response:', res);
       
+      const filters: any = {
+        shift_id: selectedShift || undefined,
+        date: formatDateForAPI(selectedDate),
+        ledger_name: searchParty || undefined,
+        staff_name: selectedStaff || undefined,
+        declared: 1,
+      };
+
+      let res;
+      if (activeDeleteShift === 'deleted') {
+        res = await APIService.GetDeletedTransaction(filters);
+      } else {
+        res = await APIService.GetTransaction(filters);
+      }
+
+      console.log('API Response:', res);
+
       if (res && res.success && res.data && res.data.length > 0) {
         // Process main table data
         const processedTableData = res.data.map((item: any, index: number) => ({
@@ -404,14 +404,14 @@ const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
           updatedBy: item.updated_by || '',
           updatedDate: new Date(item.updated_at).toLocaleString('en-GB'),
         }));
-        
+
         setTableData(processedTableData);
-        
-                 // Don't set summary data from main API - only show data when viewing details
-         // The second table should be blank by default
-         if (!isViewingDetails) {
-           setSummaryTableData([]);
-         }
+
+        // Don't set summary data from main API - only show data when viewing details
+        // The second table should be blank by default
+        if (!isViewingDetails) {
+          setSummaryTableData([]);
+        }
       } else {
         setTableData([]);
         // Only clear summary if not viewing details
@@ -430,12 +430,12 @@ const [activeDeleteOpen, setactiveDeleteOpen] = useState(false);
       setLoadingList(false);
     }
   };
-useEffect(()=>{
-  if(activeDeleteShift){
+  useEffect(() => {
+    if (activeDeleteShift) {
 
-    getTransaction();
-  }
-},[activeDeleteShift]);
+      getTransaction();
+    }
+  }, [activeDeleteShift]);
 
   // Fetch shift data on component mount
   useEffect(() => {
@@ -449,10 +449,10 @@ useEffect(()=>{
       setShiftLoading(true);
       const response = await APIService.GetShiftDropDownDataData();
       console.log('Shift data response:', response);
-      
+
       if (response && response.success && response.data) {
         // Transform the API response to match dropdown format
-        console.log(response.data,"response.dataresponse.data")
+        console.log(response.data, "response.dataresponse.data")
         const transformedShifts = response.data.map((shift: any) => ({
           label: shift.shift_name || shift.name || 'Unknown Shift',
           value: shift.id?.toString() || shift.shift_id?.toString() || ''
@@ -475,7 +475,7 @@ useEffect(()=>{
       setStaffLoading(true);
       const response = await APIService.GetStaffDropDownDataData();
       console.log('Staff data response:', response);
-      
+
       if (response && response.success && response.data) {
         // Transform the API response to match dropdown format for staff
         const transformedStaff = response.data.map((staff: any) => ({
@@ -497,85 +497,85 @@ useEffect(()=>{
   };
 
   return (
-    <GradientBackground colors={[ "#fdf0d0","#e0efea"]} locations={[0,30]}>
-    <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
-      <ScreenHeader
-        navigation={navigation}
-        title="Declear Transaction"
-        hideBackButton={true} showDrawerButton={true}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: scale(12) }}>
-          <TouchableOpacity onPress={() => setShowSearch((prev) => !prev)}>
-            <Ionicons name={showSearch ? 'close' : 'search'} size={24} color={COLORS.WHITE} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setIsFilterBottomSheetOpen(true)}>
-            <Ionicons name="filter" size={24} color={COLORS.WHITE} />
-          </TouchableOpacity>
-        </View>
-      </ScreenHeader>
+    <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
+      <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
+        <ScreenHeader
+          navigation={navigation}
+          title="Declare Transaction"
+          hideBackButton={true} showDrawerButton={true}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: scale(12) }}>
+            <TouchableOpacity onPress={() => setShowSearch((prev) => !prev)}>
+              <Ionicons name={showSearch ? 'close' : 'search'} size={24} color={COLORS.WHITE} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setIsFilterBottomSheetOpen(true)}>
+              <Ionicons name="filter" size={24} color={COLORS.WHITE} />
+            </TouchableOpacity>
+          </View>
+        </ScreenHeader>
 
-      {showSearch ? (
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={18} color={COLORS.BLACK} />
-          <TextInput
-            style={styles.searchText}
-            placeholder="Search by party, amount, rate, type..."
-            placeholderTextColor={COLORS.BLACK}
-            value={query}
-            onChangeText={setQuery}
-          />
-        </View>
-      ) : null}
+        {showSearch ? (
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={18} color={COLORS.BLACK} />
+            <TextInput
+              style={styles.searchText}
+              placeholder="Search by party, amount, rate, type..."
+              placeholderTextColor={COLORS.BLACK}
+              value={query}
+              onChangeText={setQuery}
+            />
+          </View>
+        ) : null}
 
-             <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
-                  {/* Main Table */}
-         <View style={styles.tableWrapper}>
+        <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
+          {/* Main Table */}
+          <View style={styles.tableWrapper}>
             {loadingList ? (
-             <View style={styles.loadingContainer}>
-               <ActivityIndicator size="large" color={COLORS.BUTTONBG} />
-               <Text style={styles.loadingText}>Loading transactions...</Text>
-             </View>
-           ) : (
-            <TableGridView
-              columns={tableColumns}
-              data={filteredItems}
-               headerBgColor={COLORS.BUTTONBG}
-               headerTextColor={COLORS.WHITE}
-             />
-            //  <></>
-           )}
-         </View>
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={COLORS.BUTTONBG} />
+                <Text style={styles.loadingText}>Loading transactions...</Text>
+              </View>
+            ) : (
+              <TableGridView
+                columns={tableColumns}
+                data={filteredItems}
+                headerBgColor={COLORS.BUTTONBG}
+                headerTextColor={COLORS.WHITE}
+              />
+              //  <></>
+            )}
+          </View>
 
-                                       {/* Summary Table */}
-           <View style={styles.tableWrapper}>
-             {/* Table Header with Title and Reset Button */}
-           
-             
-              {loadingDetails ? (
+          {/* Summary Table */}
+          <View style={styles.tableWrapper}>
+            {/* Table Header with Title and Reset Button */}
+
+
+            {loadingDetails ? (
               <View style={styles.loadingContainer}>
                 {/* <ActivityIndicator size="large" color={COLORS.BUTTONBG} /> */}
                 <Text style={styles.loadingText}>
                   {isViewingDetails ? 'Loading transaction details...' : 'Loading summary...'}
                 </Text>
               </View>
-             ) : summaryTableData.length > 0 ? (
-               <>
-                 {isViewingDetails && (
-                   <View style={styles.tableHeaderContainer}>
-                     <Text style={styles.tableHeaderTitle}>Transaction Details</Text>
-                     <TouchableOpacity style={styles.resetButton} onPress={resetToOriginalSummary}>
-                       <Ionicons name="refresh" size={16} color={COLORS.WHITE} />
-                       <Text style={styles.resetButtonText}>Reset</Text>
-                     </TouchableOpacity>
-                   </View>
-                 )}
-              <TableGridView
-                columns={summaryTableColumns}
-                data={summaryTableData}
-                headerBgColor={COLORS.BUTTONBG}
-                headerTextColor={COLORS.WHITE}
-              />
-               </>
+            ) : summaryTableData.length > 0 ? (
+              <>
+                {isViewingDetails && (
+                  <View style={styles.tableHeaderContainer}>
+                    <Text style={styles.tableHeaderTitle}>Transaction Details</Text>
+                    <TouchableOpacity style={styles.resetButton} onPress={resetToOriginalSummary}>
+                      <Ionicons name="refresh" size={16} color={COLORS.WHITE} />
+                      <Text style={styles.resetButtonText}>Reset</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                <TableGridView
+                  columns={summaryTableColumns}
+                  data={summaryTableData}
+                  headerBgColor={COLORS.BUTTONBG}
+                  headerTextColor={COLORS.WHITE}
+                />
+              </>
             ) : (
               <View style={styles.noDataContainer}>
                 <Text style={styles.noDataText}>
@@ -585,11 +585,11 @@ useEffect(()=>{
             )}
           </View>
 
-                   {/* Action Buttons */}
+          {/* Action Buttons */}
           <View style={styles.buttonContainer}>
             {/* Debug info */}
-          
-            
+
+
             <CustomButton
               title="Add"
               onPress={() => {
@@ -605,129 +605,129 @@ useEffect(()=>{
               disabled={!isAddButtonActive}
               style={{ opacity: isAddButtonActive ? 1 : 0.6 }}
             />
-           <CustomButton
-             title="Jantri View"
-             onPress={handleJantriView}
-             backgroundColor={isJantriViewButtonActive ? COLORS.BUTTONBG : '#ccc'}
-             textColor={COLORS.WHITE}
-             disabled={!isJantriViewButtonActive}
-            //  style={styles.actionButton}
-            style={{ opacity: isJantriViewButtonActive ? 1 : 0.6 }}
-           />
-           <CustomButton
-             title="Main Jantri"
-             onPress={() => setIsMainJantriModalVisible(true)}
-             backgroundColor={COLORS.BUTTONBG}
-             textColor={COLORS.WHITE}
-             style={styles.actionButton}
-           />
-         </View>
+            <CustomButton
+              title="Jantri View"
+              onPress={handleJantriView}
+              backgroundColor={isJantriViewButtonActive ? COLORS.BUTTONBG : '#ccc'}
+              textColor={COLORS.WHITE}
+              disabled={!isJantriViewButtonActive}
+              //  style={styles.actionButton}
+              style={{ opacity: isJantriViewButtonActive ? 1 : 0.6 }}
+            />
+            <CustomButton
+              title="Main Jantri"
+              onPress={() => setIsMainJantriModalVisible(true)}
+              backgroundColor={COLORS.BUTTONBG}
+              textColor={COLORS.WHITE}
+              style={styles.actionButton}
+            />
+          </View>
 
-         {/* Dropdown */}
-         <View style={styles.dropdownContainer}>
-           <CustomDropdown
-             open={activeDeleteOpen}
-             value={activeDeleteShift}
-             items={[{ label: 'Active', value: 'active' },
+          {/* Dropdown */}
+          <View style={styles.dropdownContainer}>
+            <CustomDropdown
+              open={activeDeleteOpen}
+              value={activeDeleteShift}
+              items={[{ label: 'Active', value: 'active' },
               { label: 'Deleted', value: 'deleted' }
-             ]}
-             setOpen={setactiveDeleteOpen}
-             setValue={(val: any) => {
-                    console.log('Dropdown setValue called with:', val);
-                    if (typeof val === 'function') {
-                      const value = val();
-                      console.log('Extracted value:', value);
-                      handleActiveDeleteChange(value);
-                    } else {
-                      handleActiveDeleteChange(val);
-                    }
+              ]}
+              setOpen={setactiveDeleteOpen}
+              setValue={(val: any) => {
+                console.log('Dropdown setValue called with:', val);
+                if (typeof val === 'function') {
+                  const value = val();
+                  console.log('Extracted value:', value);
+                  handleActiveDeleteChange(value);
+                } else {
+                  handleActiveDeleteChange(val);
+                }
+              }}
+              setItems={() => { }}
+              placeholder="Active"
+            />
+
+          </View>
+        </ScrollView>
+
+        {/* Filter Bottom Sheet */}
+        {isFilterBottomSheetOpen && (
+          <BottomSheet
+            backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
+            ref={filterBottomSheetRef}
+            style={{ borderWidth: 1, borderRadius: scale(10) }}
+            index={0}
+            snapPoints={snapPoints}
+            enableDynamicSizing={false}
+            onChange={(index: number) => {
+              Keyboard.dismiss();
+              if (index === -1) {
+                setIsFilterBottomSheetOpen(false);
+              } else {
+                setIsFilterBottomSheetOpen(true);
+              }
+            }}
+            backdropComponent={renderBackdrop}
+            enablePanDownToClose={true}
+            onClose={() => {
+              setIsFilterBottomSheetOpen(false);
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: scale(20),
+                paddingBottom: scale(10),
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: scale(14),
+                    fontWeight: '600',
+                    color: COLORS.BLACK,
+                    marginEnd: scale(5),
                   }}
-             setItems={() => {}}
-             placeholder="Active"
-           />
-                     
-         </View>
-       </ScrollView>
-
-       {/* Filter Bottom Sheet */}
-       {isFilterBottomSheetOpen && (
-         <BottomSheet
-           backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
-           ref={filterBottomSheetRef}
-           style={{ borderWidth: 1, borderRadius: scale(10) }}
-           index={0}
-           snapPoints={snapPoints}
-           enableDynamicSizing={false}
-           onChange={(index: number) => {
-             Keyboard.dismiss();
-             if (index === -1) {
-               setIsFilterBottomSheetOpen(false);
-             } else {
-               setIsFilterBottomSheetOpen(true);
-             }
-           }}
-           backdropComponent={renderBackdrop}
-           enablePanDownToClose={true}
-           onClose={() => {
-             setIsFilterBottomSheetOpen(false);
-           }}
-         >
-           <View
-             style={{
-               flexDirection: 'row',
-               alignItems: 'center',
-               justifyContent: 'space-between',
-               paddingHorizontal: scale(20),
-               paddingBottom: scale(10),
-             }}
-           >
-             <View
-               style={{
-                 flexDirection: 'row',
-                 alignItems: 'center',
-               }}
-             >
-               <Text
-                 style={{
-                   fontSize: scale(14),
-                   fontWeight: '600',
-                   color: COLORS.BLACK,
-                   marginEnd: scale(5),
-                 }}
-               >
-                 Search & Filter |
-                 <Text
-                   style={{
-                     fontSize: scale(10),
-                     fontWeight: '500',
-                     color: COLORS.BLACK,
-                     marginEnd: scale(5),
-                   }}
-                 >
-                   {' '}
-                   Filter your transactions
-                 </Text>
-               </Text>
-             </View>
-             <TouchableOpacity onPress={handleFilterClosePress}>
-               <Ionicons name="close" size={scale(20)} color={COLORS.BLACK} />
-             </TouchableOpacity>
-           </View>
-           <BottomSheetScrollView
-             style={{
-               padding: 16,
-               backgroundColor: COLORS.BGFILESCOLOR,
-               flex: 1,
-             }}
+                >
+                  Search & Filter |
+                  <Text
+                    style={{
+                      fontSize: scale(10),
+                      fontWeight: '500',
+                      color: COLORS.BLACK,
+                      marginEnd: scale(5),
+                    }}
+                  >
+                    {' '}
+                    Filter your transactions
+                  </Text>
+                </Text>
+              </View>
+              <TouchableOpacity onPress={handleFilterClosePress}>
+                <Ionicons name="close" size={scale(20)} color={COLORS.BLACK} />
+              </TouchableOpacity>
+            </View>
+            <BottomSheetScrollView
+              style={{
+                padding: 16,
+                backgroundColor: COLORS.BGFILESCOLOR,
+                flex: 1,
+              }}
               keyboardShouldPersistTaps="handled"
-           >
-             <View style={{ paddingVertical: scale(20) }}>
-               <View style={styles.liveTransactionBar}>
-                 <View style={styles.liveIndicator} />
-                 <Text style={styles.liveText}>Live Transaction</Text>
-               </View>
+            >
+              <View style={{ paddingVertical: scale(20) }}>
+                <View style={styles.liveTransactionBar}>
+                  <View style={styles.liveIndicator} />
+                  <Text style={styles.liveText}>Live Transaction</Text>
+                </View>
 
-                               <CustomDropdown
+                <CustomDropdown
                   label="Shift"
                   open={shiftOpen}
                   value={selectedShift}
@@ -743,55 +743,55 @@ useEffect(()=>{
                       handleShiftChange(val);
                     }
                   }}
-                  setItems={() => {}}
+                  setItems={() => { }}
                   placeholder={shiftLoading ? "Loading shifts..." : "Select Shift"}
                 />
 
-               <CustomDateTimePicker
-                 label="Date"
-                 value={selectedDate}
-                 setFieldValue={handleDateChange}
-                 fieldName="date"
-                 mode={'date'}
-               />
+                <CustomDateTimePicker
+                  label="Date"
+                  value={selectedDate}
+                  setFieldValue={handleDateChange}
+                  fieldName="date"
+                  mode={'date'}
+                />
 
-               <View style={styles.inputContainer}>
-                 <Text style={styles.inputLabel}>Search Party</Text>
-                 <TextInput
-                   style={styles.textInput}
-                   placeholder="SEARCH PARTY..."
-                   value={searchParty}
-                   onChangeText={setSearchParty}
-                   placeholderTextColor="#999"
-                 />
-               </View>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Search Party</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="SEARCH PARTY..."
+                    value={searchParty}
+                    onChangeText={setSearchParty}
+                    placeholderTextColor="#999"
+                  />
+                </View>
 
-               <CustomDropdown
-                 label="Staff"
-                 open={staffOpen}
-                 value={selectedStaff}
-                 items={staffItems}
-                 setOpen={setStaffOpen}
-                 setValue={setSelectedStaff}
-                 setItems={() => {}}
-                 placeholder={staffLoading ? "Loading staff..." : "--STAFF--"}
-               />
+                <CustomDropdown
+                  label="Staff"
+                  open={staffOpen}
+                  value={selectedStaff}
+                  items={staffItems}
+                  setOpen={setStaffOpen}
+                  setValue={setSelectedStaff}
+                  setItems={() => { }}
+                  placeholder={staffLoading ? "Loading staff..." : "--STAFF--"}
+                />
 
-               <View style={{ marginVertical: scale(10) }}>
-                 <CustomButton
-                   title="Search"
-                   onPress={handleFilterClosePress}
-                   backgroundColor={COLORS.BUTTONBG}
-                   textColor={COLORS.WHITE}
-                 />
-               </View>
-             </View>
-           </BottomSheetScrollView>
-         </BottomSheet>
-       )}
+                <View style={{ marginVertical: scale(10) }}>
+                  <CustomButton
+                    title="Search"
+                    onPress={handleFilterClosePress}
+                    backgroundColor={COLORS.BUTTONBG}
+                    textColor={COLORS.WHITE}
+                  />
+                </View>
+              </View>
+            </BottomSheetScrollView>
+          </BottomSheet>
+        )}
 
 
-               {/* Main Jantri Modal */}
+        {/* Main Jantri Modal */}
         <JantriModal
           visible={isMainJantriModalVisible}
           onClose={() => setIsMainJantriModalVisible(false)}
@@ -819,15 +819,15 @@ useEffect(()=>{
           isMainJantri={false}
         />
         <CopyModal
-  visible={isCopyModalVisible}
-  onClose={() => { setIsCopyModalVisible(false); setCopyItem(null); }}
-  onSave={handleCopyModalSave}
-  loading={copyLoading}
-/>
-   </SafeAreaView>
-   </GradientBackground>
-   );
- };
+          visible={isCopyModalVisible}
+          onClose={() => { setIsCopyModalVisible(false); setCopyItem(null); }}
+          onSave={handleCopyModalSave}
+          loading={copyLoading}
+        />
+      </SafeAreaView>
+    </GradientBackground>
+  );
+};
 
 const styles = StyleSheet.create({
   safeAreaContainer: {
@@ -961,7 +961,7 @@ const styles = StyleSheet.create({
     paddingVertical: scale(2),
     flexWrap: 'nowrap',
   },
-     actionButton: {
+  actionButton: {
     borderRadius: scale(6),
     borderWidth: 1,
     elevation: 1,
@@ -1083,5 +1083,5 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(20),
     color: COLORS.WHITE,
   },
-});   
+});
 export default DeclareTransaction;

@@ -86,7 +86,7 @@ const TableGrid: React.FC<TableProps> = ({
                         >
                             {/* {typeof (item[column.key]) === 'boolean' ? `${item[column.key] ? 'Yes' : 'No'}` : item[column.key]} */}
 
-                            {item[column.key] || '-'}
+                            {item[column.key] ?? '-'}
                         </Text>
                     )}
                 </View>
@@ -136,7 +136,8 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         overflow: 'hidden',
         minWidth: '100%',
-        flex:1
+        flex: 1,
+        backgroundColor: COLORS.WHITE,
     },
     headerRow: {
         flexDirection: 'row',

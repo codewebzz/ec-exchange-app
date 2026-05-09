@@ -62,6 +62,7 @@ const APIService = {
       open_date: data?.open_date,
       next_day: data?.next_day,
       shift_mode: data?.shift_mode,
+      auto_open: data?.auto_open,
       super_admin_update_time: data?.super_admin_update_time,
       cash_agent_update_time: data?.cash_agent_update_time,
       data_entry_operator_update_time: data?.data_entry_operator_update_time,
@@ -533,7 +534,7 @@ const APIService = {
       date: data?.date
     }),
   liveResultByNumber: (data: any, number: any): Promise<CommonResponse> =>
-    AxiosService.post<CommonResponse>(`api/get_live_prediction/${number}`),
+    AxiosService.post<CommonResponse>(`api/get_live_prediction/${number}`, data),
   LiveResult: (data: any, number: any): Promise<CommonResponse> => AxiosService.post<CommonResponse>(`api/get_live_prediction`, {
     shift_id: data?.shift_id,
     date: data?.date
@@ -626,6 +627,26 @@ const APIService = {
       return res;
     } catch (err: any) {
       console.log('GetLedgerTransactionModes Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  DeclareShift: (params: any): Promise<CommonResponse> =>
+    AxiosService.patch<CommonResponse>(`api/declare_shift`, {}, { params }),
+  GetConsolidatedJantri: async (ledger_id: number, params?: object): Promise<any> => {
+    try {
+      const res = await AxiosService.post(`api/get_consolidated_jantri_of_ledger/${ledger_id}`, params);
+      return res;
+    } catch (err: any) {
+      console.log('GetConsolidatedJantri Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetDeclaredNumber: async (params: { date: string; shift_id: number }): Promise<any> => {
+    try {
+      const res = await AxiosService.get('api/get_declared_number', params);
+      return res;
+    } catch (err: any) {
+      console.log('GetDeclaredNumber Error:', err?.response?.data || err.message);
       throw err;
     }
   },

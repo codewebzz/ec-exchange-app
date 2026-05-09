@@ -318,27 +318,24 @@ const Settling = ({ navigation }: any) => {
           >
             <ReportTable
               data={filteredItems}
-              columns={[
-                { key: 'sno', label: 'S.No.', width: 50, align: 'center' },
-                { key: 'name', label: 'name', width: 200, align: 'left' },
-                { key: 'agent', label: 'Agent', width: 100, align: 'left' },
-                { key: 'rate', label: 'Rate', width: 120, align: 'left' },
-                { key: 'self_hissa', label: 'Self Hissa', width: 100, align: 'left' },
-                { key: 'tphissa', label: 'TP-Hissa', width: 100, align: 'left' },
-                { key: 'total_sale', label: 'Total-Sale', width: 100, align: 'right', numeric: true },
-                { key: 'dhai_sale', label: 'Dara-Sale', width: 100, align: 'right', numeric: true },
-                { key: 'hurp_sale', label: 'Akhar-Sale', width: 100, align: 'right', numeric: true },
-                { key: 'commission', label: 'Comm', width: 100, align: 'right', numeric: true },
-                { key: 'open_dhai', label: 'Open-Dhara', width: 100, align: 'right', numeric: true },
-                { key: 'clam_value_dhai', label: 'Amt-Dhara', width: 100, align: 'right', numeric: true },
-                { key: 'open_hurp', label: 'Open-Akhar', width: 100, align: 'right', numeric: true },
-                { key: 'clam_value_hurp', label: 'Amt-Akhar', width: 100, align: 'right', numeric: true },
-                { key: 'tpc', label: 'TCP', width: 80, align: 'right', numeric: true },
-                { key: 'self_hissa_amount', label: 'S-Hissa-Amt', width: 120, align: 'right', numeric: true },
-                { key: 'tpHissaAmt', label: 'TP-Hissa-Amt', width: 120, align: 'right', numeric: true },
-                { key: 'lena', label: 'Lena', width: 100, align: 'right', numeric: true },
-                { key: 'dena', label: 'Dena', width: 100, align: 'right', numeric: true },
-              ]}
+            columns={[
+              { key: 'sno', label: 'S.No.', width: 50, align: 'center' },
+              { key: 'name', label: 'Party', width: 200, align: 'left' },
+              { key: 'date', label: 'Date', width: 120, align: 'left' },
+              { key: 'openning', label: 'OP-Bal', width: 100, align: 'right', numeric: true },
+              { key: 'total_sale', label: 'T-Sale', width: 100, align: 'right', numeric: true },
+              { key: 'dhai_sale', label: 'D-Sale', width: 100, align: 'right', numeric: true },
+              { key: 'hurp_sale', label: 'A-Sale', width: 100, align: 'right', numeric: true },
+              { key: 'commission', label: 'Comm', width: 100, align: 'right', numeric: true },
+              { key: 'daOpen', label: 'D/A-Open', width: 100, align: 'right', numeric: true },
+              { key: 'hissa', label: 'Hissa', width: 100, align: 'right', numeric: true },
+              { key: 'tpc', label: 'TPC', width: 80, align: 'right', numeric: true },
+              { key: 'hp_amt', label: 'HP-Amt', width: 100, align: 'right', numeric: true },
+              { key: 'rebate', label: 'RBT', width: 100, align: 'right', numeric: true },
+              { key: 'pl', label: 'P&L', width: 100, align: 'right', numeric: true },
+              { key: 'payment', label: 'Payment', width: 100, align: 'right', numeric: true },
+              { key: 'closing', label: 'Balance', width: 100, align: 'right', numeric: true },
+            ]}
               enableRowPress={true}
               onRowPress={(row) => {
                 console.log("Row clicked:", row);

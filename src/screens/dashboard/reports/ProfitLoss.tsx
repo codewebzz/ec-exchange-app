@@ -225,16 +225,16 @@ const ProfitLoss = ({ navigation }: any) => {
         >
            <ReportTable
              data={filteredItems}
-             columns={[
+            columns={[
                { key: 'sno', label: 'S.No.', width: 50, align: 'center' },
                { key: 'shift', label: 'Shift', width: 150, align: 'left' },
                { key: 'total_sale', label: 'Total Sale', width: 120, align: 'right', numeric: true },
                { key: 'dhai_sale', label: 'Dara Sale', width: 120, align: 'right', numeric: true },
                { key: 'hurp_sale', label: 'Akhar Sale', width: 120, align: 'right', numeric: true },
                { key: 'commission', label: 'Comm', width: 100, align: 'right', numeric: true },
-               { key: 'tpc', label: 'TCP', width: 80, align: 'right', numeric: true },
-               { key: 'open_dhai', label: 'Open Dhara', width: 120, align: 'right', numeric: true },
-               { key: 'open_hurp', label: 'Open Akhar', width: 120, align: 'right', numeric: true },
+               { key: 'open_dhai', label: 'Dara Open', width: 120, align: 'right', numeric: true },
+               { key: 'open_hurp', label: 'Akhar Open', width: 120, align: 'right', numeric: true },
+               { key: 'tpc', label: 'TPC', width: 80, align: 'right', numeric: true },
                { key: 'hissa', label: 'Hissa', width: 120, align: 'right', numeric: true },
                { key: 'closing', label: 'Closing', width: 120, align: 'right', numeric: true },
              ]}

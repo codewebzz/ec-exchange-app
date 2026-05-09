@@ -1,45 +1,40 @@
-import React, { useState } from 'react';
-import {
-  ScrollView,
-  Button,
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Keyboard,
-  TouchableOpacity,
-} from 'react-native';
-import { useSelector } from 'react-redux';
-import DeclareStatusCard from '../../../components/DeclareStatusCard';
 import BottomSheet, {
   BottomSheetBackdrop,
-  BottomSheetScrollView,
-  BottomSheetView,
+  BottomSheetScrollView
 } from '@gorhom/bottom-sheet';
 import { Formik } from 'formik';
-import CustomDropdown from '../../../components/CustomDropdown';
-import CustomDateTimePicker from '../../../components/CustomDatePicker';
-import * as Yup from 'yup';
-import CustomTextInput from '../../../components/CustomTextInput';
-import CustomButton from '../../../components/CustomButton';
-import { COLORS } from '../../../assets/colors';
-import { scale } from 'react-native-size-matters';
+import React, { useState } from 'react';
+import {
+  Keyboard,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ScreenHeader from '../../../components/ScreenHeader';
-import TabHeader from '../../../components/TabHeader';
-import APIService from '../../services/APIService';
+import { scale } from 'react-native-size-matters';
 import Toast from 'react-native-toast-message';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import useSearchBar from '../../../hooks/useSearchBar';
+import { useSelector } from 'react-redux';
+import * as Yup from 'yup';
+import { COLORS } from '../../../assets/colors';
+import CustomButton from '../../../components/CustomButton';
+import CustomDropdown from '../../../components/CustomDropdown';
+import CustomTextInput from '../../../components/CustomTextInput';
+import DeclareStatusCard from '../../../components/DeclareStatusCard';
 import GradientBackground from '../../../components/GradientBackground';
+import ScreenHeader from '../../../components/ScreenHeader';
+import TabHeader from '../../../components/TabHeader';
+import useSearchBar from '../../../hooks/useSearchBar';
+import APIService from '../../services/APIService';
 const AddStaffSchema = Yup.object().shape({
   staffName: Yup.string().required('Staff Name is required'),
   role: Yup.string().required('Role is required'),
   wMode: Yup.string().required('Work Mode is required'),
   username: Yup.string().required('Username is required'),
   password: Yup.string().required('Password is required'),
-  agent: Yup.string().required('Agent is required'),
   mobile: Yup.string().required('Mobile is required').matches(/^[0-9]{10}$/, 'Mobile must be 10 digits'),
   address: Yup.string().required('Address is required'),
 });
@@ -50,7 +45,6 @@ const EditInfoSchema = Yup.object().shape({
   role: Yup.string().required('Role is required'),
   wMode: Yup.string().required('Work Mode is required'),
   username: Yup.string().required('Username is required'),
-  agent: Yup.string().required('Agent is required'),
   mobile: Yup.string().required('Mobile is required').matches(/^[0-9]{10}$/, 'Mobile must be 10 digits'),
   address: Yup.string().required('Address is required'),
 });
@@ -114,11 +108,7 @@ const Staff = ({ navigation }: any) => {
   const [dropdownValue3, setDropdownValue3] = React.useState<string | null>(
     null,
   );
-  const [dropdownItems3, setDropdownItems3] = React.useState([
-    // { label: 'Bhasker-Leaged-Cash', value: '1' },
-    // { label: 'Suresh-Leaged-Cash', value: '2' },
-    // { label: 'Umesh-Leaged-Cash', value: '3' },
-  ]);
+  const [dropdownItems3, setDropdownItems3] = React.useState([]);
   const [selectedStatus, setSelectedStatus] = useState<string>('Active');
   const [statusDropdownOpen, setStatusDropdownOpen] = useState<boolean>(false);
   const statusDropdownItems = [
@@ -155,7 +145,6 @@ const Staff = ({ navigation }: any) => {
           break;
         // case 'Locked':
         //   apiParams = { locked: 1 };
-        //   break;
         case 'NotActive':
           apiParams = { inactive: 1 };
           break;
@@ -200,7 +189,6 @@ const Staff = ({ navigation }: any) => {
   };
   React.useEffect(() => {
     if (selectedCompany) {
-      // Method 1: Map by name (if parent sends name)
       const staffRoleValue = findDropdownValue(
         dropdownItems,
         selectedCompany.staff_role?.name,
@@ -213,12 +201,7 @@ const Staff = ({ navigation }: any) => {
       );
       setDropdownValue2(workModeValue);
 
-      const agentValue = findDropdownValue(
-        dropdownItems3,
-        selectedCompany.agent?.name,
-      );
-      setDropdownValue3(agentValue);
-
+      setDropdownValue2(workModeValue);
     }
   }, [selectedCompany]);
 
@@ -259,7 +242,6 @@ const Staff = ({ navigation }: any) => {
     setIsEditing(false);
     setDropdownValue(null);
     setDropdownValue2(null);
-    setDropdownValue3(null);
   };
   const handleEditShift = (item: any) => {
     setSelectedCompany(item);
@@ -268,22 +250,11 @@ const Staff = ({ navigation }: any) => {
   };
   const [activeTab, setActiveTab] = useState(0);
 
-  // const getStaff = async () => {
-  //   try {
-  //     const response = await APIService.GetStaff();
-  //     if (response?.success) {
-  //       setData(response?.data);
-  //     }
-  //   } catch (error) {
-  //     console.error('Shift fetch failed', error);
-  //   }
-  // };
   const handleCreateStaff = async (values: any) => {
     try {
       const payload = {
         staff_name: values?.staffName || '',
         staff_role: values?.role !== null && values?.role !== undefined && values?.role !== '' ? Number(values.role) : null,
-        agent_id: values?.agent !== null && values?.agent !== undefined && values?.agent !== '' ? Number(values.agent) : 0,
         password: values?.password || '',
         mobile: values?.mobile || '',
         address: values?.address || '',
@@ -309,13 +280,10 @@ const Staff = ({ navigation }: any) => {
   const handleUpdateShift = async (values: any) => {
     try {
       const payload = {
-        // staff_name: values?.staffName || '',
         staff_role: values?.role !== null && values?.role !== undefined && values?.role !== '' ? Number(values.role) : null,
-        agent_id: values?.agent !== null && values?.agent !== undefined && values?.agent !== '' ? Number(values.agent) : 0,
         password: values?.password || '',
         mobile: values?.mobile || '',
         address: values?.address || '',
-        // username: values?.username || '',
         work_mode: values?.wMode !== null && values?.wMode !== undefined && values?.wMode !== '' ? Number(values.wMode) : null,
       };
 
@@ -354,10 +322,8 @@ const Staff = ({ navigation }: any) => {
   };
   React.useEffect(() => {
     fetchLedgerData();
-    fetchAgentData();
   }, []);
 
-  // Fetch ledger dropdown data
   const fetchLedgerData = async () => {
     try {
       setLedgerLoading(true);
@@ -365,7 +331,6 @@ const Staff = ({ navigation }: any) => {
       console.log('Ledger data response:', response);
 
       if (response && response.success && response.data) {
-        // Transform the API response to match dropdown format for ledgers
         const transformedLedgers = response.data.map((ledger: any) => ({
           label: ledger.real_name || ledger.name || 'Unknown Ledger',
           value: ledger.id?.toString() || ledger.ledger_id?.toString() || ''
@@ -379,31 +344,6 @@ const Staff = ({ navigation }: any) => {
     } catch (error) {
       console.error('Error fetching ledger data:', error);
       setDropdownItems([]);
-    } finally {
-      setLedgerLoading(false);
-    }
-  };
-  const fetchAgentData = async () => {
-    try {
-      setLedgerLoading(true);
-      const response = await APIService.getMasterLedgerAgent();
-      console.log('Ledger data response:', response);
-
-      if (response && response.success && response.data) {
-        // Transform the API response to match dropdown format for ledgers
-        const transformedLedgers = response.data.map((ledger: any) => ({
-          label: ledger.real_name || ledger.name || 'Unknown Ledger',
-          value: ledger.id?.toString() || ledger.ledger_id?.toString() || ''
-        }));
-        setDropdownItems3(transformedLedgers);
-        console.log('Transformed ledger items:', transformedLedgers);
-      } else {
-        console.log('No ledger data found or API error');
-        setDropdownItems3([]);
-      }
-    } catch (error) {
-      console.error('Error fetching ledger data:', error);
-      setDropdownItems3([]);
     } finally {
       setLedgerLoading(false);
     }
@@ -466,7 +406,6 @@ const Staff = ({ navigation }: any) => {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 position: 'relative',
-                // zIndex: 1, // Lower z-index to stay below bottom sheet
               }}
             >
               {!isOpenBottomSheet && (
@@ -510,15 +449,6 @@ const Staff = ({ navigation }: any) => {
               )}
 
             </View>
-            {/* <View
-            style={{
-              marginVertical: scale(10),
-              marginHorizontal: scale(15),
-              alignItems: 'flex-end',
-            }}
-          >
-           
-          </View> */}
             <ScrollView style={{ padding: 16 }} keyboardShouldPersistTaps="handled">
               {Array.isArray(getData) && getData.length === 0 ? (
                 <Text style={style.noResultsText}>No data found</Text>
@@ -532,7 +462,6 @@ const Staff = ({ navigation }: any) => {
                 ]}
                 actionOneLabel="Is Active"
                 actionTwoLabel="Action"
-                // statusKey="status"
                 onActionOne={handleToggleActive}
                 onActionTwo={(item: any) => {
                   handleEditShift(item);
@@ -542,7 +471,7 @@ const Staff = ({ navigation }: any) => {
               />)}
             </ScrollView>
             {isOpenBottomSheet && (
-                 <BottomSheet
+              <BottomSheet
                 backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
                 ref={bottomSheetRef}
                 style={{ borderWidth: 1, borderRadius: scale(10) }}
@@ -578,7 +507,6 @@ const Staff = ({ navigation }: any) => {
                       wMode: findDropdownValue(dropdownItems2, selectedCompany?.work_mode?.name) || '',
                       username: selectedCompany?.username || '',
                       password: '',
-                      agent: findDropdownValue(dropdownItems3, selectedCompany?.agent?.name) || '',
                       mobile: selectedCompany?.mobile || '',
                       address: selectedCompany?.address || '',
                     }}
@@ -613,7 +541,7 @@ const Staff = ({ navigation }: any) => {
                               onSubmitEditing={() => setFocusedField('role')}
                             />
 
-                             <CustomDropdown
+                            <CustomDropdown
                               label="Role"
                               open={openDropdown}
                               value={dropdownValue}
@@ -631,7 +559,7 @@ const Staff = ({ navigation }: any) => {
                             />
 
                             <View style={style.flexSingleColumb}>
-                               <CustomDropdown
+                              <CustomDropdown
                                 label="W-Mode"
                                 open={openDropdown2}
                                 value={dropdownValue2}
@@ -648,7 +576,7 @@ const Staff = ({ navigation }: any) => {
                                 error={errors.wMode}
                               />
                             </View>
-                             <View style={style.flexSingleColumb}>
+                            <View style={style.flexSingleColumb}>
                               <CustomTextInput
                                 ref={usernameRef}
                                 label="UserName"
@@ -661,9 +589,7 @@ const Staff = ({ navigation }: any) => {
                               />
                             </View>
 
-
-
-                             <View style={style.flexSingleColumb}>
+                            <View style={style.flexSingleColumb}>
                               <CustomTextInput
                                 ref={passwordRef}
                                 label="Password"
@@ -672,29 +598,11 @@ const Staff = ({ navigation }: any) => {
                                 error={typeof errors.password === 'string' ? errors.password : undefined}
                                 onFocus={() => setFocusedField(null)}
                                 returnKeyType="next"
-                                onSubmitEditing={() => setOpenDropdown3(true)}
-                              />
-                            </View>
-                            <View style={style.flexSingleColumb}>
-                               <CustomDropdown
-                                label="Agent"
-                                open={openDropdown3}
-                                value={dropdownValue3}
-                                items={dropdownItems3}
-                                setOpen={setOpenDropdown3}
-                                isFocused={focusedField === 'agent'}
-                                onOpen={() => setFocusedField('agent')}
-                                setValue={(val: any) => {
-                                  setDropdownValue3(val());
-                                  setFieldValue('agent', val());
-                                  setFocusedField(null);
-                                }}
-                                setItems={setDropdownItems3}
-                                error={errors.agent}
+                                onSubmitEditing={() => mobileRef.current?.focus()}
                               />
                             </View>
 
-                             <CustomTextInput
+                            <CustomTextInput
                               ref={mobileRef}
                               label="Mobile"
                               value={values.mobile}
@@ -711,7 +619,7 @@ const Staff = ({ navigation }: any) => {
                               returnKeyType="next"
                               onSubmitEditing={() => addressRef.current?.focus()}
                             />
-                             <CustomTextInput
+                            <CustomTextInput
                               ref={addressRef}
                               label="Address"
                               value={values.address}
@@ -789,22 +697,6 @@ const Staff = ({ navigation }: any) => {
                                   setItems={setDropdownItems2}
                                   error={errors.wMode}
                                 />
-                                <CustomDropdown
-                                  label="Agent"
-                                  open={openDropdown3}
-                                  value={dropdownValue3}
-                                  items={dropdownItems3}
-                                  setOpen={setOpenDropdown3}
-                                  isFocused={focusedField === 'agent'}
-                                  onOpen={() => setFocusedField('agent')}
-                                  setValue={(val: any) => {
-                                    setDropdownValue3(val());
-                                    setFieldValue('agent', val());
-                                    setFocusedField(null);
-                                  }}
-                                  setItems={setDropdownItems3}
-                                  error={errors.agent}
-                                />
                                 <CustomTextInput
                                   ref={mobileRef}
                                   label="Mobile"
@@ -822,7 +714,7 @@ const Staff = ({ navigation }: any) => {
                                   returnKeyType="next"
                                   onSubmitEditing={() => addressRef.current?.focus()}
                                 />
-                                 <CustomTextInput
+                                <CustomTextInput
                                   ref={addressRef}
                                   label="Address"
                                   value={values.address}
@@ -847,16 +739,16 @@ const Staff = ({ navigation }: any) => {
                               </View>
                             ) : (
                               <View>
-                                 <CustomTextInput
-                                   ref={passwordRef}
-                                   label="Password"
-                                   value={values.password}
-                                   onChangeText={handleChange('password')}
-                                   error={errors.password}
-                                   onFocus={() => setFocusedField(null)}
-                                   returnKeyType="done"
-                                   onSubmitEditing={() => handleSubmit()}
-                                 />
+                                <CustomTextInput
+                                  ref={passwordRef}
+                                  label="Password"
+                                  value={values.password}
+                                  onChangeText={handleChange('password')}
+                                  error={errors.password}
+                                  onFocus={() => setFocusedField(null)}
+                                  returnKeyType="done"
+                                  onSubmitEditing={() => handleSubmit()}
+                                />
                                 <CustomButton
                                   title="Save"
                                   onPress={() => {
