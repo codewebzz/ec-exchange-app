@@ -16,11 +16,14 @@ interface DeclareStatusCardProps {
   statusKey?: string;
   onActionOne?: (item: any) => void;
   onActionTwo?: (item: any) => void;
+  onActionThree?: (item: any) => void;
   actionOneLabel?: string;
   actionTwoLabel?: string;
+  actionThreeLabel?: string;
   isButtonOne?: boolean;
-  isButtonTwo?: boolean
-  value?: boolean
+  isButtonTwo?: boolean;
+  isButtonThree?: boolean;
+  value?: boolean;
   useToggleOne?: boolean;
   activeKey?: string;
   refreshing?: boolean;
@@ -33,10 +36,13 @@ const DeclareStatusCard = ({
   statusKey = 'status',
   onActionOne,
   onActionTwo,
+  onActionThree,
   actionOneLabel = 'Edit',
   actionTwoLabel = 'Delete',
+  actionThreeLabel = 'Copy',
   isButtonOne = true,
   isButtonTwo = true,
+  isButtonThree = false,
   value,
   useToggleOne = false,
   activeKey = 'active_status',
@@ -44,6 +50,9 @@ const DeclareStatusCard = ({
   onRefresh,
 }: DeclareStatusCardProps) => {
   const formatValue = (value: any, key: string) => {
+    if (React.isValidElement(value)) {
+      return value;
+    }
     if (value === null || value === undefined) {
       return '';
     }
@@ -168,11 +177,17 @@ const DeclareStatusCard = ({
         <View style={styles.divider} />
 
         {config.map((field, i) => {
-          const v = formatValue(item[field.key], field.key);
+          const rawValue = item[field.key];
+          const v = formatValue(rawValue, field.key);
+
           return (
             <View key={field.key + String(i)} style={styles.kvRow}>
               <Text style={styles.keyText}>{field.label}</Text>
-              <Text style={styles.valueText} numberOfLines={1}>{String(v) || '-'}</Text>
+              {React.isValidElement(v) ? (
+                <View style={styles.valueContainer}>{v}</View>
+              ) : (
+                <Text style={styles.valueText} numberOfLines={1}>{String(v) || '-'}</Text>
+              )}
             </View>
           );
         })}
@@ -192,12 +207,21 @@ const DeclareStatusCard = ({
             )
           )}
 
-          {isButtonTwo && (
-            <TouchableOpacity onPress={() => onActionTwo?.(item)} style={styles.secondaryBtn} activeOpacity={0.85}>
-              <Icon name="delete-outline" size={18} color={'#B45309'} />
-              <Text style={styles.secondaryText}>{actionTwoLabel}</Text>
-            </TouchableOpacity>
-          )}
+          <View style={styles.rightActions}>
+            {isButtonThree && (
+              <TouchableOpacity onPress={() => onActionThree?.(item)} style={styles.copyBtn} activeOpacity={0.85}>
+                <Icon name="content-copy" size={16} color={'#2563EB'} />
+                <Text style={styles.copyText}>{actionThreeLabel || 'Copy'}</Text>
+              </TouchableOpacity>
+            )}
+
+            {isButtonTwo && (
+              <TouchableOpacity onPress={() => onActionTwo?.(item)} style={styles.secondaryBtn} activeOpacity={0.85}>
+                <Icon name="delete-outline" size={18} color={'#B45309'} />
+                <Text style={styles.secondaryText}>{actionTwoLabel}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
     );
@@ -324,6 +348,10 @@ const styles = StyleSheet.create({
     maxWidth: '60%',
     textAlign: 'right',
   },
+  valueContainer: {
+    maxWidth: '60%',
+    alignItems: 'flex-end',
+  },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -416,5 +444,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: scale(12),
     paddingTop: scale(4),
     paddingBottom: scale(12),
+  },
+  closedChip: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: scale(8),
+    paddingVertical: scale(2),
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(8),
+  },
+  closedChipText: {
+    color: '#B91C1C',
+    fontSize: scale(10),
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  copyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
   },
 });

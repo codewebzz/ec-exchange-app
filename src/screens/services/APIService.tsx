@@ -548,6 +548,15 @@ const APIService = {
       throw err;
     }
   },
+  GetSupportedUserRoles: async (): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/master/supported_user_roles`);
+      return res;
+    } catch (err: any) {
+      console.log('GetSupportedUserRoles Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
   agentRoleAPI: async (params?: object, transaction_id?: number): Promise<any> => {
     try {
       const res = await AxiosService.get(`api/master/get_all_staff_name_id`);
@@ -647,6 +656,42 @@ const APIService = {
       return res;
     } catch (err: any) {
       console.log('GetDeclaredNumber Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetAllPermissionsRoles: async (): Promise<any> => {
+    try {
+      const res = await AxiosService.get('api/all_permission_roles');
+      return res;
+    } catch (err: any) {
+      console.log('GetAllPermissionsRoles Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetPermissionsForRole: async (roleId: number): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/get_permissions_for/${roleId}`);
+      return res;
+    } catch (err: any) {
+      console.log('GetPermissionsForRole Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetPermissionsForStaff: async (staffId: number): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/get_permissions_for_staff/${staffId}`);
+      return res;
+    } catch (err: any) {
+      console.log('GetPermissionsForStaff Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  UpdateStaffPermissions: async (data: any): Promise<any> => {
+    try {
+      const res = await AxiosService.put(`api/update_staff_permission`, data);
+      return res;
+    } catch (err: any) {
+      console.log('UpdateStaffPermissions Error:', err?.response?.data || err.message);
       throw err;
     }
   },

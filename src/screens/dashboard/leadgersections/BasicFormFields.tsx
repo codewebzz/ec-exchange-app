@@ -1,27 +1,17 @@
+import { Keyboard } from "react-native";
 import CustomDropdown from "../../../components/CustomDropdown";
 import CustomTextInput from "../../../components/CustomTextInput";
-import { Keyboard, Text, View } from "react-native";
 
 export const BasicFormFields = ({ values, errors, touched, handleChange, dropdownProps, inputRefs, focusedField, setFocusedField }: any) => {
   const { setFieldValue } = dropdownProps;
-  const { leadgerNameRef, realNameRef, cappingRef, dhaniRateRef, groupDropdownRef } = inputRefs;
+  const { realNameRef, cappingRef, dhaniRateRef, groupDropdownRef } = inputRefs;
 
   return (
     <>
-      <CustomTextInput
-        ref={leadgerNameRef}
-        label="Leadger Name"
-        value={values.leadgerName}
-        onChangeText={handleChange('leadgerName')}
-        error={touched.leadgerName && typeof errors.leadgerName === 'string' ? errors.leadgerName : undefined}
-        returnKeyType="next"
-        onSubmitEditing={() => realNameRef.current?.focus()}
-        onFocus={() => setFocusedField(null)}
-      />
-      
+
       <CustomTextInput
         ref={realNameRef}
-        label="Real Name"
+        label="Name"
         value={values.realName}
         onChangeText={handleChange('realName')}
         error={touched.realName && typeof errors.realName === 'string' ? errors.realName : undefined}
@@ -29,7 +19,7 @@ export const BasicFormFields = ({ values, errors, touched, handleChange, dropdow
         onSubmitEditing={() => cappingRef.current?.focus()}
         onFocus={() => setFocusedField(null)}
       />
-      
+
       <CustomTextInput
         ref={cappingRef}
         label="Capping"
@@ -47,11 +37,11 @@ export const BasicFormFields = ({ values, errors, touched, handleChange, dropdow
           // If we are not moving to group, clear it? Actually handled in onSubmitEditing
         }}
       />
-      
+
       <CustomDropdown
         ref={groupDropdownRef}
         key={`group-dropdown-${dropdownProps.dropdownValue || 'empty'}`}
-        label="Group"
+        label="Group*"
         open={dropdownProps.openDropdown}
         value={dropdownProps.dropdownValue}
         items={dropdownProps.dropdownItems}
@@ -64,15 +54,15 @@ export const BasicFormFields = ({ values, errors, touched, handleChange, dropdow
           console.log('Group dropdown setValue called with:', val);
           const selectedValue = typeof val === 'function' ? val() : val;
           dropdownProps.setDropdownValue(selectedValue);
-          
+
           // Find the selected item to get both value and label
           const selectedItem = dropdownProps.dropdownItems.find((item: any) => item.value === selectedValue);
-          
+
           // Store the VALUE (ID) in the form field
           if (typeof setFieldValue === 'function') {
             setFieldValue('group', selectedValue);
             console.log('Form field group set to:', selectedValue);
-            
+
             // Also store the label if you want to use it elsewhere
             if (selectedItem) {
               setFieldValue('groupLabel', selectedItem.label);
@@ -85,7 +75,7 @@ export const BasicFormFields = ({ values, errors, touched, handleChange, dropdow
         placeholder="Select Group"
         onChangeValue={(selectedValue: any) => {
           console.log('Group dropdown onChangeValue called with:', selectedValue);
-          
+
           // Focus the next field after selection
           if (selectedValue) {
             setFocusedField(null); // Selection complete
@@ -94,7 +84,7 @@ export const BasicFormFields = ({ values, errors, touched, handleChange, dropdow
 
           // Find the selected item to get the label
           const selectedItem = dropdownProps.dropdownItems.find((item: any) => item.value === selectedValue);
-          
+
           if (selectedItem) {
             console.log('Selected group:', {
               value: selectedValue,
@@ -105,7 +95,7 @@ export const BasicFormFields = ({ values, errors, touched, handleChange, dropdow
       />
 
       {/* Display selected group information */}
-   
+
 
     </>
   );

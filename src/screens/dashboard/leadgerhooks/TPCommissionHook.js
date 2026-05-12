@@ -6,8 +6,8 @@ export const useTPCommission = (values, setFieldValue, editingTPIndex) => {
   const [isTPModalOpen, setIsTPModalOpen] = useState(false);
 
   const handleAddTPCommission = () => {
-    if (!tpModalData.partyName || !tpModalData.dComm ) {
-      Alert.alert('Error', 'Please fill all fields');
+    if (!tpModalData.partyName || (!tpModalData.dComm && !tpModalData.hComm)) {
+      Alert.alert('Error', 'Please fill party name and at least one commission field');
       return;
     }
 
@@ -35,10 +35,10 @@ export const useTPCommission = (values, setFieldValue, editingTPIndex) => {
     }
 
     const totalHComm = existingHCommTotal + hComm;
-    // if (totalHComm > harupCommission) {
-    //   Alert.alert('Error', `Total H-Comm (${totalHComm}) cannot exceed Harup Commission (${harupCommission})`);
-    //   return;
-    // }
+    if (totalHComm > harupCommission) {
+      Alert.alert('Error', `Total H-Comm (${totalHComm}) cannot exceed Harup Commission (${harupCommission})`);
+      return;
+    }
 
     const newTPCommission = {
       partyName: tpModalData.partyName,

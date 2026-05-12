@@ -4,15 +4,7 @@ import APIService from "../../services/APIService";
 export const useDropdownStates = () => {
   const [openDropdown, setOpenDropdown] = useState(false);
   const [dropdownValue, setDropdownValue] = useState(null);
-  const [dropdownItems, setDropdownItems] = useState([
-    { label: 'fanter', value: '1' },
-    { label: 'cash agent', value: '2' },
-    { label: 'direct expense', value: '3' },
-    { label: 'distributer', value: '4' },
-    { label: 'profit & loss', value: '5' },
-    { label: 'indirect expense', value: '6' },
-    { label: 'company', value: '7' },
-  ]);
+  const [dropdownItems, setDropdownItems] = useState([]);
 
   // Debug logging
   useEffect(() => {
@@ -62,13 +54,46 @@ export const useDropdownStates = () => {
   const [agentLoading, setAgentLoading] = useState(false);
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [distributorLoading, setDistributorLoading] = useState(false);
+  const [rolesLoading, setRolesLoading] = useState(false);
 
   // Fetch data on component mount
   useEffect(() => {
+    fetchRolesData();
     fetchAgentData();
     fetchLedgerData();
     fetchDistributorData();
   }, []);
+
+  // Fetch roles dropdown data for Group
+  const fetchRolesData = async () => {
+    try {
+      setRolesLoading(true);
+      const response = await APIService.GetSupportedUserRoles();
+      console.log('Roles data response:', response);
+      
+      if (response && response.success && response.data) {
+        const transformedRoles = response.data.map((role) => ({
+          label: role.name || 'Unknown Role',
+          value: role.id?.toString() || ''
+        }));
+        setDropdownItems(transformedRoles);
+        
+        // Select first item by default
+        if (transformedRoles.length > 0 && !dropdownValue) {
+          setDropdownValue(transformedRoles[0].value);
+        }
+        console.log('Transformed roles items:', transformedRoles);
+      } else {
+        console.log('No roles data found or API error');
+        setDropdownItems([]);
+      }
+    } catch (error) {
+      console.error('Error fetching roles data:', error);
+      setDropdownItems([]);
+    } finally {
+      setRolesLoading(false);
+    }
+  };
 
   // Fetch agent dropdown data
   const fetchAgentData = async () => {
@@ -170,7 +195,11 @@ export const useDropdownStates = () => {
 
   // Function to clear all dropdown states
   const clearAllDropdownStates = () => {
-    setDropdownValue(null);
+    if (dropdownItems.length > 0) {
+      setDropdownValue(dropdownItems[0].value);
+    } else {
+      setDropdownValue(null);
+    }
     setDropdownValueParty(null);
     setDropdownValueWapsiParty(null);
     setDropdownValuePattiParty(null);
@@ -204,7 +233,7 @@ export const useDropdownStates = () => {
     // Limit dropdown
     openDropdownLimit, setOpenDropdownLimit, dropdownValueLimit, setDropdownValueLimit, dropdownItemsLimit, setDropdownItemsLimit,
     // Loading states
-    ledgerLoading, distributorLoading,
+    ledgerLoading, distributorLoading, rolesLoading,
     // Helper function
     getDropdownLabel,
     // Clear function

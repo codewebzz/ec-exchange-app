@@ -69,23 +69,7 @@ interface DropdownItem {
   value: string;
 }
 
-interface SelectedCompany {
-  staff_role?: {
-    name?: string;
-    id?: string;
-  };
-  work_mode?: {
-    name?: string;
-    id?: string;
-  };
-  agent?: {
-    name?: string;
-    id?: string;
-  };
-}
 const Ledger = ({ navigation }: any) => {
-  const [open, setOpen] = useState(false);
-  const shifts = useSelector((state: any) => state.shift);
   const [showSearch, setShowSearch] = useState(false);
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
   const [selectedCompany, setSelectedCompany] = React.useState<any>(null);
@@ -120,8 +104,7 @@ const Ledger = ({ navigation }: any) => {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const passwordFetchedRef = React.useRef<string | null>(null);
   // console.log(getData,"[getData][getData][getData][getData][getData][")
-  const [openDropdown, setOpenDropdown] = React.useState(false);
-  const [dropdownValue, setDropdownValue] = React.useState<string | null>(null);
+  const [dropdownValue, setDropdownValue] = React.useState<string | null>('1');
   const [dropdownItems, setDropdownItems] = React.useState([
     { label: 'fanter', value: '1' },
     { label: 'cash agent', value: '2' },
@@ -621,6 +604,56 @@ const Ledger = ({ navigation }: any) => {
       setButtonLoading(prev => ({ ...prev, deleteStatus: false }));
     }
   };
+  const handleCopyUsernamePassword = async (item: any) => {
+    try {
+      const username = item?.username;
+      if (!username) {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Username not found',
+          position: 'bottom',
+        });
+        return;
+      }
+
+      const response = await APIService.getPassword({}, username);
+      if (response?.success && response?.data) {
+        const password = response.data;
+        const textToCopy = `Username: ${username}\nPassword: ${password}`;
+
+        // Using standard React Native Clipboard (it might be deprecated but often still works in older RN versions or through polyfills)
+        // If it fails, we fallback to an Alert
+        try {
+          const { Clipboard } = require('react-native');
+          Clipboard.setString(textToCopy);
+          Toast.show({
+            type: 'success',
+            text1: 'Success',
+            text2: 'Copied to clipboard!',
+            position: 'bottom',
+          });
+        } catch (err) {
+          Alert.alert('Credentials', textToCopy);
+        }
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: response?.message || 'Failed to fetch password',
+          position: 'bottom',
+        });
+      }
+    } catch (error) {
+      console.error('Copy credentials failed', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to copy credentials',
+        position: 'bottom',
+      });
+    }
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -717,12 +750,15 @@ const Ledger = ({ navigation }: any) => {
                   isButtonOne={false}
                   actionOneLabel="Is Active"
                   actionTwoLabel="Action"
+                  actionThreeLabel="Copy"
+                  isButtonThree={true}
                   // statusKey="status"
                   onActionOne={handleToggleActive}
                   onActionTwo={(item: any) => {
                     handleEditLedger(item);
                     console.log(item, "[][][][][][shhshdghsghds][][][][]")
                   }}
+                  onActionThree={handleCopyUsernamePassword}
                   refreshing={refreshing}
                   onRefresh={getData && getData.length > 0 ? onRefresh : undefined}
                 />
@@ -754,7 +790,7 @@ const Ledger = ({ navigation }: any) => {
                     backgroundColor: COLORS.BGFILESCOLOR,
                     flex: 1,
                   }}
-                  contentContainerStyle={{ 
+                  contentContainerStyle={{
                     paddingHorizontal: 16,
                     paddingBottom: scale(350) // Drastically increase padding to ensure last inputs can be scrolled up
                   }}
@@ -798,7 +834,7 @@ const Ledger = ({ navigation }: any) => {
                       realName: selectedCompany?.real_name
                         || '',
                       capping: selectedCompany?.capping?.toString() || '',
-                      group: selectedCompany?.user_role?.id?.toString() || '1',
+                      group: selectedCompany?.user_role?.id?.toString() || '',
                       dhaniRate: selectedCompany?.dhai_rate?.toString() || '0',
                       commission: selectedCompany?.dhai_rate_commission?.toString() || '0',
                       harupRate: selectedCompany?.harup_rate?.toString() || '0',
@@ -849,6 +885,13 @@ const Ledger = ({ navigation }: any) => {
                     }) => {
                       const dropdownStates = useDropdownStates();
                       const formLogic = useFormLogic(values, setFieldValue);
+
+                      // Sync group value with dropdown default for new ledgers
+                      React.useEffect(() => {
+                        if (!isEditing && dropdownStates.dropdownValue && !values.group) {
+                          setFieldValue('group', dropdownStates.dropdownValue);
+                        }
+                      }, [dropdownStates.dropdownValue, isEditing, values.group, setFieldValue]);
 
                       // Set agent dropdown value when editing
                       React.useEffect(() => {
@@ -1128,16 +1171,16 @@ const Ledger = ({ navigation }: any) => {
 
                               {activeTab === 3 && (
                                 <View>
-                                   <CustomTextInput
-                                     label="Password"
-                                     value={values.password}
-                                     onChangeText={handleChange('password')}
-                                     secureTextEntry={false}
-                                     editable={!passwordLoading}
-                                     onFocus={() => setFocusedField(null)}
-                                     returnKeyType="done"
-                                     onSubmitEditing={() => handleSubmit()}
-                                   />
+                                  <CustomTextInput
+                                    label="Password"
+                                    value={values.password}
+                                    onChangeText={handleChange('password')}
+                                    secureTextEntry={false}
+                                    editable={!passwordLoading}
+                                    onFocus={() => setFocusedField(null)}
+                                    returnKeyType="done"
+                                    onSubmitEditing={() => handleSubmit()}
+                                  />
                                   {passwordLoading && (
                                     <View style={{ marginTop: scale(10), alignItems: 'center' }}>
                                       <ActivityIndicator size="small" color={COLORS.BLACK} />
@@ -1254,7 +1297,7 @@ const Ledger = ({ navigation }: any) => {
                                 setFocusedField={setFocusedField}
                               />
 
-                               <RateCommissionFields
+                              <RateCommissionFields
                                 values={values}
                                 errors={errors}
                                 touched={touched}

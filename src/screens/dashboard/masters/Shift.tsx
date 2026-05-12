@@ -354,7 +354,14 @@ const Shift = ({ navigation }: any) => {
 
             <ScrollView style={{ padding: 16 }} keyboardShouldPersistTaps="handled">
               <DeclareStatusCard
-                data={filteredItems}
+                data={filteredItems.map((item: any) => ({
+                  ...item,
+                  open_date: (!item?.open_date || String(item?.open_date).trim() === '') ? (
+                    <View style={style.closedChip}>
+                      <Text style={style.closedChipText}>Closed</Text>
+                    </View>
+                  ) : item?.open_date
+                }))}
                 config={[
                   { key: 'shift_name', label: 'Shift Name' },
                   { key: 'open_date', label: 'Open Date' },
@@ -784,6 +791,20 @@ const style = StyleSheet.create({
     flex: 1,
     height: 1,
     backgroundColor: '#E5E7EB',
+  },
+  closedChip: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: scale(8),
+    paddingVertical: scale(2),
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+  closedChipText: {
+    color: '#B91C1C',
+    fontSize: scale(10),
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
 });
 
