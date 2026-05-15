@@ -20,6 +20,9 @@ interface DeclareStatusCardProps {
   actionOneLabel?: string;
   actionTwoLabel?: string;
   actionThreeLabel?: string;
+  actionOneIcon?: string;
+  actionTwoIcon?: string;
+  actionThreeIcon?: string;
   isButtonOne?: boolean;
   isButtonTwo?: boolean;
   isButtonThree?: boolean;
@@ -40,6 +43,9 @@ const DeclareStatusCard = ({
   actionOneLabel = 'Edit',
   actionTwoLabel = 'Delete',
   actionThreeLabel = 'Copy',
+  actionOneIcon,
+  actionTwoIcon,
+  actionThreeIcon,
   isButtonOne = true,
   isButtonTwo = true,
   isButtonThree = false,
@@ -201,7 +207,7 @@ const DeclareStatusCard = ({
           ) : (
             isButtonOne && (
               <TouchableOpacity onPress={() => onActionOne?.(item)} style={getActiveButtonStyle(Boolean(item["" + String(activeKey)]))} activeOpacity={0.85}>
-                {/* <Icon name={Boolean(item["" + String(activeKey)]) ? 'toggle-on' : 'toggle-off'} size={18} color={'#FFFFFF'} style={{ marginRight: scale(6) }} /> */}
+                {actionOneIcon && <Icon name={actionOneIcon as any} size={18} color={'#FFFFFF'} style={{ marginRight: scale(4) }} />}
                 <Text style={styles.primaryText}>{actionOneLabel ? actionOneLabel : (item["" + String(activeKey)] ? 'Active' : 'Inactive')}</Text>
               </TouchableOpacity>
             )
@@ -210,14 +216,14 @@ const DeclareStatusCard = ({
           <View style={styles.rightActions}>
             {isButtonThree && (
               <TouchableOpacity onPress={() => onActionThree?.(item)} style={styles.copyBtn} activeOpacity={0.85}>
-                <Icon name="content-copy" size={16} color={'#2563EB'} />
+                <Icon name={actionThreeIcon || "content-copy"} size={16} color={'#2563EB'} />
                 <Text style={styles.copyText}>{actionThreeLabel || 'Copy'}</Text>
               </TouchableOpacity>
             )}
 
             {isButtonTwo && (
               <TouchableOpacity onPress={() => onActionTwo?.(item)} style={styles.secondaryBtn} activeOpacity={0.85}>
-                <Icon name="delete-outline" size={18} color={'#B45309'} />
+                <Icon name={actionTwoIcon || "delete-outline"} size={18} color={'#B45309'} />
                 <Text style={styles.secondaryText}>{actionTwoLabel}</Text>
               </TouchableOpacity>
             )}

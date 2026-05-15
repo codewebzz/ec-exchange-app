@@ -208,6 +208,15 @@ const APIService = {
       throw err;
     }
   },
+  GetResultHistoryReport: async (params?: object): Promise<any> => {
+    try {
+      const res = await AxiosService.get('api/result_history_report', params);
+      return res;
+    } catch (err: any) {
+      console.log('GetResultHistoryReport Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
   CreateCompany: (data: any): Promise<CommonResponse> =>
     AxiosService.post<CommonResponse>(`api/create_company`, {
       company_name: data?.company_name,
@@ -650,6 +659,24 @@ const APIService = {
       throw err;
     }
   },
+  GetCutConsolidatedJantri: async (ledger_id: number, params?: object): Promise<any> => {
+    try {
+      const res = await AxiosService.post(`api/get_cut_consolidated_jantri_of_ledger/${ledger_id}`, params);
+      return res;
+    } catch (err: any) {
+      console.log('GetCutConsolidatedJantri Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetHpCutConsolidatedJantri: async (ledger_id: number, params?: object): Promise<any> => {
+    try {
+      const res = await AxiosService.post(`api/get_hp_cut_consolidated_jantri_of_ledger/${ledger_id}`, params);
+      return res;
+    } catch (err: any) {
+      console.log('GetHpCutConsolidatedJantri Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
   GetDeclaredNumber: async (params: { date: string; shift_id: number }): Promise<any> => {
     try {
       const res = await AxiosService.get('api/get_declared_number', params);
@@ -692,6 +719,42 @@ const APIService = {
       return res;
     } catch (err: any) {
       console.log('UpdateStaffPermissions Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetShiftsByStaff: async (staffId: number): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/get_shift_permissions_by_staff/${staffId}`);
+      return res;
+    } catch (err: any) {
+      console.log('GetShiftsByStaff Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  CreateShiftPermission: async (data: { shift_id: number; staff_id: number }): Promise<any> => {
+    try {
+      const res = await AxiosService.post(`api/create_shift_permission`, data);
+      return res;
+    } catch (err: any) {
+      console.log('CreateShiftPermission Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  DeleteShiftPermission: async (permissionId: number): Promise<any> => {
+    try {
+      const res = await AxiosService.delete(`api/delete_shift_permission/${permissionId}`);
+      return res;
+    } catch (err: any) {
+      console.log('DeleteShiftPermission Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetMainJantri: async (data?: object): Promise<any> => {
+    try {
+      const res = await AxiosService.post('api/get_main_jantri', data);
+      return res;
+    } catch (err: any) {
+      console.log('GetMainJantri Error:', err?.response?.data || err.message);
       throw err;
     }
   },

@@ -25,7 +25,8 @@ import ScreenHeader from '../../../components/ScreenHeader';
 import TableGridView from '../../../components/TableGridView';
 import useSearchBar from '../../../hooks/useSearchBar';
 import APIService from '../../services/APIService';
-import JantriModal from './addTransaction/JantriModal';
+import JantriViewModal from './addTransaction/JantriViewModal';
+import MainJantriModal from './addTransaction/MainJantriModal';
 
 const { width, height } = Dimensions.get('window');
 
@@ -50,13 +51,9 @@ export const Transaction = ({ navigation }: any) => {
   const [isFilterBottomSheetOpen, setIsFilterBottomSheetOpen] = useState(false);
   const filterBottomSheetRef = React.useRef<any>(null);
 
-  // Main Jantri Modal state
+  // Modal states
   const [isMainJantriModalVisible, setIsMainJantriModalVisible] = useState(false);
-  const [jantriTransactions, setJantriTransactions] = useState<any[]>([]);
-
-  // Jantri View Modal state
   const [isJantriViewModalVisible, setIsJantriViewModalVisible] = useState(false);
-  const [jantriViewTransactions, setJantriViewTransactions] = useState<any[]>([]);
 
   // Dropdown states
   const [shiftOpen, setShiftOpen] = useState(false);
@@ -85,20 +82,12 @@ export const Transaction = ({ navigation }: any) => {
     debounceMs: 200,
   });
 
-  // Handle Jantri View button click
   const handleJantriView = () => {
-    console.log('Jantri View button clicked');
-    console.log('Summary table data:', summaryTableData);
-
-    // Transform summary table data to match JantriModal expected format
-    const transformedData = summaryTableData.map(item => ({
-      number: item.number,
-      amount: parseFloat(item.amount) || 0,
-      timestamp: new Date().toLocaleString()
-    }));
-
-    setJantriViewTransactions(transformedData);
     setIsJantriViewModalVisible(true);
+  };
+
+  const handleMainJantriView = () => {
+    setIsMainJantriModalVisible(true);
   };
 
   // Handle shift selection
@@ -421,6 +410,7 @@ export const Transaction = ({ navigation }: any) => {
             addedDate: new Date(item.created_at).toLocaleString('en-GB'),
             updatedBy: item.updated_by || '',
             updatedDate: new Date(item.updated_at).toLocaleString('en-GB'),
+            ledger_id: item.ledger_info?.id,
           }));
 
           setTableData(processedTableData);
@@ -454,6 +444,7 @@ export const Transaction = ({ navigation }: any) => {
             addedDate: new Date(item.created_at).toLocaleString('en-GB'),
             updatedBy: item.updated_by || '',
             updatedDate: new Date(item.updated_at).toLocaleString('en-GB'),
+            ledger_id: item.ledger_info?.id,
           }));
 
           setTableData(processedTableData);
@@ -670,7 +661,7 @@ export const Transaction = ({ navigation }: any) => {
             />
             <CustomButton
               title="Main Jantri"
-              onPress={() => setIsMainJantriModalVisible(true)}
+              onPress={handleMainJantriView}
               backgroundColor={COLORS.BUTTONBG}
               textColor={COLORS.WHITE}
             //  style={styles.actionButton}
@@ -856,31 +847,25 @@ export const Transaction = ({ navigation }: any) => {
 
 
         {/* Main Jantri Modal */}
-        <JantriModal
+        <MainJantriModal
           visible={isMainJantriModalVisible}
           onClose={() => setIsMainJantriModalVisible(false)}
-          onSave={(transactions: any[]) => {
-            console.log('Main Jantri transactions saved:', transactions);
-            setJantriTransactions(transactions);
-            setIsMainJantriModalVisible(false);
-          }}
           title="MAIN JANTRI"
-          externalTransactions={jantriTransactions}
-          isMainJantri={true}
+          shiftId={selectedShift}
+          date={formatDateForAPI(selectedDate)}
+          isDeclared="false"
         />
 
         {/* Jantri View Modal */}
-        <JantriModal
+        <JantriViewModal
           visible={isJantriViewModalVisible}
           onClose={() => setIsJantriViewModalVisible(false)}
-          onSave={(transactions: any[]) => {
-            console.log('Jantri View transactions saved:', transactions);
-            setJantriViewTransactions(transactions);
-            setIsJantriViewModalVisible(false);
-          }}
-          title="JANTRI VIEW"
-          externalTransactions={jantriViewTransactions}
-          isMainJantri={false}
+          title={selectedTransaction ? selectedTransaction.party : "JANTRI VIEW"}
+          ledgerId={selectedTransaction?.ledger_id || selectedTransaction?.id}
+          shiftId={selectedShift}
+          date={formatDateForAPI(selectedDate)}
+          initialData={summaryTableData}
+          isDeclared={false}
         />
         <CopyModal
           visible={isCopyModalVisible}

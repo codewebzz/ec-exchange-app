@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  Dimensions,
   TouchableOpacity,
 } from 'react-native';
 import { scale } from 'react-native-size-matters';
@@ -157,8 +156,8 @@ const ReportTable: React.FC<ReportTableProps> = ({
                     {column.key === 'sno' || colIndex === 0
                       ? totalRowLabel
                       : column.numeric
-                      ? formatValue(totals[column.key], true)
-                      : '-'}
+                        ? formatValue(totals[column.key], true)
+                        : '-'}
                   </Text>
                 </View>
               ))}
@@ -175,7 +174,7 @@ export default ReportTable;
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  table: { minWidth: scale(900) },
+  table: {},
 
   headerRow: {
     flexDirection: 'row',
@@ -206,7 +205,7 @@ const styles = StyleSheet.create({
   dataText: {
     fontSize: scale(10),
     color: '#111827',
-    textDecorationLine:'underline'
+    textDecorationLine: 'underline'
   },
 
   totalRow: {

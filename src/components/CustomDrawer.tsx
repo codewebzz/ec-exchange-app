@@ -125,6 +125,7 @@ const CustomDrawer = (props: any) => {
         { label: 'TPC', route: 'TPC' },
         { label: 'Profit Loss', route: 'ProfitLoss' },
         { label: 'LimitBalance', route: 'LimitBalance' },
+        { label: 'Result History', route: 'ResultHistory' },
       ],
     },
     // Logout is handled separately with token clearing

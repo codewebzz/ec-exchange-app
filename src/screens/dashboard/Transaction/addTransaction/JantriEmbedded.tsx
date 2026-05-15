@@ -9,27 +9,13 @@ import {
   View
 } from 'react-native';
 import { scale } from 'react-native-size-matters';
+import { GridCell } from './JantriTable';
+
 const { width: screenWidth } = Dimensions.get('window');
 const CELL_WIDTH = 70;
 const TOTAL_COLUMN_WIDTH = 96;
 const ROW_HEIGHT = 48;
 const TABLE_WIDTH = CELL_WIDTH * 10 + TOTAL_COLUMN_WIDTH;
-
-interface GridCell {
-  key: string;
-  value: string;
-  amount?: string;
-  editable?: boolean;
-  type?: 'triple' | 'four-digit' | 'normal' | 'number' | 'amount';
-  section?: 'G' | 'B' | 'A' | 'S' | 'H';
-  position?: number;
-  isNumberCell?: boolean;
-  isAmountCell?: boolean;
-  rowType?: 'data' | 'total' | 'section' | 'rowTotal' | 'grandTotal' | 'header';
-  // display label shown inside the same cell (e.g., 01, B1, A1)
-  label?: string;
-}
-
 interface QuickEntryItem {
   id: string;
   number: string;

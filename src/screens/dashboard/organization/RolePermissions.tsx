@@ -26,6 +26,7 @@ import ScreenHeader from '../../../components/ScreenHeader';
 import useSearchBar from '../../../hooks/useSearchBar';
 import APIService from '../../services/APIService';
 import { PermissionsSelector } from '../../../components/PermissionsSelector';
+import StaffShiftsPopup from '../../../components/StaffShiftsPopup';
 
 const RolePermissions = ({ navigation }: any) => {
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
@@ -33,6 +34,8 @@ const RolePermissions = ({ navigation }: any) => {
   const [selectedParty, setSelectedParty] = useState<any>(null);
   const [isDefaultPermissions, setIsDefaultPermissions] = useState(false);
   const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
+  const [isShiftsPopupOpen, setIsShiftsPopupOpen] = useState(false);
+  const [selectedStaffForShifts, setSelectedStaffForShifts] = useState<any>(null);
 
   const [getData, setData] = React.useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -220,7 +223,7 @@ const RolePermissions = ({ navigation }: any) => {
               </View>
               <CustomButton
                 textColor={COLORS.WHITE}
-                title="Default permissions"
+                title="Set Defaults"
                 onPress={() => {
                   setIsOpenBottomSheet(true);
                   setIsDefaultPermissions(true);
@@ -250,7 +253,9 @@ const RolePermissions = ({ navigation }: any) => {
                   ]}
                   isButtonOne={true}
                   actionOneLabel="Permissions"
-                  isButtonTwo={false}
+                  isButtonTwo={true}
+                  actionTwoLabel="Shifts"
+                  actionTwoIcon="access-time"
                   useToggleOne={false}
                   onActionOne={(item: any) => {
                     setSelectedParty(item);
@@ -258,6 +263,10 @@ const RolePermissions = ({ navigation }: any) => {
                     setIsDefaultPermissions(false);
                     setPermissionStates([]);
                     fetchPermissionsForStaff(item.id);
+                  }}
+                  onActionTwo={(item: any) => {
+                    setSelectedStaffForShifts(item);
+                    setIsShiftsPopupOpen(true);
                   }}
                   refreshing={refreshing}
                   onRefresh={onRefresh}
@@ -400,6 +409,14 @@ const RolePermissions = ({ navigation }: any) => {
               </BottomSheet>
             )}
           </View>
+          <StaffShiftsPopup
+            isOpen={isShiftsPopupOpen}
+            staff={selectedStaffForShifts}
+            onClose={() => {
+              setIsShiftsPopupOpen(false);
+              setSelectedStaffForShifts(null);
+            }}
+          />
         </SafeAreaView>
       </GradientBackground>
     </GestureHandlerRootView>

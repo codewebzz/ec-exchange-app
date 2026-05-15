@@ -17,6 +17,7 @@ import TPC from '../screens/dashboard/reports/TPC';
 import ProfitLoss from '../screens/dashboard/reports/ProfitLoss';
 import LimitBalance from '../screens/dashboard/reports/LimitBalance';
 import Ledger from '../screens/dashboard/masters/Ledger';
+import ResultHistory from '../screens/dashboard/reports/ResultHistory';
 import { Transaction } from '../screens/dashboard/Transaction/Transaction';
 import AddTransaction from '../screens/dashboard/Transaction/AddTransaction';
 import JantriScreen from '../screens/dashboard/Transaction/addTransaction/JantriScreen';
@@ -64,6 +65,7 @@ export default function DrawerStack() {
       <Drawer.Screen name="TPC" component={TPC}/>
       <Drawer.Screen name="ProfitLoss" component={ProfitLoss}/>
       <Drawer.Screen name="LimitBalance" component={LimitBalance}/>
+      <Drawer.Screen name="ResultHistory" component={ResultHistory}/>
       <Drawer.Screen name="Transaction" component={TransactionStackNavigator}/>
       <Drawer.Screen name="DeclareTransaction" component={DeclareTransaction}/>
       <TransactionStack.Screen name="AddTransaction" component={AddTransaction} />

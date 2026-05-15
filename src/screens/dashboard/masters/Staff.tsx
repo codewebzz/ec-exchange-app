@@ -240,7 +240,7 @@ const Staff = ({ navigation }: any) => {
     setIsOpenBottomSheet(true);
     setSelectedCompany(null);
     setIsEditing(false);
-    setDropdownValue(null);
+    setDropdownValue(dropdownItems.length > 0 ? dropdownItems[0].value : null);
     setDropdownValue2(null);
   };
   const handleEditShift = (item: any) => {
@@ -503,14 +503,14 @@ const Staff = ({ navigation }: any) => {
                     key={(selectedCompany?.id ?? 'new').toString()}
                     initialValues={{
                       staffName: selectedCompany?.staff_name || '',
-                      role: findDropdownValue(dropdownItems, selectedCompany?.staff_role?.name) || '',
+                      role: findDropdownValue(dropdownItems, selectedCompany?.staff_role?.name) || (dropdownItems.length > 0 ? dropdownItems[0].value : ''),
                       wMode: findDropdownValue(dropdownItems2, selectedCompany?.work_mode?.name) || '',
                       username: selectedCompany?.username || '',
                       password: '',
                       mobile: selectedCompany?.mobile || '',
                       address: selectedCompany?.address || '',
                     }}
-                    enableReinitialize={false}
+                    enableReinitialize={true}
                     validationSchema={isEditing ? (activeTab === 1 ? EditPasswordSchema : EditInfoSchema) : AddStaffSchema}
                     onSubmit={handleFormSubmit}
                   >

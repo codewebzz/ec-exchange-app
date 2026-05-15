@@ -18,7 +18,7 @@ import ScreenHeader from '../../../components/ScreenHeader';
 import CustomButton from '../../../components/CustomButton';
 import CustomDropdown from '../../../components/CustomDropdown';
 import CustomDateTimePicker from '../../../components/CustomDatePicker';
-import JantriModal from '../Transaction/addTransaction/JantriModal';
+import JantriViewModal from '../Transaction/addTransaction/JantriViewModal';
 import APIService from '../../services/APIService';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -578,14 +578,12 @@ const CollectionResult = ({ navigation }: any) => {
         </BottomSheet>
       )}
 
-      {/* JantriModal */}
-      <JantriModal
+      {/* JantriViewModal */}
+      <JantriViewModal
         visible={isJantriModalVisible}
         onClose={() => setIsJantriModalVisible(false)}
-        onSave={handleJantriSave}
         title="Collection Results"
         externalTransactions={jantriData}
-        isMainJantri={false}
       />
     </SafeAreaView>
   );
