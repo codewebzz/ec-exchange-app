@@ -11,7 +11,7 @@ import { COLORS } from '../assets/colors';
 import { scale } from 'react-native-size-matters';
 
 interface CustomInputProps extends TextInputProps {
-  label?: string;
+  label?: string | React.ReactNode;
   error?: string;
   wrapperStyle?: ViewStyle;
 }

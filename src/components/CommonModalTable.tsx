@@ -19,6 +19,7 @@ interface ColumnConfig {
   width?: number;
   align?: 'left' | 'center' | 'right';
   numeric?: boolean;
+  renderCell?: (row: any, rowIndex: number) => React.ReactNode;
 }
 
 interface SummaryCard {
@@ -209,17 +210,21 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
                               { width: getColumnWidth(column) },
                             ]}
                           >
-                            <Text
-                              style={[
-                                styles.tableDataText,
-                                column.align === 'right' && styles.textRight,
-                                column.align === 'center' && styles.textCenter,
-                              ]}
-                            >
-                              {column.key === 'sno' || colIndex === 0
-                                ? (rowIndex + 1).toString()
-                                : formatValue(row[column.key], column.numeric)}
-                            </Text>
+                            {column.renderCell ? (
+                              column.renderCell(row, rowIndex)
+                            ) : (
+                              <Text
+                                style={[
+                                  styles.tableDataText,
+                                  column.align === 'right' && styles.textRight,
+                                  column.align === 'center' && styles.textCenter,
+                                ]}
+                              >
+                                {column.key === 'sno' || colIndex === 0
+                                  ? (rowIndex + 1).toString()
+                                  : formatValue(row[column.key], column.numeric)}
+                              </Text>
+                            )}
                           </View>
                         ))}
                       </View>

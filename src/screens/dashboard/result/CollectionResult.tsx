@@ -1,27 +1,22 @@
-import React, { useState, useRef, useEffect } from 'react';
+import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
+  ScrollView,
   StyleSheet,
   Text,
-  View,
-  TouchableOpacity,
   TextInput,
-  ScrollView,
-  Dimensions,
-  Alert,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { COLORS } from '../../../assets/colors';
-import { scale } from 'react-native-size-matters';
-import ScreenHeader from '../../../components/ScreenHeader';
-import CustomButton from '../../../components/CustomButton';
-import CustomDropdown from '../../../components/CustomDropdown';
 import CustomDateTimePicker from '../../../components/CustomDatePicker';
-import JantriViewModal from '../Transaction/addTransaction/JantriViewModal';
+import CustomDropdown from '../../../components/CustomDropdown';
+import ScreenHeader from '../../../components/ScreenHeader';
 import APIService from '../../services/APIService';
-
-const { width: screenWidth } = Dimensions.get('window');
+import JantriViewModal from '../Transaction/addTransaction/JantriViewModal';
 
 // Common Grid Table Component
 const CollectionGridTable = ({ transactionData }: { transactionData: any[] }) => {
@@ -31,8 +26,8 @@ const CollectionGridTable = ({ transactionData }: { transactionData: any[] }) =>
       <Text style={styles.gridTitle}>
         Collection Data {transactionData.length > 0 ? `(${transactionData.length} transactions)` : ''}
       </Text>
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={true}
         contentContainerStyle={styles.tableScrollContainer}
         bounces={false}
@@ -43,7 +38,7 @@ const CollectionGridTable = ({ transactionData }: { transactionData: any[] }) =>
             <View style={styles.headerCell}>
               <Text style={styles.headerCellText}></Text>
             </View>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9 ].map((num) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <View key={num} style={styles.headerCell}>
                 <Text style={styles.headerCellText}>{num}</Text>
               </View>
@@ -54,15 +49,15 @@ const CollectionGridTable = ({ transactionData }: { transactionData: any[] }) =>
           </View>
 
           {/* Data Rows */}
-          {[ 0,1, 2, 3, 4, 5, 6, 7, 8, 9].map((rowIndex) => (
+          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((rowIndex) => (
             <View key={rowIndex} style={styles.row}>
               {/* Row Header */}
-               <View style={[styles.rowHeaderCell]}>
+              <View style={[styles.rowHeaderCell]}>
                 <Text style={[styles.rowHeaderText]}>
                   {(rowIndex * 10 + 1).toString().padStart(2, '0')}
                 </Text>
               </View>
-              
+
               {/* Data Cells */}
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((colIndex) => {
                 const number = (rowIndex * 10 + colIndex + 1).toString().padStart(2, '0');
@@ -76,7 +71,7 @@ const CollectionGridTable = ({ transactionData }: { transactionData: any[] }) =>
                   </View>
                 );
               })}
-              
+
               {/* Row Total */}
               <View style={styles.totalCell}>
                 <Text style={styles.totalCellText}>0</Text>
@@ -104,7 +99,7 @@ const CollectionGridTable = ({ transactionData }: { transactionData: any[] }) =>
             {/* <View style={styles.rowHeaderCell}>
               <Text style={styles.rowHeaderText}>B1</Text>
             </View> */}
-            {[1,2, 3, 4, 5, 6, 7, 8, 9, 0].map((num) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num) => (
               <View key={num} style={styles.dataCell}>
                 <Text style={styles.rowHeaderText}>B{num}</Text>
               </View>
@@ -119,7 +114,7 @@ const CollectionGridTable = ({ transactionData }: { transactionData: any[] }) =>
             {/* <View style={styles.rowHeaderCell}>
               <Text style={styles.rowHeaderText}>A1</Text>
             </View> */}
-            {[1,2, 3, 4, 5, 6, 7, 8, 9, 0].map((num) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num) => (
               <View key={num} style={styles.dataCell}>
                 <Text style={styles.rowHeaderText}>A{num}</Text>
               </View>
@@ -154,13 +149,13 @@ const CollectionGridTable = ({ transactionData }: { transactionData: any[] }) =>
 
 const CollectionResult = ({ navigation }: any) => {
   // State for filter bottom sheet
-  const [isFilterBottomSheetOpen, setIsFilterBottomSheetOpen] = useState(false);
+  const [isFilterBottomSheetOpen, setIsFilterBottomSheetOpen] = useState(true);
   const filterBottomSheetRef = useRef<any>(null);
-  
+
   // State for JantriModal
   const [isJantriModalVisible, setIsJantriModalVisible] = useState(false);
   const [jantriData, setJantriData] = useState<any[]>([]);
-  
+
   // State for transaction data
   const [transactionData, setTransactionData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -232,7 +227,7 @@ const CollectionResult = ({ navigation }: any) => {
 
     try {
       setIsLoading(true);
-      
+
       // Prepare API data
       const apiData = {
         shift_id: selectedShift,
@@ -250,7 +245,7 @@ const CollectionResult = ({ navigation }: any) => {
 
       // Call API
       const response: any = await APIService.collectionResult(apiData);
-      
+
       // The response structure might be different, let's handle it safely
       if (response && response.success) {
         // Extract transaction data from response - check different possible structures
@@ -324,7 +319,7 @@ const CollectionResult = ({ navigation }: any) => {
       setShiftLoading(true);
       const response = await APIService.GetShiftDropDownDataData();
       console.log('Shift data response:', response);
-      
+
       if (response && response.success && response.data) {
         // Transform the API response to match dropdown format
         console.log(response.data, "response.dataresponse.data");
@@ -357,11 +352,11 @@ const CollectionResult = ({ navigation }: any) => {
     <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
       {/* Header */}
       <ScreenHeader
-      
-       
+
+
         navigation={navigation}
         title="Collection Result"
-       
+
         hideBackButton={true} showDrawerButton={true}
       >
         <TouchableOpacity onPress={() => setIsFilterBottomSheetOpen(true)}>
@@ -469,7 +464,7 @@ const CollectionResult = ({ navigation }: any) => {
 
             {/* Shift Dropdown */}
             <View style={styles.filterSection}>
-              <View style={[styles.shiftHeaderContainer,{top:10}]}>
+              <View style={[styles.shiftHeaderContainer, { top: 10 }]}>
                 <Text style={styles.filterLabel}>Shift</Text>
                 {/* <TouchableOpacity 
                   style={styles.refreshButton} 
@@ -489,14 +484,14 @@ const CollectionResult = ({ navigation }: any) => {
                 items={shiftItems}
                 setOpen={setShiftOpen}
                 setValue={setSelectedShift}
-                setItems={() => {}}
+                setItems={() => { }}
                 placeholder={shiftLoading ? "Loading shifts..." : "Select Shift"}
               />
             </View>
 
             {/* Date Picker */}
             <View style={[styles.filterSection]}>
-              <Text style={[styles.filterLabel,{top:20}]}>Date</Text>
+              <Text style={[styles.filterLabel, { top: 20 }]}>Date</Text>
               <CustomDateTimePicker
                 value={selectedDate}
                 setFieldValue={handleDateChange}
@@ -507,7 +502,7 @@ const CollectionResult = ({ navigation }: any) => {
 
             {/* Categories */}
             <View style={styles.filterSection}>
-              <Text style={[styles.filterLabel,{marginVertical:10}]}>Categories</Text>
+              <Text style={[styles.filterLabel, { marginVertical: 10 }]}>Categories</Text>
               <View style={styles.categoriesContainer}>
                 {Object.entries(selectedCategories).map(([key, value]) => (
                   <View key={key} style={styles.categoryItem}>
@@ -565,8 +560,8 @@ const CollectionResult = ({ navigation }: any) => {
             </View>
 
             {/* Submit Button */}
-            <TouchableOpacity 
-              style={[styles.submitButton, isLoading && styles.submitButtonDisabled]} 
+            <TouchableOpacity
+              style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
               onPress={handleFilterSubmit}
               disabled={isLoading}
             >
@@ -758,7 +753,7 @@ const styles = StyleSheet.create({
     borderColor: '#4CAF50',
     flexShrink: 0,
   },
-  rowHeaderText:{backgroundColor:'hsl(44,88%,84%)',padding:2,position:"absolute",top:1,left:2,fontWeight:"400",fontSize: 10,color:"black"},
+  rowHeaderText: { backgroundColor: 'hsl(44,88%,84%)', padding: 2, position: "absolute", top: 1, left: 2, fontWeight: "400", fontSize: 10, color: "black" },
   // Data cells (light grey background)
   dataCell: {
     backgroundColor: '#fff',

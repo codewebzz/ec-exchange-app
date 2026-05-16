@@ -16,6 +16,7 @@ interface ColumnConfig {
   width?: number;
   align?: 'left' | 'center' | 'right';
   numeric?: boolean;
+  renderCell?: (row: any, rowIndex: number) => React.ReactNode;
 }
 
 interface ReportTableProps {
@@ -71,7 +72,7 @@ const ReportTable: React.FC<ReportTableProps> = ({
     return String(value);
   };
 
-  if (loading) {
+  if (loading && (!data || data.length === 0)) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#2563EB" />
@@ -120,7 +121,9 @@ const ReportTable: React.FC<ReportTableProps> = ({
                     { width: getColumnWidth(column) },
                   ]}
                 >
-                  {colIndex === 1 && enableRowPress ? (
+                  {column.renderCell ? (
+                    column.renderCell(row, rowIndex)
+                  ) : colIndex === 1 && enableRowPress ? (
                     <TouchableOpacity
                       onPress={() => onRowPress?.(row)}
                       activeOpacity={0.7}

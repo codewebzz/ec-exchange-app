@@ -5,7 +5,7 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,129 +17,22 @@ import CustomDateTimePicker from '../../../components/CustomDatePicker';
 import APIService from '../../services/APIService';
 import { scale } from 'react-native-size-matters';
 
-const { width: screenWidth } = Dimensions.get('window');
 
-// Jantari Grid Table Component
-const CELL_WIDTH = 70;
-const TOTAL_COLUMN_WIDTH = 96;
-const ROW_HEIGHT = 48;
-const TABLE_WIDTH = CELL_WIDTH * 10 + TOTAL_COLUMN_WIDTH;
-
-const JantariGridTable = () => {
-  return (
-    <View style={styles.gridSection}>
-      <Text style={styles.gridTitle}>Jantari Data</Text>
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={true}
-        contentContainerStyle={styles.tableScrollContainer}
-        bounces={false}
-      >
-        <View style={styles.table}>
-          {/* Header Row */}
-          <View style={styles.row}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-              <View key={num} style={styles.headerCell}>
-                <Text style={styles.headerCellText}>{num}</Text>
-              </View>
-            ))}
-            <View style={[styles.headerCell, styles.totalColumnCell]}>
-              <Text style={styles.headerCellText}>Total</Text>
-            </View>
-          </View>
-
-          {/* Data Rows */}
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rowIndex) => (
-            <View key={rowIndex} style={styles.row}>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((colIndex) => {
-                const number = ((rowIndex - 1) * 10 + colIndex).toString().padStart(2, '0');
-                return (
-                  <View key={colIndex} style={styles.dataCell}>
-                    <View style={styles.numberBadge}>
-                      <Text style={styles.numberBadgeText}>{number}</Text>
-                    </View>
-                    <Text style={styles.cellText}>0</Text>
-                  </View>
-                );
-              })}
-
-              {/* Row Total */}
-              <View style={[styles.totalCell, styles.totalColumnCell]}>
-                <Text style={styles.totalCellText}>0</Text>
-              </View>
-            </View>
-          ))}
-
-          {/* Summary Row */}
-          <View style={styles.row}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-              <View key={num} style={styles.summaryCell}>
-                <Text style={styles.summaryCellText}>0</Text>
-              </View>
-            ))}
-            <View style={[styles.summaryCell, styles.totalColumnCell]}>
-              <Text style={styles.summaryCellText}>0</Text>
-            </View>
-          </View>
-
-          {/* B Series Row */}
-          <View style={styles.row}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num, index) => (
-              <View key={index} style={[styles.dataCell, styles.seriesCell]}>
-                <View style={[styles.numberBadge, styles.seriesBadge]}>
-                  <Text style={styles.numberBadgeText}>B{num}</Text>
-                </View>
-                <Text style={styles.cellText}>0</Text>
-              </View>
-            ))}
-            <View style={[styles.totalCell, styles.totalColumnCell]}>
-              <Text style={styles.totalCellText}>0</Text>
-            </View>
-          </View>
-
-          {/* A Series Row */}
-          <View style={styles.row}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num, index) => (
-              <View key={index} style={[styles.dataCell, styles.seriesCell]}>
-                <View style={[styles.numberBadge, styles.seriesBadge]}>
-                  <Text style={styles.numberBadgeText}>A{num}</Text>
-                </View>
-                <Text style={styles.cellText}>0</Text>
-              </View>
-            ))}
-            <View style={[styles.totalCell, styles.totalColumnCell]}>
-              <Text style={styles.totalCellText}>0</Text>
-            </View>
-          </View>
-
-          {/* Grand Total Row */}
-          <View style={styles.row}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-              <View key={num} style={styles.grandTotalCell}>
-                <Text style={styles.grandTotalCellText}>-</Text>
-              </View>
-            ))}
-            <View style={styles.grandTotalLabelCell}>
-              <Text style={styles.grandTotalLabelText}>Grand Total</Text>
-            </View>
-            <View style={[styles.grandTotalValueCell, styles.totalColumnCell]}>
-              <Text style={styles.grandTotalValueText}>0</Text>
-            </View>
-          </View>
-        </View>
-      </ScrollView>
-    </View>
-  );
-};
+import JantriTable from '../Transaction/addTransaction/JantriTable';
+import JantariResultLandscapeModal from './JantariResultLandscapeModal';
 
 const JantariResult = ({ navigation }: any) => {
   // State for filter bottom sheet
-  const [isFilterBottomSheetOpen, setIsFilterBottomSheetOpen] = useState(false);
+  const [isFilterBottomSheetOpen, setIsFilterBottomSheetOpen] = useState(true);
   const filterBottomSheetRef = useRef<any>(null);
 
   // Filter states
   const [selectedShift, setSelectedShift] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLandscapeModalOpen, setIsLandscapeModalOpen] = useState(false);
 
   // Dropdown states
   const [shiftOpen, setShiftOpen] = useState(false);
@@ -201,15 +94,40 @@ const JantariResult = ({ navigation }: any) => {
     setIsFilterBottomSheetOpen(false);
   };
 
+  const fetchJantriData = async () => {
+    try {
+      setIsLoading(true);
+      const formattedDate = selectedDate.toLocaleDateString('en-GB');
+      const payload = {
+        shift_id: selectedShift || undefined,
+        is_declared: 'all',
+        date: formattedDate,
+      };
+
+      const res = await APIService.GetMainJantri(payload);
+      if (res && res.success) {
+        let jantriData = res.data?.transaction || [];
+        if (!Array.isArray(jantriData)) {
+          jantriData = Object.keys(jantriData).map(key => ({
+            number: key,
+            amount: jantriData[key]
+          }));
+        }
+        setTransactions(jantriData);
+      } else {
+        setTransactions([]);
+      }
+    } catch (error) {
+      console.error('Error fetching jantri result:', error);
+      setTransactions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Handle filter submit
   const handleFilterSubmit = () => {
-    // Here you would typically make an API call with the filter parameters
-    console.log('Filter submitted:', {
-      selectedShift,
-      selectedDate,
-    });
-
-    // Close the bottom sheet
+    fetchJantriData();
     handleFilterClosePress();
   };
 
@@ -224,22 +142,34 @@ const JantariResult = ({ navigation }: any) => {
     <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
       {/* Header */}
       <ScreenHeader
-          navigation={navigation}
-          title="Jantari Result"
-         
-          hideBackButton={true} showDrawerButton={true}
+        navigation={navigation}
+        title="Jantari Result"
+
+        hideBackButton={true} showDrawerButton={true}
       >
-        <TouchableOpacity onPress={() => setIsFilterBottomSheetOpen(true)}>
-          <Ionicons name="filter" size={24} color={COLORS.WHITE} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => setIsLandscapeModalOpen(true)}>
+            <Ionicons name="expand" size={24} color={COLORS.WHITE} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setIsFilterBottomSheetOpen(true)}>
+            <Ionicons name="filter" size={24} color={COLORS.WHITE} />
+          </TouchableOpacity>
+        </View>
       </ScreenHeader>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
 
-       
-        
-            <JantariGridTable />
-       
+        {isLoading ? (
+          <ActivityIndicator size="large" color={COLORS.BUTTONBG} style={{ marginTop: scale(50) }} />
+        ) : (
+          <View style={{ padding: scale(10), marginBottom: scale(20) }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={true} bounces={false}>
+              <View style={{ width: 800 }}>
+                <JantriTable externalTransactions={transactions} isEditable={false} />
+              </View>
+            </ScrollView>
+          </View>
+        )}
       </ScrollView>
 
       {/* Filter Bottom Sheet */}
@@ -274,27 +204,27 @@ const JantariResult = ({ navigation }: any) => {
           <BottomSheetScrollView style={styles.bottomSheetContent}>
             {/* Shift Dropdown */}
             <View style={styles.filterSection}>
-             
+
               <View >
 
-              <CustomDropdown
-              label='Shift'
-                open={shiftOpen}
-                value={selectedShift}
-                items={shiftItems}
-                setOpen={setShiftOpen}
-                setValue={setSelectedShift}
-                setItems={() => {}}
-                placeholder={shiftLoading ? "Loading shifts..." : "Select Shift"}
-              />
+                <CustomDropdown
+                  label='Shift'
+                  open={shiftOpen}
+                  value={selectedShift}
+                  items={shiftItems}
+                  setOpen={setShiftOpen}
+                  setValue={setSelectedShift}
+                  setItems={() => { }}
+                  placeholder={shiftLoading ? "Loading shifts..." : "Select Shift"}
+                />
               </View>
             </View>
 
             {/* Date Picker */}
             <View style={styles.filterSection}>
-              
+
               <CustomDateTimePicker
-              label={"Date"}
+                label={"Date"}
                 value={selectedDate}
                 setFieldValue={handleDateChange}
                 fieldName="date"
@@ -309,6 +239,14 @@ const JantariResult = ({ navigation }: any) => {
           </BottomSheetScrollView>
         </BottomSheet>
       )}
+
+      {/* Landscape Modal */}
+      <JantariResultLandscapeModal
+        visible={isLandscapeModalOpen}
+        onClose={() => setIsLandscapeModalOpen(false)}
+        title="Jantari Result"
+        transactions={transactions}
+      />
     </SafeAreaView>
   );
 };
@@ -322,7 +260,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 16,
+    padding: 1,
   },
   filterBar: {
     backgroundColor: COLORS.BUTTONBG,
@@ -366,123 +304,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: '#1f2a37',
   },
-  table: {
-    flexDirection: 'column',
-    backgroundColor: '#fdfdfd',
-    borderWidth: 1,
-    borderColor: '#d8dce8',
-    borderRadius: 12,
-    overflow: 'hidden',
-    width: TABLE_WIDTH,
-  },
-  tableScrollContainer: {
-    flexGrow: 0,
-    width: TABLE_WIDTH,
-  },
-  row: {
-    flexDirection: 'row',
-    flexShrink: 0,
-  },
-  headerCell: {
-    backgroundColor: '#1f2a37',
-    width: CELL_WIDTH,
-    height: ROW_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2a37',
-    flexShrink: 0,
-  },
-  headerCellText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#f4f6fd',
-  },
-  dataCell: {
-    backgroundColor: '#f9fafc',
-    width: CELL_WIDTH,
-    height: ROW_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e3e6f0',
-    flexShrink: 0,
-    position: 'relative',
-  },
-  numberBadge: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    backgroundColor: '#10b5a6',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 0,
-  },
-  numberBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#fdfdfd',
-  },
-  cellText: {
-    fontSize: 13,
-    color: '#0f172a',
-    fontWeight: '600',
-    left:scale(5)
-  },
-  summaryCell: {
-    backgroundColor: '#1f2a37',
-    width: CELL_WIDTH,
-    height: ROW_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2a37',
-    flexShrink: 0,
-  },
-  summaryCellText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#f4f6fd',
-  },
-  totalCell: {
-    backgroundColor: '#1f2a37',
-    width: CELL_WIDTH,
-    height: ROW_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2a37',
-    flexShrink: 0,
-  },
-  totalCellText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#f4f6fd',
-  },
-  totalColumnCell: {
-    width: TOTAL_COLUMN_WIDTH,
-  },
-  seriesCell: {
-    backgroundColor: '#fdf6f0',
-  },
-  seriesBadge: {
-    backgroundColor: '#10b5a6',
-  },
-  grandTotalCell: {
-    backgroundColor: '#1f2a37',
-    width: CELL_WIDTH,
-    height: ROW_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2a37',
-    flexShrink: 0,
-  },
-  grandTotalCellText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#f4f6fd',
-  },
+
   bottomSheet: {
     borderWidth: 1,
     borderRadius: 10,
@@ -534,36 +356,5 @@ const styles = StyleSheet.create({
   refreshButton: {
     padding: 4,
     borderRadius: 4,
-  },
-  grandTotalLabelCell: {
-    backgroundColor: '#1f2a37',
-    width: TOTAL_COLUMN_WIDTH,
-    height: ROW_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    borderWidth: 1,
-    borderColor: '#1f2a37',
-    flexShrink: 0,
-    paddingLeft: 12,
-  },
-  grandTotalLabelText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#f4f6fd',
-  },
-  grandTotalValueCell: {
-    backgroundColor: '#1f2a37',
-    width: TOTAL_COLUMN_WIDTH,
-    height: ROW_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#1f2a37',
-    flexShrink: 0,
-  },
-  grandTotalValueText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#f4f6fd',
   },
 });

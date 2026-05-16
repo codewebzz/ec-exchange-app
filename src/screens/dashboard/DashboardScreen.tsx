@@ -1,14 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ScreenHeader from '../../components/ScreenHeader';
 import GradientBackground from '../../components/GradientBackground';
-import LinearGradient from 'react-native-linear-gradient';
-import APIService from '../services/APIService';
-import { useCountdown } from '../../hooks/useCountdown';
+import ScreenHeader from '../../components/ScreenHeader';
 import ShiftCard from '../../components/ShiftCard';
+import APIService from '../services/APIService';
 
+const { height } = Dimensions.get('window');
 
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
@@ -26,27 +25,14 @@ const formatDateTime = (value?: string) => {
   });
 };
 
-const formatDate = (value?: string) => {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-  return date.toLocaleDateString('en-IN', {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-  });
-};
 
-const DashboardScreen = ({navigation}:any) => {
+
+const DashboardScreen = ({ navigation }: any) => {
   const [recentUserRes, setRecentUserRes] = useState<any>([]);
   const [shiftDataRes, setShiftDataRes] = useState<any>([]);
-  const [undeclaredRes, setUndeclaredRes] = useState<any>([]);
-  const [ledgerRows, setLedgerRows] = useState<string[][]>([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [shiftLoading, setShiftLoading] = useState(false);
-// console.log(recentUserRes,"recentUserResrecentUserResrecentUserRes")
+  // console.log(recentUserRes,"recentUserResrecentUserResrecentUserRes")
   // const shiftCards = Array.isArray(recentUserRes?.data)
   //   ? recentUserRes.data
   //   : Array.isArray(recentUserRes)
@@ -60,9 +46,6 @@ const DashboardScreen = ({navigation}:any) => {
     transactions: number;
   }> = [];
 
- 
-
- console.log(shiftDataRes,"shiftDataRes[]")
   const fetchRecentUsers = useCallback(async () => {
     console.log('[fetchRecentUsers] called');
     try {
@@ -79,7 +62,7 @@ const DashboardScreen = ({navigation}:any) => {
         item?.active_status ? 'Active' : 'Inactive',
       ]);
       setRecentUserRes(formatted);
-  
+
     } catch (error) {
       console.error('Recent fetchRecentUsers fetch failed', error);
       setRecentUserRes([]); // keep state consistent
@@ -106,7 +89,7 @@ const DashboardScreen = ({navigation}:any) => {
     fetchRecentUsers()
   }, [
     // loadRecentLedgers
-    fetchRecentUsers,fetchShiftData]);
+    fetchRecentUsers, fetchShiftData]);
   // const fetchRecentUsers = useCallback(async () => {
   //   const resp = await APIService.getRecentUser();
   //   return Array.isArray(resp?.data) ? resp.data : Array.isArray(resp) ? resp : [];
@@ -121,123 +104,125 @@ const DashboardScreen = ({navigation}:any) => {
     const resp = await APIService.getallundeclaredtransactionsbydateshift();
     return Array.isArray(resp?.data) ? resp.data : Array.isArray(resp) ? resp : [];
   }, []);
-// console.log(fetchRecentUsers(),"fetchRecentUsersfetchRecentUsersfetchRecentUsers")
-//   const fetchDashboardMeta = useCallback(async () => {
-//     try {
-//       const [recentUserPayload, shiftDataPayload, undeclaredPayload] = await Promise.all([
-//         fetchRecentUsers(),
-//         fetchShiftData(),
-//         fetchUndeclared(),
-//       ]);
+  // console.log(fetchRecentUsers(),"fetchRecentUsersfetchRecentUsersfetchRecentUsers")
+  //   const fetchDashboardMeta = useCallback(async () => {
+  //     try {
+  //       const [recentUserPayload, shiftDataPayload, undeclaredPayload] = await Promise.all([
+  //         fetchRecentUsers(),
+  //         fetchShiftData(),
+  //         fetchUndeclared(),
+  //       ]);
 
-//       setRecentUserRes(recentUserPayload);
-//       setShiftDataRes(shiftDataPayload);
-//       setUndeclaredRes(undeclaredPayload);
+  //       setRecentUserRes(recentUserPayload);
+  //       setShiftDataRes(shiftDataPayload);
+  //       setUndeclaredRes(undeclaredPayload);
 
-//       console.log('Dashboard recent users:', recentUserPayload);
-//       console.log('Dashboard shift data:', shiftDataPayload);
-//       console.log('Dashboard undeclared transactions:', undeclaredPayload);
-//     } catch (err) {
-//       console.error('Dashboard meta fetch failed', err);
-//     }
-//   }, [fetchRecentUsers, fetchShiftData, fetchUndeclared]);
+  //       console.log('Dashboard recent users:', recentUserPayload);
+  //       console.log('Dashboard shift data:', shiftDataPayload);
+  //       console.log('Dashboard undeclared transactions:', undeclaredPayload);
+  //     } catch (err) {
+  //       console.error('Dashboard meta fetch failed', err);
+  //     }
+  //   }, [fetchRecentUsers, fetchShiftData, fetchUndeclared]);
 
   // useEffect(() => {
   //   fetchDashboardMeta();
   // }, [fetchDashboardMeta]);
   return (
-    <GestureHandlerRootView style={{flex:1}}>
-      <GradientBackground colors={[ "#fdf0d0","#e0efea"]} locations={[0,30]}>
-      <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
-     
-     <ScreenHeader title={"Dashboard"} navigation={navigation} hideBackButton={true} showDrawerButton={true} />
-   
-  <ScrollView
-     contentContainerStyle={styles.scrollContent}
-     showsVerticalScrollIndicator={false}
-    nestedScrollEnabled
-   >
-     <View style={styles.topRow}>
-       {shiftLoading ? (
-         <View style={styles.shiftLoading}>
-           <ActivityIndicator color="#4f46e5" size="large" />
-         </View>
-       ) : Array.isArray(shiftDataRes) && shiftDataRes.length > 0 ? (
-        shiftDataRes.map((card: any) => {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/2e33dffb-7baa-4cb6-aa5f-9efc22abb991',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardScreen.tsx:167',message:'Rendering ShiftCard',data:{hasNavigation:!!navigation,navigationType:typeof navigation,willPassNavigation:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-          // #endregion
-          return (
-          <ShiftCard
-            key={card.id?.toString() ?? card.name}
-            card={card}
-            navigation={navigation}
-          />
-        )})
-      ): (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>No shift data available</Text>
-        </View>
-      )}
-     </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
+        <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
 
-     <View style={styles.sectionsRow}>
-       <View style={styles.sectionCard}>
-         <SectionHeader
-           title="Recent Ledgers"
-           subtitle="Latest declarations"
-           actionLabel="Export"
-           onAction={() => {}}
-         />
-         <DashboardTable
-           headers={['S.No.', 'Name', 'Username', 'Role', 'Created By', 'Created At', 'Status']}
-           rows={recentUserRes}
-           statusColumnIndex={6}
-          columnWidths={[60, 160, 140, 120, 140, 170, 100]}
-           loading={ledgerLoading}
-           emptyText="No ledgers found"
-         />
-       </View>
+          <ScreenHeader title={"Dashboard"} navigation={navigation} hideBackButton={true} showDrawerButton={true} />
 
-       <View style={styles.sectionCard}>
-         <SectionHeader
-           title="Redeclare Transaction"
-           subtitle="Audit trail"
-           actionLabel="Export"
-           onAction={() => {}}
-         />
-         {redeclareRows.length === 0 ? (
-           <View style={styles.emptyState}>
-             <Text style={styles.emptyStateText}>No results found.</Text>
-           </View>
-         ) : (
-           <DashboardTable
-             headers={['S.No.', 'Shift Name', 'Date', 'Transactions', 'Action']}
-             rows={redeclareRows.map(item => [
-               item.id.toString(),
-               item.shiftName,
-               item.date,
-               item.transactions.toString(),
-               'View',
-             ])}
-           />
-         )}
-       </View>
-     </View>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+          >
+            <View style={styles.topRow}>
+              {shiftLoading ? (
+                <View style={styles.shiftLoading}>
+                  <ActivityIndicator color="#4f46e5" size="large" />
+                </View>
+              ) : Array.isArray(shiftDataRes) && shiftDataRes.length > 0 ? (
+                shiftDataRes.map((card: any) => {
+                  // #region agent log
+                  fetch('http://127.0.0.1:7242/ingest/2e33dffb-7baa-4cb6-aa5f-9efc22abb991', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'DashboardScreen.tsx:167', message: 'Rendering ShiftCard', data: { hasNavigation: !!navigation, navigationType: typeof navigation, willPassNavigation: true }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' }) }).catch(() => { });
+                  // #endregion
+                  return (
+                    <ShiftCard
+                      key={card.id?.toString() ?? card.name}
+                      card={card}
+                      navigation={navigation}
+                    />
+                  )
+                })
+              ) : (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateText}>No shift data available</Text>
+                </View>
+              )}
+            </View>
 
-   </ScrollView>
+            <View style={styles.sectionsRow}>
+              <View style={styles.sectionCard}>
+                <SectionHeader
+                  title="Recent Ledgers"
+                  subtitle="Latest declarations"
+                  actionLabel="Export"
+                  onAction={() => { }}
+                />
+                <DashboardTable
+                  headers={['S.No.', 'Name', 'Username', 'Role', 'Created By', 'Created At', 'Status']}
+                  rows={recentUserRes}
+                  statusColumnIndex={6}
+                  columnWidths={[60, 160, 140, 120, 140, 170, 100]}
+                  loading={ledgerLoading}
+                  emptyText="No ledgers found"
+                  maxHeight={height * 0.5}
+                />
+              </View>
 
-   </SafeAreaView>
+              <View style={styles.sectionCard}>
+                <SectionHeader
+                  title="Redeclare Transaction"
+                  subtitle="Audit trail"
+                  actionLabel="Export"
+                  onAction={() => { }}
+                />
+                {redeclareRows.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyStateText}>No results found.</Text>
+                  </View>
+                ) : (
+                  <DashboardTable
+                    headers={['S.No.', 'Shift Name', 'Date', 'Transactions', 'Action']}
+                    rows={redeclareRows.map(item => [
+                      item.id.toString(),
+                      item.shiftName,
+                      item.date,
+                      item.transactions.toString(),
+                      'View',
+                    ])}
+                  />
+                )}
+              </View>
+            </View>
+
+          </ScrollView>
+
+        </SafeAreaView>
       </GradientBackground>
-    
+
     </GestureHandlerRootView>
   );
 };
 
 export default DashboardScreen;
 
-const MetricBox = ({label, value, color}:{label:string; value:string | number; color:string}) => (
-  <View style={[styles.metricBox, {backgroundColor: color}]}>
+const MetricBox = ({ label, value, color }: { label: string; value: string | number; color: string }) => (
+  <View style={[styles.metricBox, { backgroundColor: color }]}>
     <Text style={styles.metricLabel}>{label}</Text>
     <Text style={styles.metricValue}>{value}</Text>
   </View>
@@ -248,11 +233,11 @@ const SectionHeader = ({
   subtitle,
   actionLabel,
   onAction,
-}:{
-  title:string;
-  subtitle:string;
-  actionLabel?:string;
-  onAction?:()=>void;
+}: {
+  title: string;
+  subtitle: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }) => (
   <View style={styles.sectionHeader}>
     <View>
@@ -274,13 +259,15 @@ const DashboardTable = ({
   columnWidths,
   loading,
   emptyText = 'No data available',
-}:{
-  headers:string[];
-  rows:string[][];
-  statusColumnIndex?:number;
-  columnWidths?:number[];
-  loading?:boolean;
-  emptyText?:string;
+  maxHeight,
+}: {
+  headers: string[];
+  rows: string[][];
+  statusColumnIndex?: number;
+  columnWidths?: number[];
+  loading?: boolean;
+  emptyText?: string;
+  maxHeight?: number;
 }) => (
   <ScrollView
     horizontal
@@ -296,7 +283,7 @@ const DashboardTable = ({
             style={[
               styles.cellWrapper,
               columnWidths?.[index]
-                ? {minWidth: columnWidths[index], maxWidth: columnWidths[index]}
+                ? { minWidth: columnWidths[index], maxWidth: columnWidths[index] }
                 : null,
             ]}
           >
@@ -315,8 +302,14 @@ const DashboardTable = ({
           <Text style={styles.emptyStateText}>{emptyText}</Text>
         </View>
       ) : (
-        rows.map((row, rowIndex) => (
-          <View
+        <ScrollView
+          nestedScrollEnabled
+          style={maxHeight ? { height: maxHeight, flexGrow: 0 } : undefined}
+          showsVerticalScrollIndicator={true}
+          persistentScrollbar={true}
+        >
+          {rows.map((row, rowIndex) => (
+            <View
             key={rowIndex}
             style={[styles.tableRow, rowIndex % 2 === 1 && styles.tableRowStriped]}
           >
@@ -326,7 +319,7 @@ const DashboardTable = ({
                 style={[
                   styles.cellWrapper,
                   columnWidths?.[colIndex]
-                    ? {minWidth: columnWidths[colIndex], maxWidth: columnWidths[colIndex]}
+                    ? { minWidth: columnWidths[colIndex], maxWidth: columnWidths[colIndex] }
                     : null,
                 ]}
               >
@@ -343,7 +336,8 @@ const DashboardTable = ({
               </View>
             ))}
           </View>
-        ))
+        ))}
+        </ScrollView>
       )}
     </View>
   </ScrollView>
@@ -383,7 +377,7 @@ const styles = StyleSheet.create({
     padding: 16,
     elevation: 2,
     shadowColor: '#00000020',
-    shadowOffset: {width:0, height:4},
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 6,
     alignSelf: 'flex-start',

@@ -50,19 +50,9 @@ import { ContactAndAdditionalFields } from '../leadgersections/ContactAndAdditio
 import { WapsiModal } from '../leadgerModal/WapsiModal';
 import { PattiModal } from '../leadgerModal/PattiModal';
 import GradientBackground from '../../../components/GradientBackground';
-const AddStaffSchema = Yup.object().shape({
-  staffName: Yup.string().required('Shaff Name is required'),
-  nextDay: Yup.string().required('Next Day is required'),
-  openTime: Yup.string().required('Open Time is required'),
-  closeTimeOwner: Yup.string().required('Closing Time is required'),
-  owner: Yup.string().required('Owner Closing Time is required'),
-  superAdmin: Yup.string().required('Super Admin Closing Time is required'),
-  fanter: Yup.string().required('Fanter Closing Time is required'),
-  caseAgent: Yup.string().required('Case Agent Closing Time is required'),
-  admin: Yup.string().required('Admin Closing Time is required'),
-  dataEntryOperator: Yup.string().required(
-    'Data Entry Operator Closing Time is required',
-  ),
+
+const LedgerSchema = Yup.object().shape({
+  realName: Yup.string().required('Name is required'),
 });
 interface DropdownItem {
   label: string;
@@ -873,6 +863,7 @@ const Ledger = ({ navigation }: any) => {
                       limit: selectedCompany?.limit?.toString() || '0',
                       grantorName: selectedCompany?.grantor_name || '',
                     }}
+                    validationSchema={LedgerSchema}
                     onSubmit={handleFormSubmit}
                   >
                     {({

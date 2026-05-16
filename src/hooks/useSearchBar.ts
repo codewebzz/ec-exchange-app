@@ -15,32 +15,38 @@ export default function useSearchBar<T = any>(
   const { selector, debounceMs = 150, initialQuery = '' } = options;
 
   const [query, setQuery] = React.useState<string>(initialQuery);
-  const [filteredItems, setFilteredItems] = React.useState<T[]>(Array.isArray(items) ? items : []);
+  const [debouncedQuery, setDebouncedQuery] = React.useState<string>(initialQuery);
 
   React.useEffect(() => {
-    let active = true;
+    // If query is empty, update debouncedQuery immediately to avoid lag
+    if (!query) {
+      setDebouncedQuery('');
+      return;
+    }
+
     const handle = setTimeout(() => {
-      if (!active) return;
-      const source = Array.isArray(items) ? items : [];
-      if (!query) {
-        setFilteredItems(source);
-        return;
-      }
-      const q = query.toLowerCase().trim();
-      const next = source.filter((item) => {
-        const text = selector
-          ? selector(item)
-          : String((item as any)?.name ?? (item as any)?.title ?? (item as any)?.shift_name ?? '');
-        return String(text).toLowerCase().includes(q);
-      });
-      setFilteredItems(next);
+      setDebouncedQuery(query);
     }, debounceMs);
 
     return () => {
-      active = false;
       clearTimeout(handle);
     };
-  }, [items, query, selector, debounceMs]);
+  }, [query, debounceMs]);
+
+  const filteredItems = React.useMemo(() => {
+    const source = Array.isArray(items) ? items : [];
+    if (!debouncedQuery) {
+      return source;
+    }
+
+    const q = debouncedQuery.toLowerCase().trim();
+    return source.filter((item) => {
+      const text = selector
+        ? selector(item)
+        : String((item as any)?.name ?? (item as any)?.title ?? (item as any)?.shift_name ?? '');
+      return String(text).toLowerCase().includes(q);
+    });
+  }, [items, debouncedQuery, selector]);
 
   return { query, setQuery, filteredItems } as const;
 }

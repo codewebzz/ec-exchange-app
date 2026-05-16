@@ -166,6 +166,18 @@ const APIService = {
       throw err;
     }
   },
+  GetAllShiftReportById: async (id: number, params?: object): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/all_shift_report/${id}`, params);
+      return res;
+    } catch (err: any) {
+      console.log(
+        'GetAllShiftReportById Error:',
+        err?.response?.data || err.message,
+      );
+      throw err;
+    }
+  },
   GetSettlingReport: async (params?: object): Promise<any> => {
     try {
       const res = await AxiosService.get('api/settling_report', params);

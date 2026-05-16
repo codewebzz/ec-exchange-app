@@ -48,7 +48,7 @@ export const Transaction = ({ navigation }: any) => {
   const [showSearch, setShowSearch] = useState(false);
 
   // Bottom sheet states
-  const [isFilterBottomSheetOpen, setIsFilterBottomSheetOpen] = useState(false);
+  const [isFilterBottomSheetOpen, setIsFilterBottomSheetOpen] = useState(true);
   const filterBottomSheetRef = React.useRef<any>(null);
 
   // Modal states
@@ -388,10 +388,10 @@ export const Transaction = ({ navigation }: any) => {
         // Call getDeletedTransaction API
         const data = {
           declared: 0,
-          shift_id: selectedShift,
+          shift_id: selectedShift || undefined,
           date: formatDateForAPI(selectedDate),
-          ledger_name: searchParty,
-          staff: selectedStaff,
+          ledger_name: searchParty || undefined,
+          staff_name: selectedStaff || undefined,
         };
         const res = await APIService.GetDeletedTransaction(data);
         console.log('Deleted Transactions API Response:', res);
@@ -421,10 +421,10 @@ export const Transaction = ({ navigation }: any) => {
         // Call getTransaction API (default for active)
         const data = {
           declared: 0,
-          shift_id: selectedShift,
+          shift_id: selectedShift || undefined,
           date: formatDateForAPI(selectedDate),
-          ledger_name: searchParty,
-          staff: selectedStaff,
+          ledger_name: searchParty || undefined,
+          staff_name: selectedStaff || undefined,
           deleted: 0,
         };
         const res = await APIService.GetTransaction(data);
@@ -486,8 +486,6 @@ export const Transaction = ({ navigation }: any) => {
     if (!activeDeleteShift) {
       setactiveDeleteShift('active');
     }
-    // Fetch active transactions by default
-    fetchTransactions();
   }, []);
 
   // Fetch shift dropdown data
@@ -589,46 +587,47 @@ export const Transaction = ({ navigation }: any) => {
                 headerBgColor={COLORS.BUTTONBG}
                 headerTextColor={COLORS.WHITE}
               />
-
             )}
           </View>
 
           {/* Summary Table */}
-          <View style={styles.tableWrapper}>
+          <View style={styles.summaryTableWrapper}>
             {/* Table Header with Title and Reset Button */}
-
-
-            {loadingDetails ? (
-              <View style={styles.loadingContainer}>
-                {/* <ActivityIndicator size="large" color={COLORS.BUTTONBG} /> */}
-                <Text style={styles.loadingText}>
-                  {isViewingDetails ? 'Loading transaction details...' : 'Loading summary...'}
-                </Text>
-              </View>
-            ) : summaryTableData.length > 0 ? (
+            {!loadingList && (
               <>
-                {isViewingDetails && (
-                  <View style={styles.tableHeaderContainer}>
-                    <Text style={styles.tableHeaderTitle}>Transaction Details</Text>
-                    <TouchableOpacity style={styles.resetButton} onPress={resetToOriginalSummary}>
-                      <Ionicons name="refresh" size={16} color={COLORS.WHITE} />
-                      <Text style={styles.resetButtonText}>Reset</Text>
-                    </TouchableOpacity>
+                {loadingDetails ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color={COLORS.BUTTONBG} />
+                    <Text style={styles.loadingText}>
+                      {isViewingDetails ? 'Loading transaction details...' : 'Loading summary...'}
+                    </Text>
+                  </View>
+                ) : summaryTableData.length > 0 ? (
+                  <>
+                    {isViewingDetails && (
+                      <View style={styles.tableHeaderContainer}>
+                        <Text style={styles.tableHeaderTitle}>Transaction Details</Text>
+                        <TouchableOpacity style={styles.resetButton} onPress={resetToOriginalSummary}>
+                          <Ionicons name="refresh" size={16} color={COLORS.WHITE} />
+                          <Text style={styles.resetButtonText}>Reset</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    <TableGridView
+                      columns={summaryTableColumns}
+                      data={summaryTableData}
+                      headerBgColor={COLORS.BUTTONBG}
+                      headerTextColor={COLORS.WHITE}
+                    />
+                  </>
+                ) : (
+                  <View style={styles.noDataContainer}>
+                    <Text style={styles.noDataText}>
+                      {isViewingDetails ? 'No transaction details found' : 'No summary data available'}
+                    </Text>
                   </View>
                 )}
-                <TableGridView
-                  columns={summaryTableColumns}
-                  data={summaryTableData}
-                  headerBgColor={COLORS.BUTTONBG}
-                  headerTextColor={COLORS.WHITE}
-                />
               </>
-            ) : (
-              <View style={styles.noDataContainer}>
-                <Text style={styles.noDataText}>
-                  {isViewingDetails ? 'No transaction details found' : 'No summary data available'}
-                </Text>
-              </View>
             )}
           </View>
 
@@ -830,6 +829,7 @@ export const Transaction = ({ navigation }: any) => {
                       fetchStaffData();
                     }
                   }}
+                  showClearButton={true}
                 />
 
                 <View style={{ marginVertical: scale(10) }}>
@@ -987,6 +987,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.WHITE,
     borderRadius: scale(8),
     overflow: 'hidden',
+  },
+  summaryTableWrapper: {
+    marginTop: scale(16),
+    backgroundColor: COLORS.WHITE,
+    borderRadius: scale(8),
+    overflow: 'hidden',
+    height: height * 0.5,
   },
   userInfoContainer: {
     flexDirection: 'column',

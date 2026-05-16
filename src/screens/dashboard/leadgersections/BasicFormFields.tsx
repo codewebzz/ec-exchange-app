@@ -1,4 +1,5 @@
-import { Keyboard } from "react-native";
+import React from 'react';
+import { Keyboard, Text } from "react-native";
 import CustomDropdown from "../../../components/CustomDropdown";
 import CustomTextInput from "../../../components/CustomTextInput";
 
@@ -11,7 +12,7 @@ export const BasicFormFields = ({ values, errors, touched, handleChange, dropdow
 
       <CustomTextInput
         ref={realNameRef}
-        label="Name"
+        label={<Text>Name <Text style={{color: 'red'}}>*</Text></Text>}
         value={values.realName}
         onChangeText={handleChange('realName')}
         error={touched.realName && typeof errors.realName === 'string' ? errors.realName : undefined}

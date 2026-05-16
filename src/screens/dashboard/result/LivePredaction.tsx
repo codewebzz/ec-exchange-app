@@ -31,7 +31,7 @@ const Result30DaysSection = ({ data, onNumberClick }: { data: any, onNumberClick
   })).sort((a, b) => Number(a.number) - Number(b.number));
 
   const columns: any = [
-    { key: 'result_30_days', label: 'Result 30 Days', align: 'center', width: scale(100) },
+    { key: 'result_30_days', label: '30 Days', align: 'center', width: scale(100) },
     {
       key: 'number',
       label: 'Number',
@@ -199,7 +199,7 @@ const DeclareResultSection = ({ selectedShift, selectedDate }: { selectedShift: 
 
 const LivePredaction = ({ navigation }: any) => {
   // State for filter bottom sheet
-  const [isFilterBottomSheetOpen, setIsFilterBottomSheetOpen] = useState(false);
+  const [isFilterBottomSheetOpen, setIsFilterBottomSheetOpen] = useState(true);
   const filterBottomSheetRef = useRef<any>(null);
 
   // State for detail bottom sheet

@@ -15,9 +15,9 @@ import CustomDateTimePicker from '../../../components/CustomDatePicker'
 import APIService from '../../services/APIService'
 import GradientBackground from '../../../components/GradientBackground'
 import useSearchBar from '../../../hooks/useSearchBar'
-import ReportTable from '../../../components/ReportTable'
+import TableGrid from '../../../components/TableGridView';
 const LimitBalance = ({ navigation }: any) => {
-  const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
+  const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(true);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
   const [openDropdown, setOpenDropdown] = React.useState(false);
   const [dropdownValue, setDropdownValue] = React.useState(null);
@@ -105,7 +105,6 @@ const LimitBalance = ({ navigation }: any) => {
   React.useEffect(() => {
     fetchAgents();
     fetchParties();
-    getLimitBalanceReport({});
   }, []);
 
   // Fetch agents for dropdown
@@ -246,20 +245,17 @@ const LimitBalance = ({ navigation }: any) => {
             </TouchableOpacity> */}
           </View>
         ) : null}
-        <ScrollView 
-          style={{ padding: 16 }} 
-          contentContainerStyle={{ flexGrow: 1 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={loading}
-              onRefresh={() => {
-                getLimitBalanceReport({});
-              }}
-            />
-          }
-        >
-          <ReportTable
+        <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16 }}>
+          <TableGrid
+            loading={loading}
             data={filteredItems}
+            showTotal={true}
+            totalRowLabel="Total"
+            onRefresh={() => {
+              getLimitBalanceReport({});
+            }}
+            refreshing={loading && filteredItems.length > 0}
+            style={{ maxHeight: scale(450) }}
             columns={[
               { key: 'sno', label: 'S.No.', width: 50, align: 'center' },
               { key: 'name', label: 'Party', width: 200, align: 'left' },
@@ -270,11 +266,8 @@ const LimitBalance = ({ navigation }: any) => {
               { key: 'payment', label: 'Payment', width: 120, align: 'right', numeric: true },
               { key: 'final_limit', label: 'Final Limit', width: 130, align: 'right', numeric: true },
             ]}
-            loading={loading}
-            showTotal={true}
-            totalRowLabel="Total"
           />
-        </ScrollView>
+        </View>
         {
           isOpenBottomSheet && (<BottomSheet
             backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}

@@ -15,11 +15,11 @@ import CustomDateTimePicker from '../../../components/CustomDatePicker'
 import APIService from '../../services/APIService'
 import GradientBackground from '../../../components/GradientBackground'
 import useSearchBar from '../../../hooks/useSearchBar'
-import ReportTable from '../../../components/ReportTable'
+import TableGrid from '../../../components/TableGridView';
 import CommonModalTable from '../../../components/CommonModalTable'
 
 const Settling = ({ navigation }: any) => {
-  const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
+  const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(true);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
   const [openDropdown2, setOpenDropdown2] = React.useState(false);
   const [dropdownValue2, setDropdownValue2] = React.useState(null);
@@ -28,7 +28,7 @@ const Settling = ({ navigation }: any) => {
   const [showSearch, setShowSearch] = useState(false);
   const [showModalTable, setShowModalTable] = React.useState(false);
   const [selectedRow, setSelectedRow] = React.useState<any>(null);
-  
+
   // Date states
   const [openDate, setOpenDate] = React.useState(new Date());
   const [closeDate, setCloseDate] = React.useState(new Date());
@@ -105,7 +105,7 @@ const Settling = ({ navigation }: any) => {
       setIsOpenBottomSheet(true);
     }
   };
-  
+
   const snapPoints = React.useMemo(() => ['80%'], []);
   const renderBackdrop = React.useCallback(
     (props: any) => (
@@ -117,14 +117,13 @@ const Settling = ({ navigation }: any) => {
     ),
     [],
   );
-  
+
   const [getData, setData] = React.useState<any[]>([]);
   const today = new Date();
   const formattedDate = today.toLocaleDateString('en-GB');
 
   React.useEffect(() => {
     fetchRecentUsers();
-    getSettlingReport({});
   }, []);
 
   // Fetch recent users for dropdown
@@ -185,24 +184,24 @@ const Settling = ({ navigation }: any) => {
 
   // Format props for modal table
   const modalTableProps = React.useMemo(() => {
-    if (!selectedRow) return { 
-      title: '', 
-      dateFrom: '', 
-      dateTo: '', 
-      columns: [], 
-      data: [], 
-      summaryCards: [] 
+    if (!selectedRow) return {
+      title: '',
+      dateFrom: '',
+      dateTo: '',
+      columns: [],
+      data: [],
+      summaryCards: []
     };
-    
+
     // Format dates to DD/MM/YYYY format
     const startDate = openDate ? openDate.toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
     const endDate = closeDate ? closeDate.toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
-    
+
     // Format title like "345 45/55 3/70" from row data
-    const title = selectedRow.name 
+    const title = selectedRow.name
       ? `${selectedRow.name}${selectedRow.rate ? ` ${selectedRow.rate}` : ''}${selectedRow.self_hissa ? `/${selectedRow.self_hissa}` : ''}${selectedRow.tphissa ? ` ${selectedRow.tphissa}` : ''}`
       : 'Settling Report';
-    
+
     // Columns matching the settling report structure
     const columns = [
       { key: 'sno', label: 'S.No.', width: 50, align: 'center' as const },
@@ -225,7 +224,7 @@ const Settling = ({ navigation }: any) => {
       { key: 'lena', label: 'Lena', width: 90, align: 'right' as const, numeric: true },
       { key: 'dena', label: 'Dena', width: 90, align: 'right' as const, numeric: true },
     ];
-    
+
     // Map selectedRow data to match column keys
     const rowData = [{
       sno: 1,
@@ -248,7 +247,7 @@ const Settling = ({ navigation }: any) => {
       lena: selectedRow.lena || 0,
       dena: selectedRow.dena || 0,
     }];
-    
+
     // Summary cards with colors matching the settling report
     const summaryCards = [
       { label: 'OPENING', value: selectedRow.open_dhai || 0, borderColor: '#3B82F6' },
@@ -258,14 +257,14 @@ const Settling = ({ navigation }: any) => {
       { label: 'TPC', value: selectedRow.tpc || 0, borderColor: '#3B82F6' },
       { label: 'CLOSING', value: selectedRow.clam_value_hurp || 0, borderColor: '#10B981' },
     ];
-    
-    return { 
-      title, 
-      dateFrom: startDate, 
-      dateTo: endDate, 
-      columns, 
-      data: rowData, 
-      summaryCards 
+
+    return {
+      title,
+      dateFrom: startDate,
+      dateTo: endDate,
+      columns,
+      data: rowData,
+      summaryCards
     };
   }, [selectedRow, openDate, closeDate]);
 
@@ -290,7 +289,7 @@ const Settling = ({ navigation }: any) => {
               </TouchableOpacity>
             </View>
           </ScreenHeader>
-          
+
           {showSearch ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(10), marginHorizontal: scale(15), marginVertical: scale(10) }}>
               <View style={{ flex: 1 }}>
@@ -303,50 +302,53 @@ const Settling = ({ navigation }: any) => {
               </View>
             </View>
           ) : null}
-          
-          <ScrollView
-            style={{ padding: 16 }}
-            contentContainerStyle={{ flexGrow: 1 }}
-            refreshControl={
-              <RefreshControl
-                refreshing={loading}
-                onRefresh={() => {
-                  getSettlingReport({});
-                }}
-              />
-            }
-          >
-            <ReportTable
+
+          <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16 }}>
+            <TableGrid
+              loading={loading}
               data={filteredItems}
-            columns={[
-              { key: 'sno', label: 'S.No.', width: 50, align: 'center' },
-              { key: 'name', label: 'Party', width: 200, align: 'left' },
-              { key: 'date', label: 'Date', width: 120, align: 'left' },
-              { key: 'openning', label: 'OP-Bal', width: 100, align: 'right', numeric: true },
-              { key: 'total_sale', label: 'T-Sale', width: 100, align: 'right', numeric: true },
-              { key: 'dhai_sale', label: 'D-Sale', width: 100, align: 'right', numeric: true },
-              { key: 'hurp_sale', label: 'A-Sale', width: 100, align: 'right', numeric: true },
-              { key: 'commission', label: 'Comm', width: 100, align: 'right', numeric: true },
-              { key: 'daOpen', label: 'D/A-Open', width: 100, align: 'right', numeric: true },
-              { key: 'hissa', label: 'Hissa', width: 100, align: 'right', numeric: true },
-              { key: 'tpc', label: 'TPC', width: 80, align: 'right', numeric: true },
-              { key: 'hp_amt', label: 'HP-Amt', width: 100, align: 'right', numeric: true },
-              { key: 'rebate', label: 'RBT', width: 100, align: 'right', numeric: true },
-              { key: 'pl', label: 'P&L', width: 100, align: 'right', numeric: true },
-              { key: 'payment', label: 'Payment', width: 100, align: 'right', numeric: true },
-              { key: 'closing', label: 'Balance', width: 100, align: 'right', numeric: true },
-            ]}
+              showTotal={true}
+              onRefresh={() => {
+                getSettlingReport({});
+              }}
+              refreshing={loading && filteredItems.length > 0}
+              style={{ maxHeight: scale(450) }}
+              columns={[
+                { key: 'sno', label: 'S.No.', width: 50, align: 'center' },
+                { key: 'name', label: 'Party', width: 200, align: 'left' },
+                {
+                  key: 'date',
+                  label: 'Date',
+                  width: 120,
+                  align: 'left',
+                  renderCell: (row: any) => {
+                    if (!row.date) return <Text style={{ fontSize: scale(10), color: '#111827' }}>-</Text>;
+                    // Extract only the date part if it's a full ISO string or contains space/time
+                    const dateOnly = row.date.split(' ')[0].split('T')[0];
+                    return <Text style={{ fontSize: scale(10), color: '#111827' }}>{dateOnly}</Text>;
+                  }
+                },
+                { key: 'opening', label: 'OP-Bal', width: 100, align: 'right', numeric: true },
+                { key: 'total_sale', label: 'T-Sale', width: 100, align: 'right', numeric: true },
+                { key: 'dhai_sale', label: 'D-Sale', width: 100, align: 'right', numeric: true },
+                { key: 'hurp_sale', label: 'A-Sale', width: 100, align: 'right', numeric: true },
+                { key: 'commission', label: 'Comm', width: 100, align: 'right', numeric: true },
+                { key: 'daOpen', label: 'D/A-Open', width: 100, align: 'right', numeric: true },
+                { key: 'tpc', label: 'TPC', width: 80, align: 'right', numeric: true },
+                { key: 'hissa', label: 'Hissa', width: 100, align: 'right', numeric: true },
+                { key: 'pl', label: 'Profit', width: 100, align: 'right', numeric: true },
+                { key: 'rebate', label: 'Rebate', width: 100, align: 'right', numeric: true },
+                { key: 'payment', label: 'Payment', width: 100, align: 'right', numeric: true },
+                { key: 'closing', label: 'Closing', width: 100, align: 'right', numeric: true },
+              ]}
               enableRowPress={true}
-              onRowPress={(row) => {
-                console.log("Row clicked:", row);
+              onRowPress={async (row) => {
                 setSelectedRow(row);
                 setShowModalTable(true);
               }}
-              loading={loading}
-              showTotal={true}
               totalRowLabel="Total"
             />
-            
+
             {/* CommonModalTable Integration */}
             {selectedRow && showModalTable && (
               <CommonModalTable
@@ -366,8 +368,8 @@ const Settling = ({ navigation }: any) => {
                 totalRowLabel="Total"
               />
             )}
-          </ScrollView>
-          
+          </View>
+
           {
             isOpenBottomSheet && (<BottomSheet
               backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}

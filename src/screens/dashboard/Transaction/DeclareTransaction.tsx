@@ -534,7 +534,7 @@ const DeclareTransaction = ({ navigation }: any) => {
           </View>
 
           {/* Summary Table */}
-          <View style={styles.tableWrapper}>
+          <View style={styles.summaryTableWrapper}>
             {/* Table Header with Title and Reset Button */}
 
 
@@ -732,6 +732,11 @@ const DeclareTransaction = ({ navigation }: any) => {
                   }}
                   setItems={() => { }}
                   placeholder={shiftLoading ? "Loading shifts..." : "Select Shift"}
+                  onOpen={() => {
+                    if (shiftItems.length === 0) {
+                      fetchShiftData();
+                    }
+                  }}
                 />
 
                 <CustomDateTimePicker
@@ -762,6 +767,12 @@ const DeclareTransaction = ({ navigation }: any) => {
                   setValue={setSelectedStaff}
                   setItems={() => { }}
                   placeholder={staffLoading ? "Loading staff..." : "--STAFF--"}
+                  onOpen={() => {
+                    if (staffItems.length === 0) {
+                      fetchStaffData();
+                    }
+                  }}
+                  showClearButton={true}
                 />
 
                 <View style={{ marginVertical: scale(10) }}>
@@ -918,6 +929,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.WHITE,
     borderRadius: scale(8),
     overflow: 'hidden',
+  },
+  summaryTableWrapper: {
+    marginTop: scale(16),
+    backgroundColor: COLORS.WHITE,
+    borderRadius: scale(8),
+    overflow: 'hidden',
+    height: height * 0.5,
   },
   userInfoContainer: {
     flexDirection: 'column',

@@ -15,9 +15,9 @@ import CustomDateTimePicker from '../../../components/CustomDatePicker'
 import APIService from '../../services/APIService'
 import GradientBackground from '../../../components/GradientBackground'
 import useSearchBar from '../../../hooks/useSearchBar'
-import ReportTable from '../../../components/ReportTable'
+import TableGrid from '../../../components/TableGridView';
 const TPC = ({ navigation }: any) => {
-  const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
+  const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(true);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
   const [openDropdown2, setOpenDropdown2] = React.useState(false);
   const [dropdownValue2, setDropdownValue2] = React.useState(null);
@@ -117,7 +117,6 @@ const TPC = ({ navigation }: any) => {
   
   React.useEffect(() => {
     fetchAgents();
-    getTCPReport({});
   }, []);
 
   // Fetch agents for dropdown
@@ -212,20 +211,17 @@ const TPC = ({ navigation }: any) => {
             </TouchableOpacity> */}
           </View>
         ) : null}
-        <ScrollView 
-          style={{ padding: 16 }} 
-          contentContainerStyle={{ flexGrow: 1 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={loading}
-              onRefresh={() => {
-                getTCPReport({});
-              }}
-            />
-          }
-        >
-          <ReportTable
+        <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16 }}>
+          <TableGrid
+            loading={loading}
             data={filteredItems}
+            showTotal={true}
+            totalRowLabel="Total"
+            onRefresh={() => {
+              getTCPReport({});
+            }}
+            refreshing={loading && filteredItems.length > 0}
+            style={{ maxHeight: scale(450) }}
             columns={[
               { key: 'sno', label: 'S.No.', width: 50, align: 'center' },
               { key: 'name', label: 'Party', width: 200, align: 'left' },
@@ -239,14 +235,11 @@ const TPC = ({ navigation }: any) => {
                 width: 120, 
                 align: 'right', 
                 numeric: true,
-                cell: (item: any) => (Number(item?.tpc || 0) + Number(item?.tpHissaAmt || 0)).toString()
+                renderCell: (item: any) => <Text style={{ textAlign: 'right', width: 120 }}>{(Number(item?.tpc || 0) + Number(item?.tpHissaAmt || 0)).toString()}</Text>
               },
             ]}
-            loading={loading}
-            showTotal={true}
-            totalRowLabel="Total"
           />
-        </ScrollView>
+        </View>
         {
           isOpenBottomSheet && (<BottomSheet
             backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}

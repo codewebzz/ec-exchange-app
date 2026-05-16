@@ -14,10 +14,10 @@ import CustomMonthPicker from '../../../components/CustomMonthPicker'
 import APIService from '../../services/APIService'
 import GradientBackground from '../../../components/GradientBackground'
 import useSearchBar from '../../../hooks/useSearchBar'
-import ReportTable from '../../../components/ReportTable'
+import TableGrid from '../../../components/TableGridView';
 
 const ResultHistory = ({ navigation }: any) => {
-  const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
+  const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(true);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
   const [openDropdown, setOpenDropdown] = React.useState(false);
   const [dropdownValue, setDropdownValue] = React.useState(null);
@@ -60,7 +60,6 @@ const ResultHistory = ({ navigation }: any) => {
 
   React.useEffect(() => {
     fetchShifts();
-    getResultHistory({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -148,29 +147,23 @@ const ResultHistory = ({ navigation }: any) => {
             </View>
           ) : null}
 
-          <ScrollView
-            style={{ padding: 16 }}
-            contentContainerStyle={{ flexGrow: 1 }}
-            refreshControl={
-              <RefreshControl
-                refreshing={loading}
-                onRefresh={() => {
-                  getResultHistory({});
-                }}
-              />
-            }
-          >
-            <ReportTable
+          <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16 }}>
+            <TableGrid
+              loading={loading}
               data={filteredItems}
+              showTotal={false}
+              onRefresh={() => {
+                getResultHistory({});
+              }}
+              refreshing={loading && filteredItems.length > 0}
+              style={{ maxHeight: scale(450) }}
               columns={[
                 { key: 'sno', label: 'S.No.', width: 60, align: 'center' },
                 { key: 'date', label: 'Date', width: 150, align: 'left' },
                 { key: 'declared_number', label: 'Declared Number', width: 150, align: 'right' },
               ]}
-              loading={loading}
-              showTotal={false}
             />
-          </ScrollView>
+          </View>
 
           {isOpenBottomSheet && (
             <BottomSheet

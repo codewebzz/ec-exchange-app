@@ -1,23 +1,23 @@
-import { Keyboard, ScrollView, StyleSheet, Text, TouchableOpacity, View, TextInput, RefreshControl, ActivityIndicator } from 'react-native'
-import React, { useState } from 'react'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import ScreenHeader from '../../../components/ScreenHeader'
-import { COLORS } from '../../../assets/colors'
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import { scale } from 'react-native-size-matters'
-import ReportTable from '../../../components/ReportTable'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { Formik } from 'formik'
-import CustomButton from '../../../components/CustomButton'
-import CustomDropdown from '../../../components/CustomDropdown'
-import CustomDateTimePicker from '../../../components/CustomDatePicker'
-import APIService from '../../services/APIService'
-import GradientBackground from '../../../components/GradientBackground'
-import useSearchBar from '../../../hooks/useSearchBar'
+import React, { useState } from 'react'
+import { ActivityIndicator, Keyboard, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { scale } from 'react-native-size-matters'
+import Icon from 'react-native-vector-icons/MaterialIcons'
+import { COLORS } from '../../../assets/colors'
 import CommonGridTable from '../../../components/CommonGridTable'
+import CustomButton from '../../../components/CustomButton'
+import CustomDateTimePicker from '../../../components/CustomDatePicker'
+import CustomDropdown from '../../../components/CustomDropdown'
+import GradientBackground from '../../../components/GradientBackground'
+import ScreenHeader from '../../../components/ScreenHeader'
+import TableGrid from '../../../components/TableGridView'
+import useSearchBar from '../../../hooks/useSearchBar'
+import APIService from '../../services/APIService'
 const Daily = ({ navigation }: any) => {
-  const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
+  const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(true);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
   const [openDropdown, setOpenDropdown] = React.useState(false);
   const [dropdownValue, setDropdownValue] = React.useState(null);
@@ -200,7 +200,7 @@ const Daily = ({ navigation }: any) => {
         const number = (rowIndex * 10 + colIndex + 1).toString().padStart(2, '0');
         // Normalize "100" to "00" for matching logic
         const normalizedNumber = number === "100" ? "00" : number;
-        
+
         // Get value from jantriMap
         const value = jantriMap[normalizedNumber] || jantriMap[parseInt(normalizedNumber, 10).toString()] || '0';
 
@@ -366,22 +366,18 @@ const Daily = ({ navigation }: any) => {
             </TouchableOpacity> */}
             </View>
           ) : null}
-          <ScrollView
-            style={{ padding: 16 }}
-            contentContainerStyle={{ flexGrow: 1 }}
-            refreshControl={
-              <RefreshControl
-                refreshing={loading}
-                onRefresh={() => {
-                  if (dropdownValue && selectedDate) {
-                    getDailyReport({ shift: dropdownValue, date: selectedDate });
-                  }
-                }}
-              />
-            }
-          >
-            <ReportTable
+          <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16 }}>
+            <TableGrid
+              loading={loading}
               data={filteredItems}
+              showTotal={true}
+              style={{ maxHeight: scale(450) }}
+              onRefresh={() => {
+                if (dropdownValue && selectedDate) {
+                  getDailyReport({ shift: dropdownValue, date: selectedDate });
+                }
+              }}
+              refreshing={loading && filteredItems.length > 0}
               columns={[
                 { key: 'sno', label: 'S.No.', width: 50, align: 'center' },
                 { key: 'name', label: 'name', width: 200, align: 'left' },
@@ -398,6 +394,7 @@ const Daily = ({ navigation }: any) => {
                 { key: 'open_hurp', label: 'Open-Akhar', width: 100, align: 'right', numeric: true },
                 { key: 'clam_value_hurp', label: 'Amt-Akhar', width: 100, align: 'right', numeric: true },
                 { key: 'tpc', label: 'TCP', width: 80, align: 'right', numeric: true },
+                { key: 'net_balance', label: 'Balance', width: 100, align: 'right', numeric: true },
                 { key: 'self_hissa_amount', label: 'S-Hissa-Amt', width: 120, align: 'right', numeric: true },
                 { key: 'tpHissaAmt', label: 'TP-Hissa-Amt', width: 120, align: 'right', numeric: true },
                 { key: 'lena', label: 'Lena', width: 100, align: 'right', numeric: true },
@@ -456,8 +453,6 @@ const Daily = ({ navigation }: any) => {
                   setShowGridTable(true);
                 }
               }}
-              loading={loading}
-              showTotal={true}
               totalRowLabel="Total"
             />
             {selectedRow && showGridTable && (
@@ -476,7 +471,7 @@ const Daily = ({ navigation }: any) => {
                 date={gridTableProps.date}
               />
             )}
-          </ScrollView>
+          </View>
           {loadingJantri && (
             <View style={style.loadingOverlay}>
               <ActivityIndicator size="large" color={COLORS.BUTTONBG} />
