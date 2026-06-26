@@ -29,6 +29,8 @@ import ScreenHeader from '../../../components/ScreenHeader';
 import TabHeader from '../../../components/TabHeader';
 import useSearchBar from '../../../hooks/useSearchBar';
 import APIService from '../../services/APIService';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
 const AddShiftSchema = Yup.object().shape({
   name: Yup.string().required('Shift Name is required'),
   openTime: Yup.string()
@@ -313,6 +315,7 @@ const Shift = ({ navigation }: any) => {
 
 
   return (
+    <PermissionGuard permission={PERMISSIONS.MASTER_SHIFT_VIEW.value}>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
         <SafeAreaView
@@ -718,6 +721,7 @@ const Shift = ({ navigation }: any) => {
         </SafeAreaView>
       </GradientBackground>
     </GestureHandlerRootView>
+    </PermissionGuard>
   );
 };
 

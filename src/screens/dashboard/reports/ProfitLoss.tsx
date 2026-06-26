@@ -14,6 +14,8 @@ import TableGrid from '../../../components/TableGridView';
 import ScreenHeader from '../../../components/ScreenHeader'
 import useSearchBar from '../../../hooks/useSearchBar'
 import APIService from '../../services/APIService'
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
 const ProfitLoss = ({ navigation }: any) => {
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(true);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
@@ -118,11 +120,11 @@ const ProfitLoss = ({ navigation }: any) => {
   // Fetch agents for dropdown
   const fetchAgents = async () => {
     try {
-      const res = await APIService.getMasterLedgerAgent();
+      const res = await APIService.GetAgentDropDownDataData();
       if (res && res.success && Array.isArray(res.data)) {
         const items = res.data.map((a: any) => ({
-          label: a.agent_name || a.name || `Agent ${a.id}`,
-          value: a.id?.toString?.() || a.agent_id?.toString?.() || `${a.id}`,
+          label: a.name || a.real_name || `Agent ${a.id}`,
+          value: a.id?.toString() || a.agent_id?.toString() || `${a.id}`,
         }));
         setDropdownItems2(items);
       } else {
@@ -171,6 +173,7 @@ const ProfitLoss = ({ navigation }: any) => {
     }
   };
   return (
+    <PermissionGuard permission={PERMISSIONS.REPORTS_PROFIT_LOSS_VIEW.value}>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
         <SafeAreaView style={style.safeAreaContainer}>
@@ -336,6 +339,7 @@ const ProfitLoss = ({ navigation }: any) => {
         </SafeAreaView>
       </GradientBackground>
     </GestureHandlerRootView>
+    </PermissionGuard>
   )
 }
 

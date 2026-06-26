@@ -89,7 +89,10 @@ const TableGrid: React.FC<TableProps> = ({
             if (col.numeric) {
                 totals[col.key] = (data || []).reduce((sum, row) => {
                     const value = row[col.key];
-                    const num = typeof value === 'number' ? value : parseFloat(value) || 0;
+                    const cleanedValue = typeof value === 'string'
+                        ? value.replace(/[₹\s,]/g, '')
+                        : value;
+                    const num = typeof cleanedValue === 'number' ? cleanedValue : parseFloat(cleanedValue) || 0;
                     return sum + num;
                 }, 0);
             }
@@ -217,27 +220,34 @@ const TableGrid: React.FC<TableProps> = ({
 
     const renderTotalRow = () => (
         <View style={styles.totalRow}>
-            {columns.map((column, colIndex) => (
-                <View
-                    key={column.key}
-                    style={[
-                        { width: column.width || 100 },
-                        column.align === 'right'
-                            ? { paddingEnd: scale(10) }
-                            : column.align === 'center'
-                                ? { alignItems: 'center', paddingHorizontal: scale(5) }
-                                : { paddingStart: scale(10) },
-                    ]}
-                >
-                    <Text style={[styles.totalText, { textAlign: column.align }]}>
-                        {colIndex === 0
-                            ? totalRowLabel
-                            : column.numeric
-                                ? (totals[column.key] || 0).toString()
-                                : '-'}
-                    </Text>
-                </View>
-            ))}
+            {columns.map((column, colIndex) => {
+                const hasCurrency = (data || []).some(row => typeof row[column.key] === 'string' && row[column.key].includes('₹'));
+                const formattedVal = column.numeric
+                    ? (hasCurrency
+                        ? '₹ ' + (totals[column.key] || 0).toLocaleString('en-IN')
+                        : (totals[column.key] || 0).toLocaleString('en-IN'))
+                    : '-';
+
+                return (
+                    <View
+                        key={column.key}
+                        style={[
+                            { width: column.width || 100 },
+                            column.align === 'right'
+                                ? { paddingEnd: scale(10) }
+                                : column.align === 'center'
+                                    ? { alignItems: 'center', paddingHorizontal: scale(5) }
+                                    : { paddingStart: scale(10) },
+                        ]}
+                    >
+                        <Text style={[styles.totalText, { textAlign: column.align }]}>
+                            {colIndex === 0
+                                ? totalRowLabel
+                                : formattedVal}
+                        </Text>
+                    </View>
+                );
+            })}
         </View>
     );
 
@@ -255,11 +265,11 @@ const TableGrid: React.FC<TableProps> = ({
                     data={getSortedData()}
                     renderItem={renderRow}
                     keyExtractor={(item, index) => index.toString()}
+                    style={{ flex: 1 }}
                     nestedScrollEnabled={true}
                     showsVerticalScrollIndicator={true}
                     persistentScrollbar={true}
-                    contentContainerStyle={{ paddingBottom: scale(20) }}
-                    ListFooterComponent={(showTotal && (data?.length ?? 0) > 0) ? renderTotalRow : null}
+                    contentContainerStyle={{ flexGrow: 1, paddingBottom: scale(10) }}
                     refreshControl={
                         onRefresh ? (
                             <RefreshControl
@@ -286,6 +296,7 @@ const TableGrid: React.FC<TableProps> = ({
                         </Text>
                     </View>
                 )}
+                {showTotal && (data?.length ?? 0) > 0 && renderTotalRow()}
             </View>
         </ScrollView>
     );

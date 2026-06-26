@@ -29,6 +29,8 @@ import ScreenHeader from '../../../components/ScreenHeader';
 import TabHeader from '../../../components/TabHeader';
 import useSearchBar from '../../../hooks/useSearchBar';
 import APIService from '../../services/APIService';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
 const AddStaffSchema = Yup.object().shape({
   staffName: Yup.string().required('Staff Name is required'),
   role: Yup.string().required('Role is required'),
@@ -382,6 +384,7 @@ const Staff = ({ navigation }: any) => {
     }
   };
   return (
+    <PermissionGuard permission={PERMISSIONS.MASTER_STAFF_VIEW.value}>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
         <SafeAreaView
@@ -770,6 +773,7 @@ const Staff = ({ navigation }: any) => {
         </SafeAreaView>
       </GradientBackground>
     </GestureHandlerRootView>
+    </PermissionGuard>
   );
 };
 const style = StyleSheet.create({

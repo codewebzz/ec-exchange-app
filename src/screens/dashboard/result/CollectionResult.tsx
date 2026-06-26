@@ -17,135 +17,10 @@ import CustomDropdown from '../../../components/CustomDropdown';
 import ScreenHeader from '../../../components/ScreenHeader';
 import APIService from '../../services/APIService';
 import JantriViewModal from '../Transaction/addTransaction/JantriViewModal';
+import JantriTable from '../Transaction/addTransaction/JantriTable';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
 
-// Common Grid Table Component
-const CollectionGridTable = ({ transactionData }: { transactionData: any[] }) => {
-  const safeTransactionData = Array.isArray(transactionData) ? transactionData : [];
-  return (
-    <View style={styles.gridSection}>
-      <Text style={styles.gridTitle}>
-        Collection Data {transactionData.length > 0 ? `(${transactionData.length} transactions)` : ''}
-      </Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={true}
-        contentContainerStyle={styles.tableScrollContainer}
-        bounces={false}
-      >
-        <View style={styles.table}>
-          {/* Header Row */}
-          <View style={styles.row}>
-            <View style={styles.headerCell}>
-              <Text style={styles.headerCellText}></Text>
-            </View>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-              <View key={num} style={styles.headerCell}>
-                <Text style={styles.headerCellText}>{num}</Text>
-              </View>
-            ))}
-            <View style={styles.headerCell}>
-              <Text style={styles.headerCellText}>Total</Text>
-            </View>
-          </View>
-
-          {/* Data Rows */}
-          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((rowIndex) => (
-            <View key={rowIndex} style={styles.row}>
-              {/* Row Header */}
-              <View style={[styles.rowHeaderCell]}>
-                <Text style={[styles.rowHeaderText]}>
-                  {(rowIndex * 10 + 1).toString().padStart(2, '0')}
-                </Text>
-              </View>
-
-              {/* Data Cells */}
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((colIndex) => {
-                const number = (rowIndex * 10 + colIndex + 1).toString().padStart(2, '0');
-                // Find transaction data for this number
-                const transaction = safeTransactionData.find(t => t?.number === number);
-                return (
-                  <View key={colIndex} style={styles.dataCell}>
-                    <Text style={styles.rowHeaderText}>
-                      {transaction ? transaction.amount : number}
-                    </Text>
-                  </View>
-                );
-              })}
-
-              {/* Row Total */}
-              <View style={styles.totalCell}>
-                <Text style={styles.totalCellText}>0</Text>
-              </View>
-            </View>
-          ))}
-
-          {/* Summary Row */}
-          <View style={styles.row}>
-            <View style={styles.summaryHeaderCell}>
-              <Text style={styles.summaryHeaderText}>0</Text>
-            </View>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-              <View key={num} style={styles.summaryCell}>
-                <Text style={styles.summaryCellText}>0</Text>
-              </View>
-            ))}
-            <View style={styles.summaryCell}>
-              <Text style={styles.summaryCellText}>0</Text>
-            </View>
-          </View>
-
-          {/* B Series Row */}
-          <View style={styles.row}>
-            {/* <View style={styles.rowHeaderCell}>
-              <Text style={styles.rowHeaderText}>B1</Text>
-            </View> */}
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num) => (
-              <View key={num} style={styles.dataCell}>
-                <Text style={styles.rowHeaderText}>B{num}</Text>
-              </View>
-            ))}
-            <View style={styles.totalCell}>
-              <Text style={styles.totalCellText}>0</Text>
-            </View>
-          </View>
-
-          {/* A Series Row */}
-          <View style={styles.row}>
-            {/* <View style={styles.rowHeaderCell}>
-              <Text style={styles.rowHeaderText}>A1</Text>
-            </View> */}
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num) => (
-              <View key={num} style={styles.dataCell}>
-                <Text style={styles.rowHeaderText}>A{num}</Text>
-              </View>
-            ))}
-            <View style={styles.totalCell}>
-              <Text style={styles.totalCellText}>0</Text>
-            </View>
-          </View>
-
-          {/* Grand Total Row */}
-          <View style={styles.row}>
-            <View style={styles.grandTotalHeaderCell}>
-              <Text style={styles.grandTotalHeaderText}>-</Text>
-            </View>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-              <View key={num} style={styles.grandTotalCell}>
-                <Text style={styles.grandTotalCellText}>-</Text>
-              </View>
-            ))}
-            <View style={styles.grandTotalLabelCell}>
-              <Text style={styles.grandTotalLabelText}>Grand Total</Text>
-            </View>
-            <View style={styles.grandTotalValueCell}>
-              <Text style={styles.grandTotalValueText}>0</Text>
-            </View>
-          </View>
-        </View>
-      </ScrollView>
-    </View>
-  );
-};
 
 const CollectionResult = ({ navigation }: any) => {
   // State for filter bottom sheet
@@ -175,8 +50,9 @@ const CollectionResult = ({ navigation }: any) => {
   const [roundOff, setRoundOff] = useState('0');
 
   // Ledger states
-  const [partyName, setPartyName] = useState('');
-  const [ledgers, setLedgers] = useState<any[]>([]);
+  const [ledgerList, setLedgerList] = useState<any[]>([]);
+  const [ledgerDropdownOpen, setLedgerDropdownOpen] = useState(false);
+  const [selectedLedgerValue, setSelectedLedgerValue] = useState<any>(null);
 
   // Dropdown states
   const [shiftOpen, setShiftOpen] = useState(false);
@@ -217,41 +93,60 @@ const CollectionResult = ({ navigation }: any) => {
     setIsFilterBottomSheetOpen(false);
   };
 
-  // Handle filter submit
-  const handleFilterSubmit = async () => {
-    // Validate required fields
+  // Centralized function to fetch collection data (params + payload)
+  const fetchCollectionData = async (currentLedgers = ledgerList) => {
     if (!selectedShift) {
-      Alert.alert('Error', 'Please select a shift');
       return;
     }
 
     try {
       setIsLoading(true);
 
-      // Prepare API data
-      const apiData = {
-        shift_id: selectedShift,
-        date: selectedDate.toLocaleDateString('en-GB'), // Format: dd/mm/yyyy
-        cut_commission: selectedCategories.commission ? 1 : 0,
-        cut_patti: selectedCategories.hissa ? 1 : 0,
-        cut_wapsi: selectedCategories.wapsi ? 1 : 0,
-        mix_akh: selectedCategories.akh ? 1 : 0,
+      const queryData = {
+        cut_commission: selectedCategories.commission,
+        cut_patti: selectedCategories.hissa,
+        cut_wapsi: selectedCategories.wapsi,
+        mix_akh: selectedCategories.akh,
         less_amt: parseFloat(amountLess) || 0,
         less_percentage: parseFloat(lessPercentage) || 0,
         round_off_value: parseFloat(roundOff) || 0,
       };
 
-      console.log('Filter submitted:', apiData);
+      const queryParams = '?' + Object.entries(queryData)
+        .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+        .map(([key, value]) => `${key}=${value}`)
+        .join('&');
 
-      // Call API
-      const response: any = await APIService.collectionResult(apiData);
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const year = selectedDate.getFullYear();
+      const formattedDate = `${day}/${month}/${year}`;
 
-      // The response structure might be different, let's handle it safely
+      const payload = {
+        shift_id: Number(selectedShift),
+        is_declared: false,
+        date: formattedDate,
+        ledger_list: currentLedgers.filter(l => l.selected).map(l => l.id),
+      };
+
+      console.log('Sending collection result request:', { queryParams, payload });
+
+      const response: any = await APIService.collectionResult(queryParams, payload);
+
       if (response && response.success) {
-        // Extract transaction data from response - check different possible structures
-        const transactions = response?.data?.transaction ?? response?.transaction ?? [];
-        setTransactionData(Array.isArray(transactions) ? transactions : []);
-        console.log('Transaction data received:', transactions);
+        const data = response?.data;
+        const transaction = data?.transaction ?? {};
+        const returnedLedgerList = data?.ledger_list_to_return ?? [];
+
+        // Format the transactions dict into array expected by JantriTable
+        const transactions = Object.entries(transaction).map(([key, amount]) => ({
+          number: key,
+          amount,
+        }));
+
+        setTransactionData(transactions);
+        setLedgerList(returnedLedgerList);
+        console.log('Fetched transactions successfully:', transactions);
       } else {
         Alert.alert('Error', response?.message || 'Failed to fetch data');
       }
@@ -260,42 +155,51 @@ const CollectionResult = ({ navigation }: any) => {
       Alert.alert('Error', 'Failed to fetch collection data');
     } finally {
       setIsLoading(false);
-      // Close the bottom sheet
-      handleFilterClosePress();
     }
   };
 
-  // Handle add ledger
-  const handleAddLedger = () => {
-    if (!partyName.trim()) {
-      Alert.alert('Error', 'Please enter a party name');
+  // Handle filter submit
+  const handleFilterSubmit = async () => {
+    if (!selectedShift) {
+      Alert.alert('Error', 'Please select a shift');
       return;
     }
-
-    const newLedger = {
-      id: Date.now().toString(),
-      name: partyName.trim(),
-      timestamp: new Date(),
-    };
-
-    setLedgers([...ledgers, newLedger]);
-    setPartyName('');
+    await fetchCollectionData();
+    handleFilterClosePress();
   };
 
-  // Handle clear ledgers
-  const handleClearLedgers = () => {
-    Alert.alert(
-      'Clear Ledgers',
-      'Are you sure you want to clear all ledgers?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear',
-          style: 'destructive',
-          onPress: () => setLedgers([]),
-        },
-      ]
+  // Handle selecting a ledger from the dropdown
+  const handleSelectLedger = async (ledgerId: any) => {
+    if (!ledgerId) return;
+    const updatedLedgers = ledgerList.map((item) =>
+      item.id === ledgerId ? { ...item, selected: true } : item
     );
+    setLedgerList(updatedLedgers);
+    setSelectedLedgerValue(null);
+    await fetchCollectionData(updatedLedgers);
+  };
+
+  // Handle removing a ledger badge
+  const handleRemoveLedger = async (ledger: any) => {
+    const updatedLedgers = ledgerList.map((item) =>
+      item.id === ledger.id ? { ...item, selected: false } : item
+    );
+    setLedgerList(updatedLedgers);
+    await fetchCollectionData(updatedLedgers);
+  };
+
+  // Handle clear all selected ledgers
+  const handleClearLedgers = async () => {
+    const updatedLedgers = ledgerList.map((item) => ({ ...item, selected: false }));
+    setLedgerList(updatedLedgers);
+    await fetchCollectionData(updatedLedgers);
+  };
+
+  // Handle add all ledgers
+  const handleAddAllLedgers = async () => {
+    const updatedLedgers = ledgerList.map((item) => ({ ...item, selected: true }));
+    setLedgerList(updatedLedgers);
+    await fetchCollectionData(updatedLedgers);
   };
 
   // Handle category toggle
@@ -322,13 +226,17 @@ const CollectionResult = ({ navigation }: any) => {
 
       if (response && response.success && response.data) {
         // Transform the API response to match dropdown format
-        console.log(response.data, "response.dataresponse.data");
         const transformedShifts = response.data.map((shift: any) => ({
           label: shift.shift_name || shift.name || 'Unknown Shift',
           value: shift.id?.toString() || shift.shift_id?.toString() || ''
         }));
         setShiftItems(transformedShifts);
         console.log('Transformed shift items:', transformedShifts);
+
+        // Auto-select first shift if none selected
+        if (transformedShifts.length > 0 && !selectedShift) {
+          setSelectedShift(transformedShifts[0].value);
+        }
       } else {
         console.log('No shift data found or API error');
         setShiftItems([]);
@@ -345,10 +253,10 @@ const CollectionResult = ({ navigation }: any) => {
   const handleJantriSave = (transactions: any[]) => {
     console.log('Jantri data saved:', transactions);
     setIsJantriModalVisible(false);
-    // Here you would typically save the data or make an API call
   };
 
   return (
+    <PermissionGuard permission={PERMISSIONS.RESULT_COLLECTION_VIEW.value}>
     <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
       {/* Header */}
       <ScreenHeader
@@ -383,42 +291,85 @@ const CollectionResult = ({ navigation }: any) => {
               <Ionicons name="list" size={24} color={COLORS.BUTTONBG} />
               <Text style={styles.ledgerTitle}>Ledgers</Text>
             </View>
-            <View style={styles.ledgerInputContainer}>
-              <TextInput
-                style={styles.partyNameInput}
-                placeholder="Party Name"
-                value={partyName}
-                onChangeText={setPartyName}
-                placeholderTextColor="#999"
-              />
-              <TouchableOpacity style={styles.addButton} onPress={handleAddLedger}>
-                <Text style={styles.addButtonText}>Add</Text>
-              </TouchableOpacity>
-            </View>
           </View>
 
-          {ledgers.length === 0 ? (
-            <Text style={styles.noLedgersText}>No ledgers found.</Text>
-          ) : (
-            <View style={styles.ledgerList}>
-              {ledgers.map((ledger) => (
-                <View key={ledger.id} style={styles.ledgerItem}>
-                  <Text style={styles.ledgerItemText}>{ledger.name}</Text>
-                  <Text style={styles.ledgerItemDate}>
-                    {ledger.timestamp.toLocaleDateString()}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
+          {/* Select Ledger Dropdown */}
+          <View style={styles.dropdownSection}>
+            <CustomDropdown
+              open={ledgerDropdownOpen}
+              value={selectedLedgerValue}
+              items={ledgerList
+                .filter((l) => !l.selected)
+                .map((l) => ({ label: l.name, value: l.id }))
+              }
+              setOpen={setLedgerDropdownOpen}
+              setValue={(val: any) => {
+                if (typeof val === 'function') {
+                  setSelectedLedgerValue(val());
+                } else {
+                  setSelectedLedgerValue(val);
+                }
+              }}
+              onChangeValue={handleSelectLedger}
+              placeholder="Select ledger"
+              zIndex={5000}
+            />
+          </View>
 
-          <TouchableOpacity style={styles.clearButton} onPress={handleClearLedgers}>
-            <Text style={styles.clearButtonText}>Clear Ledgers List</Text>
-          </TouchableOpacity>
+          {/* Selected Ledgers Badges */}
+          <View style={styles.ledgerListContainer}>
+            {ledgerList.filter((item) => item.selected).length === 0 ? (
+              <Text style={styles.noLedgersText}>No ledgers selected.</Text>
+            ) : (
+              <View style={styles.selectedLedgersGrid}>
+                {ledgerList
+                  .filter((item) => item.selected)
+                  .map((item) => (
+                    <View key={item.id} style={styles.ledgerItemBadge}>
+                      <Text style={styles.ledgerItemText} numberOfLines={1} ellipsizeMode="tail">
+                        {item.name}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.removeLedgerButton}
+                        onPress={() => handleRemoveLedger(item)}
+                      >
+                        <Ionicons name="close" size={14} color="#E53E3E" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+              </View>
+            )}
+          </View>
+
+          {/* Footer Buttons */}
+          <View style={styles.ledgerCardFooter}>
+            <TouchableOpacity style={styles.clearLedgersButton} onPress={handleClearLedgers}>
+              <Text style={styles.clearLedgersButtonText}>Clear Ledgers</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.addAllButton} onPress={handleAddAllLedgers}>
+              <Text style={styles.addAllButtonText}>Add All</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Collection Data Grid */}
-        <CollectionGridTable transactionData={transactionData} />
+        <View style={styles.gridSection}>
+          <Text style={styles.gridTitle}>
+            Collection Data {transactionData.length > 0 ? `(${transactionData.length} transactions)` : ''}
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={true}
+            bounces={false}
+          >
+            <View style={{ width: 650 }}>
+              <JantriTable
+                externalTransactions={transactionData}
+                isEditable={false}
+              />
+            </View>
+          </ScrollView>
+        </View>
       </ScrollView>
 
       {/* Filter Bottom Sheet */}
@@ -450,7 +401,7 @@ const CollectionResult = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          <BottomSheetScrollView style={styles.bottomSheetContent}>
+          <BottomSheetScrollView style={styles.bottomSheetContent} contentContainerStyle={{ paddingBottom: 60 }}>
             {/* Collection Type */}
             <View style={styles.filterSection}>
               <Text style={styles.filterLabel}>Collection</Text>
@@ -483,7 +434,13 @@ const CollectionResult = ({ navigation }: any) => {
                 value={selectedShift}
                 items={shiftItems}
                 setOpen={setShiftOpen}
-                setValue={setSelectedShift}
+                setValue={(val: any) => {
+                  if (typeof val === 'function') {
+                    setSelectedShift(val());
+                  } else {
+                    setSelectedShift(val);
+                  }
+                }}
                 setItems={() => { }}
                 placeholder={shiftLoading ? "Loading shifts..." : "Select Shift"}
               />
@@ -581,6 +538,7 @@ const CollectionResult = ({ navigation }: any) => {
         externalTransactions={jantriData}
       />
     </SafeAreaView>
+    </PermissionGuard>
   );
 };
 
@@ -640,66 +598,80 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  ledgerInputContainer: {
+  dropdownSection: {
+    marginBottom: 12,
+    zIndex: 5000,
+  },
+  ledgerListContainer: {
+    minHeight: 50,
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  selectedLedgersGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  ledgerItemBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    flex: 1,
-    marginLeft: 16,
-  },
-  partyNameInput: {
-    flex: 1,
+    backgroundColor: '#EBF8FF',
+    borderColor: '#BEE3F8',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderRadius: 16,
+    paddingLeft: 12,
+    paddingRight: 6,
+    paddingVertical: 6,
+    maxWidth: '48%',
+  },
+  ledgerItemText: {
+    fontSize: 12,
+    color: '#2B6CB0',
+    fontWeight: '500',
+    marginRight: 4,
+    flexShrink: 1,
+  },
+  removeLedgerButton: {
+    padding: 2,
+    borderRadius: 10,
+    backgroundColor: 'rgba(229, 62, 62, 0.1)',
+  },
+  ledgerCardFooter: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+  },
+  clearLedgersButton: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderColor: '#CBD5E0',
+    borderWidth: 1,
+    paddingVertical: 10,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  clearLedgersButtonText: {
+    color: '#4A5568',
+    fontWeight: '600',
     fontSize: 14,
   },
-  addButton: {
+  addAllButton: {
+    flex: 1,
     backgroundColor: COLORS.BUTTONBG,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 8,
+    alignItems: 'center',
   },
-  addButtonText: {
-    color: COLORS.WHITE,
-    fontWeight: 'bold',
+  addAllButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
   noLedgersText: {
     textAlign: 'center',
     color: '#666',
     fontStyle: 'italic',
     marginVertical: 20,
-  },
-  ledgerList: {
-    marginBottom: 16,
-  },
-  ledgerItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  ledgerItemText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  ledgerItemDate: {
-    fontSize: 12,
-    color: '#666',
-  },
-  clearButton: {
-    backgroundColor: COLORS.BUTTONBG,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  clearButtonText: {
-    color: COLORS.WHITE,
-    fontWeight: 'bold',
   },
   gridSection: {
     marginBottom: 20,

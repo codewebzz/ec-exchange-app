@@ -4,7 +4,8 @@ import companyReducer from './reducers/companySlice';
 import journalVoucher from './reducers/journalVoucharSice';
 import limitVoucher from './reducers/limitVoucherSlice';
 import vapsiVoucher from './reducers/vapsiVoucherSlice';
-import authTokenReducer from './reducers/authToken'
+import authTokenReducer from './reducers/authToken';
+import permissionsReducer from './reducers/permissionsSlice';
 export const store = configureStore({
   reducer: {
     company: companyReducer,
@@ -13,6 +14,7 @@ export const store = configureStore({
     limit:limitVoucher,
     vapsi:vapsiVoucher,
     authorization: authTokenReducer,
+    permissions: permissionsReducer,
   },
 })
 

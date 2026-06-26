@@ -50,6 +50,9 @@ import { ContactAndAdditionalFields } from '../leadgersections/ContactAndAdditio
 import { WapsiModal } from '../leadgerModal/WapsiModal';
 import { PattiModal } from '../leadgerModal/PattiModal';
 import GradientBackground from '../../../components/GradientBackground';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
+
 
 const LedgerSchema = Yup.object().shape({
   realName: Yup.string().required('Name is required'),
@@ -646,7 +649,9 @@ const Ledger = ({ navigation }: any) => {
   };
 
   return (
+    <PermissionGuard permission={PERMISSIONS.MASTER_LEDGER_VIEW.value}>
     <GestureHandlerRootView style={{ flex: 1 }}>
+
       <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
         <SafeAreaView
           style={style.safeAreaContainer}
@@ -1448,8 +1453,10 @@ const Ledger = ({ navigation }: any) => {
         </SafeAreaView>
       </GradientBackground>
     </GestureHandlerRootView>
+    </PermissionGuard>
   );
 };
+
 const style = StyleSheet.create({
   flexSingleColumb: {
     width: '48%',

@@ -27,6 +27,8 @@ import useSearchBar from '../../../hooks/useSearchBar';
 import APIService from '../../services/APIService';
 import { PermissionsSelector } from '../../../components/PermissionsSelector';
 import StaffShiftsPopup from '../../../components/StaffShiftsPopup';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
 
 const RolePermissions = ({ navigation }: any) => {
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
@@ -198,6 +200,7 @@ const RolePermissions = ({ navigation }: any) => {
   };
 
   return (
+    <PermissionGuard permission={PERMISSIONS.ORGANIZATION_PERMISSIONS_VIEW.value}>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
         <SafeAreaView
@@ -420,6 +423,7 @@ const RolePermissions = ({ navigation }: any) => {
         </SafeAreaView>
       </GradientBackground>
     </GestureHandlerRootView>
+    </PermissionGuard>
   );
 };
 

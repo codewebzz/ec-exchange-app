@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,33 @@ import {
   Modal,
   TouchableOpacity,
   Dimensions,
+  NativeModules,
+  Alert,
+  PixelRatio,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { scale } from 'react-native-size-matters';
 
 const { width: screenWidth } = Dimensions.get('window');
+
+// Lazy load native modules to prevent crash if not yet linked in the binary
+const getViewShotModule = () => {
+  if (!NativeModules.RNViewShot) return null;
+  try {
+    return require('react-native-view-shot');
+  } catch (e) {
+    return null;
+  }
+};
+
+const getShareModule = () => {
+  if (!NativeModules.RNShare) return null;
+  try {
+    return require('react-native-share');
+  } catch (e) {
+    return null;
+  }
+};
 
 interface ColumnConfig {
   key: string;
@@ -59,6 +81,8 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
   onCopyImage,
   onExport,
 }) => {
+  const viewShotRef = useRef<any>(null);
+
   const getColumnWidth = (column: ColumnConfig): number => {
     if (column.width) {
       return Math.max(scale(column.width), scale(60));
@@ -66,13 +90,20 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
     return scale(80);
   };
 
+  const totalTableWidth = useMemo(() => {
+    return columns.reduce((sum, col) => sum + getColumnWidth(col), 0);
+  }, [columns]);
+
   const calculateTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     columns.forEach((col) => {
       if (col.numeric) {
         totals[col.key] = data.reduce((sum, row) => {
           const value = row[col.key];
-          const num = typeof value === 'number' ? value : parseFloat(value) || 0;
+          const cleanedValue = typeof value === 'string'
+            ? value.replace(/[₹\s,]/g, '')
+            : value;
+          const num = typeof cleanedValue === 'number' ? cleanedValue : parseFloat(cleanedValue) || 0;
           return sum + num;
         }, 0);
       }
@@ -85,8 +116,8 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
   const formatValue = (value: any, isNumeric?: boolean): string => {
     if (value === null || value === undefined || value === '') return '0';
     if (isNumeric) {
-      const num = typeof value === 'number' ? value : parseFloat(value);
-      return isNaN(num) ? '0' : num.toString();
+      const num = typeof value === 'number' ? value : parseFloat(String(value).replace(/[₹\s,]/g, ''));
+      return isNaN(num) ? '0' : num.toLocaleString('en-IN');
     }
     return String(value);
   };
@@ -101,14 +132,59 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
     return '';
   };
 
-  const handleCopyImage = () => {
+  const handleShare = useCallback(async () => {
     if (onCopyImage) {
       onCopyImage();
-    } else {
-      // Default copy behavior
-      console.log('Copy image functionality');
+      return;
     }
-  };
+
+    try {
+      const viewShotModule = getViewShotModule();
+      const shareModule = getShareModule();
+
+      if (!viewShotModule || !shareModule) {
+        Alert.alert(
+          'Rebuild Required',
+          'To use this feature, please restart your app build (npm run android/ios) so the new native modules can be linked.'
+        );
+        return;
+      }
+
+      if (!viewShotRef.current) {
+        Alert.alert('Error', 'Image capture not initialized');
+        return;
+      }
+
+      const captureRef = viewShotModule.captureRef || viewShotModule.default?.captureRef;
+
+      const pixelRatio = PixelRatio.get();
+      const logicalWidth = totalTableWidth + scale(32);
+      const physicalWidth = Math.round(logicalWidth * pixelRatio);
+
+      const uri = await (captureRef ? captureRef(viewShotRef, {
+        format: 'png',
+        quality: 1.0,
+        width: physicalWidth,
+      }) : viewShotModule(viewShotRef, {
+        format: 'png',
+        quality: 1.0,
+        width: physicalWidth,
+      }));
+
+      const shareOptions = {
+        title: 'Report Details',
+        url: uri,
+        type: 'image/png',
+      };
+
+      await shareModule.default.open(shareOptions);
+    } catch (error) {
+      console.log('Capture/Share error:', error);
+      Alert.alert('Error', 'Failed to share image.');
+    }
+  }, [onCopyImage, totalTableWidth]);
+
+
 
   const handleExport = () => {
     if (onExport) {
@@ -129,6 +205,145 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
+        {/* Hidden View for Capture */}
+        <View
+          style={{
+            position: 'absolute',
+            left: -9999,
+            top: 0,
+            width: totalTableWidth + scale(32),
+            backgroundColor: '#F8F6EF',
+            padding: scale(16),
+          }}
+          collapsable={false}
+          ref={viewShotRef}
+        >
+          {/* Header */}
+          <View style={[styles.modalHeader, { backgroundColor: '#F8F6EF', paddingHorizontal: 0 }]}>
+            <View style={styles.modalHeaderContent}>
+              <Text style={styles.modalTitle}>{title}</Text>
+              {formatDateRange() && (
+                <Text style={styles.modalDate}>{formatDateRange()}</Text>
+              )}
+            </View>
+          </View>
+
+          {/* Table Card */}
+          <View style={[styles.tableCard, { marginBottom: scale(16) }]}>
+            <View style={[styles.table, { minWidth: totalTableWidth }]}>
+              {/* Table Header Row */}
+              <View style={styles.tableHeaderRow}>
+                {columns.map((column) => (
+                  <View
+                    key={column.key}
+                    style={[
+                      styles.tableHeaderCell,
+                      { width: getColumnWidth(column) },
+                    ]}
+                  >
+                    <Text style={styles.tableHeaderText}>
+                      {column.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* Data Rows or No Results */}
+              {loading ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateText}>Loading...</Text>
+                </View>
+              ) : !data || data.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateText}>No results found.</Text>
+                </View>
+              ) : (
+                data.map((row, rowIndex) => (
+                  <View key={rowIndex} style={styles.tableDataRow}>
+                    {columns.map((column, colIndex) => (
+                      <View
+                        key={column.key}
+                        style={[
+                          styles.tableDataCell,
+                          { width: getColumnWidth(column) },
+                        ]}
+                      >
+                        {column.renderCell ? (
+                          column.renderCell(row, rowIndex)
+                        ) : (
+                          <Text
+                            style={[
+                              styles.tableDataText,
+                              column.align === 'right' && styles.textRight,
+                              column.align === 'center' && styles.textCenter,
+                            ]}
+                          >
+                            {column.key === 'sno' || colIndex === 0
+                              ? (rowIndex + 1).toString()
+                              : formatValue(row[column.key], column.numeric)}
+                          </Text>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                ))
+              )}
+
+              {/* Total Row */}
+              {showTotal && data && data.length > 0 && (
+                <View style={styles.tableTotalRow}>
+                  {columns.map((column, colIndex) => {
+                    const hasCurrency = (data || []).some(row => typeof row[column.key] === 'string' && row[column.key].includes('₹'));
+                    const formattedTotal = column.numeric
+                      ? (hasCurrency
+                        ? '₹ ' + formatValue(totals[column.key], true)
+                        : formatValue(totals[column.key], true))
+                      : '-';
+
+                    return (
+                      <View
+                        key={column.key}
+                        style={[
+                          styles.tableTotalCell,
+                          { width: getColumnWidth(column) },
+                        ]}
+                      >
+                        <Text style={styles.tableTotalText}>
+                          {column.key === 'sno' || colIndex === 0
+                            ? totalRowLabel
+                            : formattedTotal}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Summary Cards */}
+          {summaryCards && summaryCards.length > 0 && (
+            <View style={[styles.summaryCardsContainer, { justifyContent: 'flex-start' }]}>
+              {summaryCards.map((card, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.summaryCard,
+                    { borderColor: card.borderColor, flex: 0, width: scale(140), marginRight: scale(12), marginBottom: scale(12) },
+                  ]}
+                >
+                  <Text style={styles.summaryCardLabel}>{card.label}</Text>
+                  <Text style={styles.summaryCardValue}>
+                    {typeof card.value === 'number'
+                      ? card.value.toString()
+                      : card.value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+
         <View style={styles.modalContainer}>
           {/* Header */}
           <View style={styles.modalHeader}>
@@ -172,7 +387,7 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
 
               {/* Table */}
               <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-                <View style={styles.table}>
+                <View style={[styles.table, { maxHeight: scale(380) }]}>
                   {/* Table Header Row */}
                   <View style={styles.tableHeaderRow}>
                     {columns.map((column) => (
@@ -200,57 +415,66 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
                       <Text style={styles.emptyStateText}>No results found.</Text>
                     </View>
                   ) : (
-                    data.map((row, rowIndex) => (
-                      <View key={rowIndex} style={styles.tableDataRow}>
-                        {columns.map((column, colIndex) => (
-                          <View
-                            key={column.key}
-                            style={[
-                              styles.tableDataCell,
-                              { width: getColumnWidth(column) },
-                            ]}
-                          >
-                            {column.renderCell ? (
-                              column.renderCell(row, rowIndex)
-                            ) : (
-                              <Text
-                                style={[
-                                  styles.tableDataText,
-                                  column.align === 'right' && styles.textRight,
-                                  column.align === 'center' && styles.textCenter,
-                                ]}
-                              >
-                                {column.key === 'sno' || colIndex === 0
-                                  ? (rowIndex + 1).toString()
-                                  : formatValue(row[column.key], column.numeric)}
-                              </Text>
-                            )}
-                          </View>
-                        ))}
-                      </View>
-                    ))
+                    <ScrollView style={{ flex: 1 }} nestedScrollEnabled={true} showsVerticalScrollIndicator={true}>
+                      {data.map((row, rowIndex) => (
+                        <View key={rowIndex} style={styles.tableDataRow}>
+                          {columns.map((column, colIndex) => (
+                            <View
+                              key={column.key}
+                              style={[
+                                styles.tableDataCell,
+                                { width: getColumnWidth(column) },
+                              ]}
+                            >
+                              {column.renderCell ? (
+                                column.renderCell(row, rowIndex)
+                              ) : (
+                                <Text
+                                  style={[
+                                    styles.tableDataText,
+                                    column.align === 'right' && styles.textRight,
+                                    column.align === 'center' && styles.textCenter,
+                                  ]}
+                                >
+                                  {column.key === 'sno' || colIndex === 0
+                                    ? (rowIndex + 1).toString()
+                                    : formatValue(row[column.key], column.numeric)}
+                                </Text>
+                              )}
+                            </View>
+                          ))}
+                        </View>
+                      ))}
+                    </ScrollView>
                   )}
 
                   {/* Total Row */}
                   {showTotal && data && data.length > 0 && (
                     <View style={styles.tableTotalRow}>
-                      {columns.map((column, colIndex) => (
-                        <View
-                          key={column.key}
-                          style={[
-                            styles.tableTotalCell,
-                            { width: getColumnWidth(column) },
-                          ]}
-                        >
-                          <Text style={styles.tableTotalText}>
-                            {column.key === 'sno' || colIndex === 0
-                              ? totalRowLabel
-                              : column.numeric
-                              ? formatValue(totals[column.key], true)
-                              : '-'}
-                          </Text>
-                        </View>
-                      ))}
+                      {columns.map((column, colIndex) => {
+                        const hasCurrency = (data || []).some(row => typeof row[column.key] === 'string' && row[column.key].includes('₹'));
+                        const formattedTotal = column.numeric
+                          ? (hasCurrency
+                            ? '₹ ' + formatValue(totals[column.key], true)
+                            : formatValue(totals[column.key], true))
+                          : '-';
+
+                        return (
+                          <View
+                            key={column.key}
+                            style={[
+                              styles.tableTotalCell,
+                              { width: getColumnWidth(column) },
+                            ]}
+                          >
+                            <Text style={styles.tableTotalText}>
+                              {column.key === 'sno' || colIndex === 0
+                                ? totalRowLabel
+                                : formattedTotal}
+                            </Text>
+                          </View>
+                        );
+                      })}
                     </View>
                   )}
                 </View>
@@ -284,10 +508,10 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
           <View style={styles.bottomButtons}>
             <TouchableOpacity
               style={styles.copyButton}
-              onPress={handleCopyImage}
+              onPress={handleShare}
             >
-              <Icon name="image" size={scale(18)} color="#57607a" />
-              <Text style={styles.copyButtonText}>Copy Image</Text>
+              <Icon name="share" size={scale(18)} color="#57607a" />
+              <Text style={styles.copyButtonText}>Share</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

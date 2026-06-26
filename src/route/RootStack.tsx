@@ -2,17 +2,27 @@
 
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { COLORS } from '../assets/colors';
 import Login from '../screens/auth/Login';
 import DrawerStack from './DrawerStack';
-
-
+import { fetchUserPermissions, clearPermissions } from '../redux/reducers/permissionsSlice';
 
 const Stack = createNativeStackNavigator();
 
 const RootStack = () => {
   const token = useSelector((state: any) => state?.authorization?.token);
+  const dispatch = useDispatch();
+
+  // Fetch permissions whenever a valid token is present
+  React.useEffect(() => {
+    if (token) {
+      dispatch(fetchUserPermissions() as any);
+    } else {
+      // Clear stale permissions on logout
+      dispatch(clearPermissions());
+    }
+  }, [token, dispatch]);
 
   return (
     <Stack.Navigator

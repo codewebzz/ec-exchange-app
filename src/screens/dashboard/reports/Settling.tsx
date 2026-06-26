@@ -17,6 +17,8 @@ import GradientBackground from '../../../components/GradientBackground'
 import useSearchBar from '../../../hooks/useSearchBar'
 import TableGrid from '../../../components/TableGridView';
 import CommonModalTable from '../../../components/CommonModalTable'
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
 
 const Settling = ({ navigation }: any) => {
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(true);
@@ -129,18 +131,19 @@ const Settling = ({ navigation }: any) => {
   // Fetch recent users for dropdown
   const fetchRecentUsers = async () => {
     try {
-      const res = await APIService.getRecentUser();
+      const res = await APIService.GetLedgerDropDownDataData();
       if (res && res.success && Array.isArray(res.data)) {
         const items = res.data.map((user: any) => ({
-          label: user.real_name || user.name || user.mobile || `User ${user.id}`,
-          value: user.id?.toString?.() || user.user_id?.toString?.() || `${user.id}`,
+          label: user.real_name || user.name || 'Unknown Ledger',
+          value: user.id?.toString() || user.ledger_id?.toString() || '',
         }));
-        setDropdownItems2(items);
+        const sortedItems = items.sort((a: any, b: any) => a.label.localeCompare(b.label));
+        setDropdownItems2(sortedItems);
       } else {
         setDropdownItems2([]);
       }
     } catch (e) {
-      console.error('Failed to fetch recent users:', e);
+      console.error('Failed to fetch ledgers:', e);
       setDropdownItems2([]);
     }
   };
@@ -269,6 +272,7 @@ const Settling = ({ navigation }: any) => {
   }, [selectedRow, openDate, closeDate]);
 
   return (
+    <PermissionGuard permission={PERMISSIONS.REPORTS_SETTLING_VIEW.value}>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
         <SafeAreaView style={style.safeAreaContainer}>
@@ -468,6 +472,7 @@ const Settling = ({ navigation }: any) => {
         </SafeAreaView>
       </GradientBackground>
     </GestureHandlerRootView>
+    </PermissionGuard>
   )
 }
 

@@ -18,6 +18,8 @@ import TableGrid from '../../../components/TableGridView';
 import ScreenHeader from '../../../components/ScreenHeader';
 import useSearchBar from '../../../hooks/useSearchBar';
 import APIService from '../../services/APIService';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
 
 const AddStaffSchema = Yup.object().shape({
     date: Yup.string().required('Please Select Date'),
@@ -413,7 +415,8 @@ const VapsiVoucher = ({ navigation }: any) => {
     });
 
     return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
+        <PermissionGuard permission={PERMISSIONS.VOUCHER_VAPSI_VIEW.value}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
             <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
                 <SafeAreaView style={style.safeAreaContainer} edges={['top', 'left', 'right']}>
                     <ScreenHeader
@@ -841,6 +844,7 @@ const VapsiVoucher = ({ navigation }: any) => {
                 </SafeAreaView>
             </GradientBackground>
         </GestureHandlerRootView>
+    </PermissionGuard>
     );
 };
 const style = StyleSheet.create({

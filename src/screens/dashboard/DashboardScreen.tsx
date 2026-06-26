@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import GradientBackground from '../../components/GradientBackground';
 import ScreenHeader from '../../components/ScreenHeader';
 import ShiftCard from '../../components/ShiftCard';
@@ -83,13 +84,12 @@ const DashboardScreen = ({ navigation }: any) => {
       setShiftLoading(false);
     }
   }, []);
-  useEffect(() => {
-    // loadRecentLedgers();
-    fetchShiftData();
-    fetchRecentUsers()
-  }, [
-    // loadRecentLedgers
-    fetchRecentUsers, fetchShiftData]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchShiftData();
+      fetchRecentUsers();
+    }, [fetchShiftData, fetchRecentUsers])
+  );
   // const fetchRecentUsers = useCallback(async () => {
   //   const resp = await APIService.getRecentUser();
   //   return Array.isArray(resp?.data) ? resp.data : Array.isArray(resp) ? resp : [];

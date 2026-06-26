@@ -16,6 +16,9 @@ import ScreenHeader from '../../../components/ScreenHeader'
 import TableGrid from '../../../components/TableGridView'
 import useSearchBar from '../../../hooks/useSearchBar'
 import APIService from '../../services/APIService'
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
+
 const Daily = ({ navigation }: any) => {
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(true);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
@@ -30,6 +33,8 @@ const Daily = ({ navigation }: any) => {
   // Date state
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const [showSearch, setShowSearch] = useState(false);
+  const [totalProfitLoss, setTotalProfitLoss] = useState<number>(0);
+  const [hasFetched, setHasFetched] = useState(false);
 
   // Handle date selection
   const handleDateChange = (fieldName: string, value: any) => {
@@ -123,17 +128,17 @@ const Daily = ({ navigation }: any) => {
 
   const fetchAgents = async () => {
     try {
-      const res = await APIService.getMasterLedgerAgent();
+      const res = await APIService.GetAgentDropDownDataData();
       if (res && res.success && Array.isArray(res.data)) {
         const items = res.data.map((a: any) => ({
-          label: a.agent_name || a.name || `Agent ${a.id}`,
-          value: a.id?.toString?.() || a.agent_id?.toString?.() || `${a.id}`,
+          label: a.name || a.real_name || `Agent ${a.id}`,
+          value: a.id?.toString() || a.agent_id?.toString() || `${a.id}`,
         }));
         setDropdownItems1(items);
       } else {
         setDropdownItems1([]);
       }
-    } catch (e) {
+    } catch {
       setDropdownItems1([]);
     }
   };
@@ -303,7 +308,8 @@ const Daily = ({ navigation }: any) => {
 
       const payload = {
         shift_id: values?.shift || dropdownValue || 1,
-        date: dateValue // Use formatted string, not Date object
+        date: dateValue, // Use formatted string, not Date object
+        agent_id: values?.agent || dropdownValue1 || undefined
       };
 
       console.log('Fetching daily report with payload:', payload);
@@ -319,19 +325,27 @@ const Daily = ({ navigation }: any) => {
 
         console.log('Daily report data loaded:', ledgerList.length, 'items');
         setData(ledgerList);
+        setTotalProfitLoss(response.data.total ?? 0);
+        setHasFetched(true);
       } else {
         console.warn('No data in response:', response);
         setData([]);
+        setTotalProfitLoss(0);
+        setHasFetched(true);
       }
     } catch (error) {
       console.error('Daily report fetch failed', error);
       setData([]);
+      setTotalProfitLoss(0);
+      setHasFetched(true);
     } finally {
       setLoading(false);
     }
   };
   return (
+    <PermissionGuard permission={PERMISSIONS.REPORTS_DAILY_VIEW.value}>
     <GestureHandlerRootView style={{ flex: 1 }}>
+
       <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
         <SafeAreaView style={style.safeAreaContainer}>
           <ScreenHeader title={"Daily"} navigation={navigation} hideBackButton={true} showDrawerButton={true} >
@@ -366,6 +380,28 @@ const Daily = ({ navigation }: any) => {
             </TouchableOpacity> */}
             </View>
           ) : null}
+          {hasFetched && !loading && (
+            <View style={style.profitLossContainer}>
+              <View style={[
+                style.profitLossBadge,
+                totalProfitLoss >= 0 ? style.profitBadge : style.lossBadge
+              ]}>
+                <View style={[
+                  style.bullet,
+                  totalProfitLoss >= 0 ? style.profitBullet : style.lossBullet
+                ]} />
+                <Text style={[
+                  style.profitLossText,
+                  totalProfitLoss >= 0 ? style.profitText : style.lossText
+                ]}>
+                  {totalProfitLoss >= 0 ? "Profit: " : "Loss: "}
+                  <Text style={style.boldText}>
+                    ₹{Math.abs(totalProfitLoss).toLocaleString("en-IN")}
+                  </Text>
+                </Text>
+              </View>
+            </View>
+          )}
           <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16 }}>
             <TableGrid
               loading={loading}
@@ -380,7 +416,7 @@ const Daily = ({ navigation }: any) => {
               refreshing={loading && filteredItems.length > 0}
               columns={[
                 { key: 'sno', label: 'S.No.', width: 50, align: 'center' },
-                { key: 'name', label: 'name', width: 200, align: 'left' },
+                { key: 'name', label: 'Name', width: 200, align: 'left' },
                 { key: 'agent', label: 'Agent', width: 100, align: 'left' },
                 { key: 'rate', label: 'Rate', width: 120, align: 'left' },
                 { key: 'self_hissa', label: 'Self Hissa', width: 100, align: 'left' },
@@ -409,8 +445,6 @@ const Daily = ({ navigation }: any) => {
                   // Use 'date' and 'shift_id' as params to match web version expectations
                   const dateParam = formatDateForAPI(selectedDate);
                   const shiftIdParam = dropdownValue!;
-
-                  console.log("ertttrtrtr", dateParam, dropdownValue)
 
                   const [res, resDeclared] = await Promise.all([
                     APIService.GetConsolidatedJantri(row.id, {
@@ -621,8 +655,10 @@ const Daily = ({ navigation }: any) => {
         </SafeAreaView>
       </GradientBackground>
     </GestureHandlerRootView>
+    </PermissionGuard>
   )
 }
+
 
 export default Daily
 
@@ -646,5 +682,53 @@ const style = StyleSheet.create({
     marginTop: 10,
     color: COLORS.BUTTONBG,
     fontWeight: '600',
+  },
+  profitLossContainer: {
+    marginHorizontal: scale(16),
+    marginTop: scale(12),
+    alignItems: 'center',
+  },
+  profitLossBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: scale(8),
+    paddingHorizontal: scale(16),
+    borderRadius: scale(8),
+    borderWidth: 1,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  profitBadge: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#81C784',
+  },
+  lossBadge: {
+    backgroundColor: '#FFEBEE',
+    borderColor: '#E57373',
+  },
+  bullet: {
+    width: scale(8),
+    height: scale(8),
+    borderRadius: scale(4),
+    marginRight: scale(8),
+  },
+  profitBullet: {
+    backgroundColor: '#34A853',
+  },
+  lossBullet: {
+    backgroundColor: '#EA4335',
+  },
+  profitLossText: {
+    fontSize: scale(13),
+    fontWeight: '500',
+  },
+  profitText: {
+    color: '#2E7D32',
+  },
+  lossText: {
+    color: '#C62828',
+  },
+  boldText: {
+    fontWeight: '700',
   },
 })

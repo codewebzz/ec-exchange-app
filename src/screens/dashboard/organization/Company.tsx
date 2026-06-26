@@ -28,6 +28,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import APIService from '../../services/APIService';
 import Toast from 'react-native-toast-message';
 import GradientBackground from '../../../components/GradientBackground';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
 const AddCompanySchema = Yup.object().shape({
   companyName: Yup.string().required('Company Name is required'),
   printName: Yup.string().required('Print Name is required'),
@@ -187,6 +189,7 @@ const Company = ({ navigation }: any) => {
   }
 };
   return (
+    <PermissionGuard permission={PERMISSIONS.ORGANIZATION_COMPANY_VIEW.value}>
     <GestureHandlerRootView style={{flex:1}}>
          <GradientBackground colors={[ "#fdf0d0","#e0efea"]} locations={[0,30]}>
       <SafeAreaView
@@ -517,6 +520,7 @@ const Company = ({ navigation }: any) => {
       </SafeAreaView>
       </GradientBackground>
     </GestureHandlerRootView>
+    </PermissionGuard>
   );
 };
 const style = StyleSheet.create({

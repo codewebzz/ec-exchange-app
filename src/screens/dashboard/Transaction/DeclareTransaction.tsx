@@ -27,6 +27,8 @@ import { TextInput } from 'react-native';
 import { ActivityIndicator } from 'react-native';
 import GradientBackground from '../../../components/GradientBackground';
 import useSearchBar from '../../../hooks/useSearchBar';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
 
 const { width, height } = Dimensions.get('window');
 
@@ -179,7 +181,7 @@ const DeclareTransaction = ({ navigation }: any) => {
   // Summary table columns configuration
   const summaryTableColumns = [
     { key: 'number', label: 'Number', width: 100, align: 'center' as const },
-    { key: 'amount', label: 'Amount', width: 100, align: 'center' as const },
+    { key: 'amount', label: 'Amount', width: 100, align: 'center' as const, numeric: true },
   ];
 
   // Table columns configuration
@@ -188,7 +190,7 @@ const DeclareTransaction = ({ navigation }: any) => {
     { key: 'cj', label: 'C/J', width: 50, align: 'center' as const },
     { key: 'party', label: 'Party', width: 150, align: 'left' as const },
     { key: 'rate', label: 'Rate', width: 120, align: 'center' as const },
-    { key: 'amount', label: 'Amount', width: 100, align: 'right' as const },
+    { key: 'amount', label: 'Amount', width: 100, align: 'right' as const, numeric: true },
     { key: 'groupType', label: 'G. Type', width: 80, align: 'center' as const },
     {
       key: 'addedBy',
@@ -484,6 +486,7 @@ const DeclareTransaction = ({ navigation }: any) => {
   };
 
   return (
+    <PermissionGuard permission={PERMISSIONS.TRANSACTIONS_DECLARE_VIEW.value}>
     <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
       <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
         <ScreenHeader
@@ -528,6 +531,9 @@ const DeclareTransaction = ({ navigation }: any) => {
                 data={filteredItems}
                 headerBgColor={COLORS.BUTTONBG}
                 headerTextColor={COLORS.WHITE}
+                style={{ flex: 1 }}
+                showTotal={true}
+                totalRowLabel="Total"
               />
               //  <></>
             )}
@@ -561,6 +567,9 @@ const DeclareTransaction = ({ navigation }: any) => {
                   data={summaryTableData}
                   headerBgColor={COLORS.BUTTONBG}
                   headerTextColor={COLORS.WHITE}
+                  style={{ flex: 1 }}
+                  showTotal={true}
+                  totalRowLabel="Total"
                 />
               </>
             ) : (
@@ -817,6 +826,7 @@ const DeclareTransaction = ({ navigation }: any) => {
         />
       </SafeAreaView>
     </GradientBackground>
+    </PermissionGuard>
   );
 };
 
@@ -929,13 +939,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.WHITE,
     borderRadius: scale(8),
     overflow: 'hidden',
+    height: height * 0.35,
   },
   summaryTableWrapper: {
     marginTop: scale(16),
     backgroundColor: COLORS.WHITE,
     borderRadius: scale(8),
     overflow: 'hidden',
-    height: height * 0.5,
+    height: height * 0.35,
   },
   userInfoContainer: {
     flexDirection: 'column',

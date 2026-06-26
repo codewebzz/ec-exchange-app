@@ -541,19 +541,8 @@ const APIService = {
     }
   },
 
-  //Result 
-  collectionResult: (data: any): Promise<CommonResponse> =>
-    AxiosService.post<CommonResponse>(`api/get_collection`, {
-      shift_id: data?.shift_id,
-      cut_commission: data?.cut_commission || 0,
-      cut_patti: data?.cut_patti || 0,
-      cut_wapsi: data?.cut_wapsi || 0,
-      mix_akh: data?.mix_akh || 0,
-      less_amt: data?.less_amt || 0,
-      less_percentage: data?.less_percentage || 0,
-      round_off_value: data?.round_off_value || 0,
-      date: data?.date
-    }),
+  collectionResult: (queryParams: string, payload: any): Promise<CommonResponse> =>
+    AxiosService.post<CommonResponse>(`api/get_collection${queryParams}`, payload),
   liveResultByNumber: (data: any, number: any): Promise<CommonResponse> =>
     AxiosService.post<CommonResponse>(`api/get_live_prediction/${number}`, data),
   LiveResult: (data: any, number: any): Promise<CommonResponse> => AxiosService.post<CommonResponse>(`api/get_live_prediction`, {
@@ -768,6 +757,16 @@ const APIService = {
     } catch (err: any) {
       console.log('GetMainJantri Error:', err?.response?.data || err.message);
       throw err;
+    }
+  },
+
+  GetMyPermissions: async (): Promise<any> => {
+    try {
+      const res = await AxiosService.get('api/get_my_permissions');
+      return { ...res, success: true };
+    } catch (err: any) {
+      console.log('GetMyPermissions Error:', err?.response?.data || err.message);
+      return { success: false, message: err?.message || 'Failed to fetch permissions' };
     }
   },
 };

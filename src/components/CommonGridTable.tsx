@@ -192,8 +192,8 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
     return '0';
   }, [stableQuickEntryData]);
 
-  // Image Copy/Share functionality
-  const handleCopyImage = useCallback(async () => {
+  // Image Share functionality
+  const handleShare = useCallback(async () => {
     try {
       const viewShotModule = getViewShotModule();
       const shareModule = getShareModule();
@@ -211,26 +211,24 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
         return;
       }
 
-      // captureRef is a named export or on the module object
-      const captureRef = viewShotModule.captureRef;
+      const captureRef = viewShotModule.captureRef || viewShotModule.default?.captureRef;
 
-      const uri = await captureRef(viewShotRef, {
+      const uri = await (captureRef ? captureRef(viewShotRef, {
         format: 'png',
-        quality: 1,
-        result: 'base64'
-      });
+        quality: 0.9,
+      }) : viewShotModule(viewShotRef, { format: 'png', quality: 0.9 }));
 
       const shareOptions = {
         title: 'Jantri Details',
         message: `${title} - ${date}`,
-        url: `data:image/png;base64,${uri}`,
+        url: uri,
         type: 'image/png',
       };
 
       await shareModule.default.open(shareOptions);
     } catch (error) {
       console.log('Capture/Share error:', error);
-      Alert.alert('Error', 'Failed to generate image. Ensure you have rebuilt the app after installation.');
+      Alert.alert('Error', 'Failed to share image.');
     }
   }, [title, date]);
 
@@ -254,7 +252,7 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
       bounces={false}
       nestedScrollEnabled={true}
     >
-      <View style={styles.table}>
+      <View style={styles.table} collapsable={false} ref={viewShotRef}>
         {/* Header Row */}
         <View style={styles.row}>
           {headers.map((header, idx) => (
@@ -477,10 +475,6 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
   ), [headers, data, footer, footerData, totals, intermediateTotal, grandTotal, columnTotals, stableQuickEntryData, handleCellChange, getCellDisplayValue, highlightNumbers, pulseAnim]);
 
   if (visible) {
-    const viewShotModule = getViewShotModule();
-    // Resolve the actual component from the module
-    const ViewShotComp = viewShotModule ? (viewShotModule.default || viewShotModule) : null;
-
     return (
       <Modal
         visible={visible}
@@ -490,79 +484,42 @@ const CommonGridTable: React.FC<CommonGridTableProps> = ({
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            {/* 
-              Conditionally render ViewShot if available, otherwise fallback to normal View.
-              This prevents the app from crashing if the native module hasn't been built yet.
-            */}
-            {ViewShotComp && typeof ViewShotComp !== 'object' ? (
-              <ViewShotComp ref={viewShotRef} options={{ format: "png", quality: 1.0 }}>
-                <View style={styles.captureWrapper}>
-                  <View style={styles.modalHeader}>
-                    <View style={styles.modalHeaderContent}>
-                      <Text style={styles.modalTitle} numberOfLines={2}>
-                        {title}
-                      </Text>
-                      {date && (
-                        <Text style={styles.modalDate}>Date: {formatDate(date)}</Text>
-                      )}
-                    </View>
-                    <TouchableOpacity
-                      onPress={onClose}
-                      style={styles.closeIcon}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                      <Text style={styles.closeIconText}>✕</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <ScrollView
-                    style={styles.modalContent}
-                    contentContainerStyle={styles.modalContentContainer}
-                    showsVerticalScrollIndicator={false}
-                    nestedScrollEnabled={true}
-                  >
-                    {TableContent}
-                  </ScrollView>
+            <View style={styles.captureWrapper}>
+              <View style={styles.modalHeader}>
+                <View style={styles.modalHeaderContent}>
+                  <Text style={styles.modalTitle} numberOfLines={2}>
+                    {title}
+                  </Text>
+                  {date && (
+                    <Text style={styles.modalDate}>Date: {formatDate(date)}</Text>
+                  )}
                 </View>
-              </ViewShotComp>
-            ) : (
-              <View style={styles.captureWrapper}>
-                <View style={styles.modalHeader}>
-                  <View style={styles.modalHeaderContent}>
-                    <Text style={styles.modalTitle} numberOfLines={2}>
-                      {title}
-                    </Text>
-                    {date && (
-                      <Text style={styles.modalDate}>Date: {formatDate(date)}</Text>
-                    )}
-                  </View>
-                  <TouchableOpacity
-                    onPress={onClose}
-                    style={styles.closeIcon}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <Text style={styles.closeIconText}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <ScrollView
-                  style={styles.modalContent}
-                  contentContainerStyle={styles.modalContentContainer}
-                  showsVerticalScrollIndicator={false}
-                  nestedScrollEnabled={true}
+                <TouchableOpacity
+                  onPress={onClose}
+                  style={styles.closeIcon}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  {TableContent}
-                </ScrollView>
+                  <Text style={styles.closeIconText}>✕</Text>
+                </TouchableOpacity>
               </View>
-            )}
+
+              <ScrollView
+                style={styles.modalContent}
+                contentContainerStyle={styles.modalContentContainer}
+                showsVerticalScrollIndicator={false}
+                nestedScrollEnabled={true}
+              >
+                {TableContent}
+              </ScrollView>
+            </View>
 
             <View style={styles.bottomButtons}>
               <TouchableOpacity
                 style={styles.copyButton}
-                onPress={handleCopyImage}
+                onPress={handleShare}
               >
-                <Text style={styles.copyButtonIcon}>📋</Text>
-                <Text style={styles.copyButtonText}>Copy Image</Text>
+                <Text style={styles.copyButtonIcon}>📤</Text>
+                <Text style={styles.copyButtonText}>Share</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

@@ -15,6 +15,8 @@ import {
 import { COLORS } from '../../../../assets/colors';
 import JantriTable, { JantriTableRef } from './JantriTable';
 import APIService from '../../../services/APIService';
+import Share from 'react-native-share';
+import { captureRef } from 'react-native-view-shot';
 
 interface MainJantriModalProps {
   visible: boolean;
@@ -38,6 +40,28 @@ const MainJantriModal: React.FC<MainJantriModalProps> = ({
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const tableRef = useRef<JantriTableRef>(null);
+  const viewRef = useRef<View>(null);
+
+  const handleShare = async () => {
+    try {
+      if (viewRef.current) {
+        const uri = await captureRef(viewRef, {
+          format: 'png',
+          quality: 0.9,
+        });
+
+        await Share.open({
+          url: uri,
+          title: 'Share Main Jantri',
+        });
+      }
+    } catch (error: any) {
+      if (error.message !== 'User did not share') {
+        console.error('Error sharing image:', error);
+        Alert.alert('Error', 'Failed to share image');
+      }
+    }
+  };
 
   useEffect(() => {
     if (visible && shiftId) {
@@ -123,6 +147,13 @@ const MainJantriModal: React.FC<MainJantriModalProps> = ({
               >
                 <Text style={styles.searchButtonText}>Search</Text>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.shareButton}
+                onPress={handleShare}
+              >
+                <Text style={styles.searchButtonText}>Share</Text>
+              </TouchableOpacity>
             </View>
 
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -141,7 +172,7 @@ const MainJantriModal: React.FC<MainJantriModalProps> = ({
                 <Text style={styles.loadingText}>Loading Main Jantri Data...</Text>
               </View>
             ) : (
-              <View style={styles.gridSection}>
+              <View style={[styles.gridSection, { backgroundColor: '#f7f4ec' }]} collapsable={false} ref={viewRef}>
                 <JantriTable
                   ref={tableRef}
                   externalTransactions={transactions}
@@ -242,6 +273,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 11,
+  },
+  shareButton: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 30,
   },
   gridSection: {
     marginBottom: 20,

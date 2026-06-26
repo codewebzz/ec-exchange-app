@@ -46,7 +46,7 @@ const RandomModal: React.FC<RandomModalProps> = ({
   const validEntries = numberEntries.filter(entry => entry.number.trim());
   const amountValue = parseFloat(amount) || 0;
   const pltAmountValue = parseFloat(pltAmount) || 0;
-  const totalAmount = pltAmountValue + amountValue;
+  const totalAmount = (amountValue + pltAmountValue) * validEntries.length;
 
   // Add new number entry
   const addNumberEntry = () => {
@@ -120,9 +120,15 @@ const RandomModal: React.FC<RandomModalProps> = ({
     ));
   };
 
+  const formatted = (num: string): string => {
+    if (num === "100") return "00";
+    if (/^\d$/.test(num)) return `0${num}`;
+    return num.padStart(2, "0");
+  };
+
   // Reverse a number string
   const reverseNumber = (numStr: string): string => {
-    return numStr.split('').reverse().join('');
+    return numStr.padStart(2, "0").split('').reverse().join('');
   };
 
   // Generate transactions for QuickEntry
@@ -132,12 +138,14 @@ const RandomModal: React.FC<RandomModalProps> = ({
     const pltAmountValue = parseFloat(pltAmount) || 0;
 
     numberEntries.forEach(entry => {
-      if (entry.number.trim()) {
+      const trimmed = entry.number.trim();
+      if (trimmed) {
+        const formattedNum = formatted(trimmed);
         // Regular transaction with the common amount
         if (amountValue > 0) {
           transactions.push({
             id: generateId(),
-            number: entry.number.trim(),
+            number: formattedNum,
             amount: amountValue,
             type: 'regular',
             source: 'Random Modal',
@@ -147,17 +155,15 @@ const RandomModal: React.FC<RandomModalProps> = ({
 
         // PLT Amount transaction (for reversed number)
         if (pltAmountValue > 0) {
-          const reversedNumber = reverseNumber(entry.number.trim());
-          if (reversedNumber !== entry.number.trim()) { // Only if reverse is different
-            transactions.push({
-              id: generateId(),
-              number: reversedNumber,
-              amount: pltAmountValue,
-              type: 'plt',
-              source: 'Random Modal',
-              timestamp: new Date(),
-            });
-          }
+          const reversedNumber = reverseNumber(formattedNum);
+          transactions.push({
+            id: generateId(),
+            number: reversedNumber,
+            amount: pltAmountValue,
+            type: 'plt',
+            source: 'Random Modal',
+            timestamp: new Date(),
+          });
         }
       }
     });

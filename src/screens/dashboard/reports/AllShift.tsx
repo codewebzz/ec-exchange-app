@@ -1,22 +1,24 @@
-import { Keyboard, ScrollView, StyleSheet, Text, TouchableOpacity, View, TextInput, RefreshControl } from 'react-native'
-import React, { useState } from 'react'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import ScreenHeader from '../../../components/ScreenHeader'
-import { COLORS } from '../../../assets/colors'
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import { scale } from 'react-native-size-matters'
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { Formik } from 'formik'
-import CustomButton from '../../../components/CustomButton'
-import CustomDropdown from '../../../components/CustomDropdown'
-import CustomDateTimePicker from '../../../components/CustomDatePicker'
-import APIService from '../../services/APIService'
-import GradientBackground from '../../../components/GradientBackground'
-import useSearchBar from '../../../hooks/useSearchBar'
-import TableGrid from '../../../components/TableGridView';
+import React, { useState } from 'react'
+import { Keyboard, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { scale } from 'react-native-size-matters'
+import Icon from 'react-native-vector-icons/MaterialIcons'
+import { COLORS } from '../../../assets/colors'
 import CommonModalTable from '../../../components/CommonModalTable'
-import DeclaredNumber from '../../../components/DeclaredNumber';
+import CustomButton from '../../../components/CustomButton'
+import CustomDateTimePicker from '../../../components/CustomDatePicker'
+import CustomDropdown from '../../../components/CustomDropdown'
+import DeclaredNumber from '../../../components/DeclaredNumber'
+import GradientBackground from '../../../components/GradientBackground'
+import { PermissionGuard } from '../../../components/PermissionGuard'
+import ScreenHeader from '../../../components/ScreenHeader'
+import TableGrid from '../../../components/TableGridView'
+import { PERMISSIONS } from '../../../helper/permissions'
+import useSearchBar from '../../../hooks/useSearchBar'
+import APIService from '../../services/APIService'
 const AllShift = ({ navigation }: any) => {
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(true);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
@@ -130,17 +132,18 @@ const AllShift = ({ navigation }: any) => {
 
   const fetchAgents = async () => {
     try {
-      const res = await APIService.getMasterLedgerAgent();
+      const res = await APIService.GetAgentDropDownDataData();
+
       if (res && res.success && Array.isArray(res.data)) {
         const items = res.data.map((a: any) => ({
-          label: a.agent_name || a.name || `Agent ${a.id}`,
-          value: a.id?.toString?.() || a.agent_id?.toString?.() || `${a.id}`,
+          label: a.name || a.real_name || `Agent ${a.id}`,
+          value: a.id?.toString() || a.agent_id?.toString() || `${a.id}`,
         }));
         setDropdownItems(items);
       } else {
         setDropdownItems([]);
       }
-    } catch (e) {
+    } catch {
       setDropdownItems([]);
     }
   };
@@ -155,7 +158,7 @@ const AllShift = ({ navigation }: any) => {
       const payload = {
         start_date,
         end_date,
-        agent: values?.agent || undefined,
+        agent_id: values?.agent || undefined,
         deal: values?.deal || undefined,
         all: values?.all || undefined,
       }
@@ -274,270 +277,259 @@ const AllShift = ({ navigation }: any) => {
   }, [selectedRow, openDate, closeDate, modalTableData]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
-        <SafeAreaView style={style.safeAreaContainer}>
-          <ScreenHeader title={"All Shift"} navigation={navigation} hideBackButton={true} showDrawerButton={true} >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(10) }}>
-              <TouchableOpacity onPress={() => {
-                setShowSearch(!showSearch);
-                if (showSearch) {
-                  setQuery('');
-                }
-              }}>
-                <Icon name={showSearch ? 'close' : 'search'} color={COLORS.WHITE} size={scale(20)} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => {
-                setIsOpenBottomSheet(true);
-              }}>
-                <Icon name={'filter-list-alt'} color={COLORS.WHITE} size={scale(20)} />
-              </TouchableOpacity>
-            </View>
-          </ScreenHeader>
-          {showSearch ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(10), marginHorizontal: scale(15), marginVertical: scale(10) }}>
-              <View style={{ flex: 1 }}>
-                <TextInput
-                  placeholder="Search by party, agent or mobile..."
-                  value={query}
-                  onChangeText={setQuery}
-                  style={{ backgroundColor: COLORS.WHITE, minHeight: 40, borderRadius: 8, paddingHorizontal: 12, elevation: 10 }}
-                />
-              </View>
-              {/* <TouchableOpacity onPress={() => { setQuery(''); setShowSearch(false); }}>
-              <Icon name={'close-circle'} size={22} color={"red"} />
-            </TouchableOpacity> */}
-            </View>
-          ) : null}
-
-          <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16 }}>
-            <TableGrid
-              loading={loading}
-              data={filteredItems}
-              showTotal={true}
-              style={{ maxHeight: scale(450) }}
-              onRefresh={() => {
-                getAllShiftReport({});
-              }}
-              refreshing={loading && filteredItems.length > 0}
-              columns={[
-                { key: 'sno', label: 'S.No.', width: 50, align: 'center' },
-                { key: 'name', label: 'Party', width: 200, align: 'left' },
-                { key: 'mobile', label: 'Mobile', width: 120, align: 'left' },
-                { key: 'agent', label: 'Agent', width: 120, align: 'left' },
-                { key: 'limit', label: 'Limit', width: 100, align: 'right', numeric: true },
-                { key: 'openning', label: 'Opening', width: 100, align: 'right', numeric: true },
-                { key: 'total_sale', label: 'Total-Sale', width: 100, align: 'right', numeric: true },
-                { key: 'dhai_sale', label: 'Dara-Sale', width: 100, align: 'right', numeric: true },
-                { key: 'hurp_sale', label: 'Akhar-Sale', width: 100, align: 'right', numeric: true },
-                { key: 'commission', label: 'Comm', width: 100, align: 'right', numeric: true },
-                { key: 'open_dhai', label: 'Dara-Open', width: 100, align: 'right', numeric: true },
-                { key: 'open_hurp', label: 'Akhar-Open', width: 100, align: 'right', numeric: true },
-                { key: 'tpc', label: 'TPC', width: 80, align: 'right', numeric: true },
-                { key: 'tpHissaAmt', label: 'TPH-amt', width: 100, align: 'right', numeric: true },
-                { key: 'self_hissa_amount', label: 'Hissa', width: 100, align: 'right', numeric: true },
-                { key: 'pl', label: 'T-Profit', width: 100, align: 'right', numeric: true },
-                { key: 'rebate', label: 'Rebate', width: 100, align: 'right', numeric: true },
-                { key: 'tp_amount', label: 'TP-amt', width: 100, align: 'right', numeric: true },
-                { key: 'payment', label: 'Payment', width: 100, align: 'right', numeric: true },
-                { key: 'closing', label: 'Closing', width: 100, align: 'right', numeric: true },
-              ]}
-              enableRowPress={true}
-              onRowPress={async (row) => {
-                console.log("Row clicked:", row);
-                setSelectedRow(row);
-                setShowModalTable(true);
-                setModalLoading(true);
-                try {
-                  const start_date = openDate ? openDate.toLocaleDateString('en-GB') : formattedDate;
-                  const end_date = closeDate ? closeDate.toLocaleDateString('en-GB') : formattedDate;
-                  const payload = { start_date, end_date };
-                  const res = await APIService.GetAllShiftReportById(row.id, payload);
-                  if (res?.success && res?.data?.ledger_list) {
-                    setModalTableData(res.data.ledger_list);
-                  } else {
-                    setModalTableData([]);
+    <PermissionGuard permission={PERMISSIONS.REPORTS_SHIFT_VIEW.value}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
+          <SafeAreaView style={style.safeAreaContainer}>
+            <ScreenHeader title={"All Shift"} navigation={navigation} hideBackButton={true} showDrawerButton={true} >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(10) }}>
+                <TouchableOpacity onPress={() => {
+                  setShowSearch(!showSearch);
+                  if (showSearch) {
+                    setQuery('');
                   }
-                } catch (e) {
-                  console.error("Failed to fetch modal details", e);
-                  setModalTableData([]);
-                } finally {
-                  setModalLoading(false);
-                }
-              }}
-              totalRowLabel="Total"
-            />
-            {selectedRow && showModalTable && (
-              <CommonModalTable
-                visible={showModalTable}
-                onClose={() => {
-                  setShowModalTable(false);
-                  setSelectedRow(null);
-                }}
-                title={modalTableProps.title}
-                dateFrom={modalTableProps.dateFrom}
-                dateTo={modalTableProps.dateTo}
-                data={modalTableProps.data}
-                columns={modalTableProps.columns}
-                summaryCards={modalTableProps.summaryCards}
-                loading={modalLoading}
-                showTotal={true}
-                totalRowLabel="Total"
-              />
-            )}
-          </View>
-
-
-
-          {
-            isOpenBottomSheet && (<BottomSheet
-              backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
-              ref={bottomSheetRef}
-              style={{ borderWidth: 1, borderRadius: scale(10) }}
-              index={0}
-              snapPoints={snapPoints}
-              enableDynamicSizing={false}
-              onChange={handleSheetChange}
-              backdropComponent={renderBackdrop}
-              enablePanDownToClose={true}
-              onClose={() => {
-                setIsOpenBottomSheet(false);
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: scale(20),
-                  paddingBottom: scale(4),
-                  borderBottomWidth: scale(1)
                 }}>
-                <View style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
+                  <Icon name={showSearch ? 'close' : 'search'} color={COLORS.WHITE} size={scale(20)} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => {
+                  setIsOpenBottomSheet(true);
                 }}>
-                  <Text style={{ fontSize: scale(16), fontWeight: '600', color: COLORS.BLACK, marginEnd: scale(5) }}>
-                    Filter
-                  </Text>
-                </View>
-                <TouchableOpacity onPress={handleClosePress}>
-                  <Icon name='cancel' size={scale(20)} />
+                  <Icon name={'filter-list-alt'} color={COLORS.WHITE} size={scale(20)} />
                 </TouchableOpacity>
               </View>
-              <BottomSheetScrollView style={{ paddingHorizontal: scale(10), backgroundColor: COLORS.BGFILESCOLOR, flex: 1 }}>
+            </ScreenHeader>
+            {showSearch ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(10), marginHorizontal: scale(15), marginVertical: scale(10) }}>
+                <View style={{ flex: 1 }}>
+                  <TextInput
+                    placeholder="Search by party, agent or mobile..."
+                    value={query}
+                    onChangeText={setQuery}
+                    style={{ backgroundColor: COLORS.WHITE, minHeight: 40, borderRadius: 8, paddingHorizontal: 12, elevation: 10 }}
+                  />
+                </View>
+                {/* <TouchableOpacity onPress={() => { setQuery(''); setShowSearch(false); }}>
+              <Icon name={'close-circle'} size={22} color={"red"} />
+            </TouchableOpacity> */}
+              </View>
+            ) : null}
 
-
-                <Formik
-                  initialValues={{
-                    opendate: openDate,
-                    closedate: closeDate,
-                    agent: '',
-                    deal: '',
-                    all: 'all',
+            <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16 }}>
+              <TableGrid
+                loading={loading}
+                data={filteredItems}
+                showTotal={true}
+                style={{ maxHeight: scale(450) }}
+                onRefresh={() => {
+                  getAllShiftReport({});
+                }}
+                refreshing={loading && filteredItems.length > 0}
+                columns={[
+                  { key: 'sno', label: 'S.No.', width: 50, align: 'center' },
+                  { key: 'name', label: 'Party', width: 200, align: 'left' },
+                  { key: 'mobile', label: 'Mobile', width: 120, align: 'left' },
+                  { key: 'agent', label: 'Agent', width: 120, align: 'left' },
+                  { key: 'limit', label: 'Limit', width: 100, align: 'right', numeric: true },
+                  { key: 'openning', label: 'Opening', width: 100, align: 'right', numeric: true },
+                  { key: 'total_sale', label: 'Total-Sale', width: 100, align: 'right', numeric: true },
+                  { key: 'dhai_sale', label: 'Dara-Sale', width: 100, align: 'right', numeric: true },
+                  { key: 'hurp_sale', label: 'Akhar-Sale', width: 100, align: 'right', numeric: true },
+                  { key: 'commission', label: 'Comm', width: 100, align: 'right', numeric: true },
+                  { key: 'open_dhai', label: 'Dara-Open', width: 100, align: 'right', numeric: true },
+                  { key: 'open_hurp', label: 'Akhar-Open', width: 100, align: 'right', numeric: true },
+                  { key: 'tpc', label: 'TPC', width: 80, align: 'right', numeric: true },
+                  { key: 'tpHissaAmt', label: 'TPH-amt', width: 100, align: 'right', numeric: true },
+                  { key: 'self_hissa_amount', label: 'Hissa', width: 100, align: 'right', numeric: true },
+                  { key: 'pl', label: 'T-Profit', width: 100, align: 'right', numeric: true },
+                  { key: 'rebate', label: 'Rebate', width: 100, align: 'right', numeric: true },
+                  { key: 'tp_amount', label: 'TP-amt', width: 100, align: 'right', numeric: true },
+                  { key: 'payment', label: 'Payment', width: 100, align: 'right', numeric: true },
+                  { key: 'closing', label: 'Closing', width: 100, align: 'right', numeric: true },
+                ]}
+                enableRowPress={true}
+                onRowPress={async (row) => {
+                  console.log("Row clicked:", row);
+                  setSelectedRow(row);
+                  setShowModalTable(true);
+                  setModalLoading(true);
+                  try {
+                    const start_date = openDate ? openDate.toLocaleDateString('en-GB') : formattedDate;
+                    const end_date = closeDate ? closeDate.toLocaleDateString('en-GB') : formattedDate;
+                    const payload = { start_date, end_date };
+                    const res = await APIService.GetAllShiftReportById(row.id, payload);
+                    if (res?.success && res?.data?.ledger_list) {
+                      setModalTableData(res.data.ledger_list);
+                    } else {
+                      setModalTableData([]);
+                    }
+                  } catch (e) {
+                    console.error("Failed to fetch modal details", e);
+                    setModalTableData([]);
+                  } finally {
+                    setModalLoading(false);
+                  }
+                }}
+                totalRowLabel="Total"
+              />
+              {selectedRow && showModalTable && (
+                <CommonModalTable
+                  visible={showModalTable}
+                  onClose={() => {
+                    setShowModalTable(false);
+                    setSelectedRow(null);
                   }}
-                  // validationSchema={AddCompanySchema}
-                  onSubmit={(values, { resetForm }) => {
-                    getAllShiftReport(values)
-                    //  const serializedValues = {
-                    //                         ...values,
-                    //                         date: typeof values.date === 'string' ? values.date : values.date.toString()
-                    //                     };
-                    handleClosePress();
-                    // resetForm();
-                  }}
-                >
-                  {({ handleChange, handleSubmit, values, errors, touched, setFieldValue }) => (
-                    <View style={{ paddingVertical: scale(20) }}>
-                      <CustomDateTimePicker
-                        label="Open Date"
-                        value={openDate}
-                        setFieldValue={handleDateChange}
-                        fieldName="opendate"
-                        mode={'date'}
-                      />
-                      <CustomDateTimePicker
-                        label="Close Date"
-                        value={closeDate}
-                        setFieldValue={handleDateChange}
-                        fieldName="closedate"
-                        mode={'date'}
-                      />
+                  title={modalTableProps.title}
+                  dateFrom={modalTableProps.dateFrom}
+                  dateTo={modalTableProps.dateTo}
+                  data={modalTableProps.data}
+                  columns={modalTableProps.columns}
+                  summaryCards={modalTableProps.summaryCards}
+                  loading={modalLoading}
+                  showTotal={true}
+                  totalRowLabel="Total"
+                />
+              )}
+            </View>
 
 
 
-                      <CustomDropdown
-                        label="Agent"
-                        open={openDropdown}
-                        value={dropdownValue}
-                        items={dropdownItems}
-                        setOpen={setOpenDropdown}
-                        setValue={(val: any) => {
-                          setDropdownValue(val());
-                          setFieldValue('agent', val());
-                        }}
-                        bottomOffset={30}
-                        setItems={setDropdownItems}
-                      />
+            {
+              isOpenBottomSheet && (<BottomSheet
+                backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
+                ref={bottomSheetRef}
+                style={{ borderWidth: 1, borderRadius: scale(10) }}
+                index={0}
+                snapPoints={snapPoints}
+                enableDynamicSizing={false}
+                onChange={handleSheetChange}
+                backdropComponent={renderBackdrop}
+                enablePanDownToClose={true}
+                onClose={() => {
+                  setIsOpenBottomSheet(false);
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: scale(20),
+                    paddingBottom: scale(4),
+                    borderBottomWidth: scale(1)
+                  }}>
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}>
+                    <Text style={{ fontSize: scale(16), fontWeight: '600', color: COLORS.BLACK, marginEnd: scale(5) }}>
+                      Filter
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={handleClosePress}>
+                    <Icon name='cancel' size={scale(20)} />
+                  </TouchableOpacity>
+                </View>
+                <BottomSheetScrollView style={{ paddingHorizontal: scale(10), backgroundColor: COLORS.BGFILESCOLOR, flex: 1 }}>
+
+
+                  <Formik
+                    initialValues={{
+                      opendate: openDate,
+                      closedate: closeDate,
+                      agent: '',
+                      deal: '',
+                      all: 'all',
+                    }}
+                    // validationSchema={AddCompanySchema}
+                    onSubmit={(values, { resetForm }) => {
+                      getAllShiftReport(values)
+                      //  const serializedValues = {
+                      //                         ...values,
+                      //                         date: typeof values.date === 'string' ? values.date : values.date.toString()
+                      //                     };
+                      handleClosePress();
+                      // resetForm();
+                    }}
+                  >
+                    {({ handleChange, handleSubmit, values, errors, touched, setFieldValue }) => (
+                      <View style={{ paddingVertical: scale(20) }}>
+                        <CustomDateTimePicker
+                          label="Open Date"
+                          value={openDate}
+                          setFieldValue={handleDateChange}
+                          fieldName="opendate"
+                          mode={'date'}
+                        />
+                        <CustomDateTimePicker
+                          label="Close Date"
+                          value={closeDate}
+                          setFieldValue={handleDateChange}
+                          fieldName="closedate"
+                          mode={'date'}
+                        />
 
 
 
-                      <CustomDropdown
-                        label="Deal"
-                        open={openDropdown1}
-                        value={dropdownValue1}
-                        items={dropdownItems1}
-                        setOpen={setOpenDropdown1}
-                        setValue={(val: any) => {
-                          setDropdownValue1(val());
-                          setFieldValue('deal', val());
-                        }}
-                        bottomOffset={30}
-                        setItems={setDropdownItems1}
-                      />
-
-
-                      <CustomDropdown
-                        label="All"
-                        open={openDropdown2}
-                        value={dropdownValue2}
-                        items={dropdownItems2}
-                        setOpen={setOpenDropdown2}
-                        setValue={(val: any) => {
-                          setDropdownValue2(val());
-                          setFieldValue('all', val());
-                        }}
-                        setItems={setDropdownItems2}
-                      />
+                        <CustomDropdown
+                          label="Agent"
+                          open={openDropdown}
+                          value={dropdownValue}
+                          items={dropdownItems}
+                          setOpen={setOpenDropdown}
+                          setValue={(val: any) => {
+                            setDropdownValue(val());
+                            setFieldValue('agent', val());
+                          }}
+                          bottomOffset={30}
+                          setItems={setDropdownItems}
+                        />
 
 
 
-                      <View style={{ marginVertical: scale(10), flexDirection: 'row', alignItems: 'center' }}>
-                        <CustomButton title="Search" onPress={() => {
-                          handleSubmit();
-                        }} textColor={COLORS.WHITE} />
-                        <View style={{ width: scale(8) }} />
-                        <CustomButton title="Excel" onPress={() => {
-                          console.log('Export to Excel');
-                        }} textColor={COLORS.WHITE} />
-                        <View style={{ width: scale(8) }} />
-                        <CustomButton title="Wapsi" onPress={() => {
-                          console.log('Wapsi action');
-                        }} textColor={COLORS.WHITE} />
-                        <View style={{ width: scale(8) }} />
-                        <CustomButton title="Send SMS" onPress={() => {
-                          console.log('Send SMS');
-                        }} textColor={COLORS.WHITE} />
+                        <CustomDropdown
+                          label="Deal"
+                          open={openDropdown1}
+                          value={dropdownValue1}
+                          items={dropdownItems1}
+                          setOpen={setOpenDropdown1}
+                          setValue={(val: any) => {
+                            setDropdownValue1(val());
+                            setFieldValue('deal', val());
+                          }}
+                          bottomOffset={30}
+                          setItems={setDropdownItems1}
+                        />
+
+
+                        <CustomDropdown
+                          label="All"
+                          open={openDropdown2}
+                          value={dropdownValue2}
+                          items={dropdownItems2}
+                          setOpen={setOpenDropdown2}
+                          setValue={(val: any) => {
+                            setDropdownValue2(val());
+                            setFieldValue('all', val());
+                          }}
+                          setItems={setDropdownItems2}
+                        />
+
+                        <View style={{ marginVertical: scale(10), flexDirection: 'row', alignItems: 'center' }}>
+                          <CustomButton title="Search" onPress={() => {
+                            handleSubmit();
+                          }} textColor={COLORS.WHITE} />
+
+                        </View>
                       </View>
-                    </View>
-                  )}
-                </Formik>
+                    )}
+                  </Formik>
 
-              </BottomSheetScrollView>
-            </BottomSheet>)}
-        </SafeAreaView>
-      </GradientBackground>
-    </GestureHandlerRootView>
+                </BottomSheetScrollView>
+              </BottomSheet>)}
+          </SafeAreaView>
+        </GradientBackground>
+      </GestureHandlerRootView>
+    </PermissionGuard>
   )
 }
 

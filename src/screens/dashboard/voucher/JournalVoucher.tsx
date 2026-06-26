@@ -30,6 +30,8 @@ import GradientBackground from '../../../components/GradientBackground';
 import TableGrid from '../../../components/TableGridView';
 import useSearchBar from '../../../hooks/useSearchBar';
 import APIService from '../../services/APIService';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
 
 const AddStaffSchema = Yup.object().shape({
   date: Yup.string().required('Please Select Date'),
@@ -412,8 +414,8 @@ const JournalVoucher = ({ navigation }: any) => {
 
   // Load initial data on component mount
   useEffect(() => {
-    // Only fetch dropdown data, don't auto-fetch report data
     fetchLedgerData();
+    handleFilterSearch();
   }, []);
 
   // Search functionality
@@ -422,6 +424,7 @@ const JournalVoucher = ({ navigation }: any) => {
     debounceMs: 200,
   });
   return (
+    <PermissionGuard permission={PERMISSIONS.VOUCHER_JOURNAL_VIEW.value}>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
         <SafeAreaView
@@ -443,11 +446,11 @@ const JournalVoucher = ({ navigation }: any) => {
               }}>
                 <Icon name={showSearch ? 'close' : 'search'} color={COLORS.WHITE} size={scale(20)} />
               </TouchableOpacity>
-              {/* <TouchableOpacity onPress={() => {
-              setIsFilterBottomSheetOpen(true);
-            }}>
-              <Icon name={'close'} color={COLORS.WHITE} size={scale(20)} />
-            </TouchableOpacity> */}
+              <TouchableOpacity onPress={() => {
+                setIsFilterBottomSheetOpen(true);
+              }}>
+                <Icon name="filter" color={COLORS.WHITE} size={scale(20)} />
+              </TouchableOpacity>
             </View>
           </ScreenHeader>
           <View style={style.container}>
@@ -871,6 +874,7 @@ const JournalVoucher = ({ navigation }: any) => {
         </SafeAreaView>
       </GradientBackground>
     </GestureHandlerRootView>
+    </PermissionGuard>
   );
 };
 const style = StyleSheet.create({

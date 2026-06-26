@@ -20,6 +20,9 @@ import GradientBackground from '../../../components/GradientBackground';
 import useSearchBar from '../../../hooks/useSearchBar';
 import TableGrid from '../../../components/TableGridView';
 import { RefreshControl } from 'react-native';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
+
 
 const AddLimiteVoucherSchema = Yup.object().shape({
     date: Yup.string().required('Please Select Date'),
@@ -398,7 +401,9 @@ const LimitVoucher = ({ navigation }: any) => {
     });
 
     return (
+        <PermissionGuard permission={PERMISSIONS.VOUCHER_LIMIT_VIEW.value}>
         <GestureHandlerRootView style={{ flex: 1 }}>
+
             <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
                 <SafeAreaView style={style.safeAreaContainer} edges={['top', 'left', 'right']}>
                     <ScreenHeader
@@ -824,8 +829,10 @@ const LimitVoucher = ({ navigation }: any) => {
                 </SafeAreaView>
             </GradientBackground>
         </GestureHandlerRootView >
+        </PermissionGuard>
     );
 };
+
 const style = StyleSheet.create({
     flexSingleColumb: {
         width: "48%"

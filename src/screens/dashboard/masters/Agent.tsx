@@ -21,6 +21,9 @@ import APIService from '../../services/APIService';
 import Toast from 'react-native-toast-message';
 import useSearchBar from '../../../hooks/useSearchBar';
 import GradientBackground from '../../../components/GradientBackground';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
+
 const AddStaffSchema = Yup.object().shape({
   agent: Yup.string().required('Agent Name is required'),
   mainAgent: Yup.string().required('Main Agent is required'),
@@ -281,7 +284,9 @@ const Agent = ({ navigation }: any) => {
     }
   };
   return (
+    <PermissionGuard permission={PERMISSIONS.MASTER_AGENTS_VIEW.value}>
     <GestureHandlerRootView style={{flex:1}}>
+
         <GradientBackground colors={[ "#fdf0d0","#e0efea"]} locations={[0,30]}>
       <SafeAreaView
         style={style.safeAreaContainer}
@@ -455,8 +460,10 @@ const Agent = ({ navigation }: any) => {
       </SafeAreaView>
       </GradientBackground>
     </GestureHandlerRootView>
+    </PermissionGuard>
   );
 };
+
 const style = StyleSheet.create({
   flexSingleColumb: {
     width: '48%',

@@ -20,7 +20,20 @@ import ScreenHeader from '../../../components/ScreenHeader';
 import TableGrid from '../../../components/TableGridView';
 import APIService from '../../services/APIService';
 import Toast from 'react-native-toast-message';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
 
+
+
+const getFormattedDate = (value: any) => {
+  if (value instanceof Date) {
+    const day = String(value.getDate()).padStart(2, '0');
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const year = value.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+  return value;
+};
 
 // Result 30 Days Section Component
 const Result30DaysSection = ({ data, onNumberClick }: { data: any, onNumberClick: (num: string) => void }) => {
@@ -135,7 +148,7 @@ const DeclareResultSection = ({ selectedShift, selectedDate }: { selectedShift: 
       setIsDeclaring(true);
       const queryParams = {
         shift_id: selectedShift,
-        date: selectedDate.toLocaleDateString('en-GB'),
+        date: getFormattedDate(selectedDate),
         number: declareNumber
       };
 
@@ -269,7 +282,7 @@ const LivePredaction = ({ navigation }: any) => {
       setSearchLoading(true);
       const filters = {
         shift_id: selectedShift,
-        date: selectedDate instanceof Date ? selectedDate.toLocaleDateString('en-GB') : selectedDate,
+        date: getFormattedDate(selectedDate),
       };
       const response: any = await APIService.liveResultByNumber(filters, number);
 
@@ -296,7 +309,7 @@ const LivePredaction = ({ navigation }: any) => {
 
       const filters = {
         shift_id: selectedShift,
-        date: selectedDate instanceof Date ? selectedDate.toLocaleDateString('en-GB') : selectedDate,
+        date: getFormattedDate(selectedDate),
       };
 
 
@@ -330,7 +343,7 @@ const LivePredaction = ({ navigation }: any) => {
       // Prepare API data
       const apiData = {
         shift_id: selectedShift,
-        date: selectedDate instanceof Date ? selectedDate.toLocaleDateString('en-GB') : selectedDate, // Format: dd/mm/yyyy
+        date: getFormattedDate(selectedDate),
       };
 
       console.log('Filter submitted:', apiData);
@@ -391,7 +404,9 @@ const LivePredaction = ({ navigation }: any) => {
   console.log(liveResultData, "liveResultData")
 
   return (
+    <PermissionGuard permission={PERMISSIONS.RESULT_LIVE_PREDICTION_VIEW.value}>
     <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
+
       <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
         {/* Header */}
         <ScreenHeader
@@ -510,7 +525,13 @@ const LivePredaction = ({ navigation }: any) => {
                   value={selectedShift}
                   items={shiftItems}
                   setOpen={setShiftOpen}
-                  setValue={setSelectedShift}
+                  setValue={(val: any) => {
+                    if (typeof val === 'function') {
+                      setSelectedShift(val());
+                    } else {
+                      setSelectedShift(val);
+                    }
+                  }}
                   setItems={() => { }}
                   placeholder={shiftLoading ? "Loading shifts..." : "Select Shift"}
                 />
@@ -575,8 +596,10 @@ const LivePredaction = ({ navigation }: any) => {
         )}
       </SafeAreaView>
     </GradientBackground>
+    </PermissionGuard>
   );
 };
+
 
 export default LivePredaction;
 

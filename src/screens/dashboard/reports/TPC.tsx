@@ -16,6 +16,8 @@ import APIService from '../../services/APIService'
 import GradientBackground from '../../../components/GradientBackground'
 import useSearchBar from '../../../hooks/useSearchBar'
 import TableGrid from '../../../components/TableGridView';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
 const TPC = ({ navigation }: any) => {
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(true);
   const bottomSheetRef = React.useRef<BottomSheet>(null);
@@ -122,11 +124,11 @@ const TPC = ({ navigation }: any) => {
   // Fetch agents for dropdown
   const fetchAgents = async () => {
     try {
-      const res = await APIService.getMasterLedgerAgent();
+      const res = await APIService.GetAgentDropDownDataData();
       if (res && res.success && Array.isArray(res.data)) {
         const items = res.data.map((a: any) => ({
-          label: a.agent_name || a.name || `Agent ${a.id}`,
-          value: a.id?.toString?.() || a.agent_id?.toString?.() || `${a.id}`,
+          label: a.name || a.real_name || `Agent ${a.id}`,
+          value: a.id?.toString() || a.agent_id?.toString() || `${a.id}`,
         }));
         setDropdownItems2(items);
       } else {
@@ -151,7 +153,7 @@ const TPC = ({ navigation }: any) => {
       const payload = {
         start_date: values?.opendate || formatDateForAPI(openDate) || formattedDate,
         end_date: values?.closedate || formatDateForAPI(closeDate) || formattedDate,
-        agent: values?.agent || dropdownValue2 || undefined,
+        agent_id: values?.agent || dropdownValue2 || undefined,
       };
       const response = await APIService.getTCPReport(payload);
       if (response?.success && response?.data) {
@@ -176,6 +178,7 @@ const TPC = ({ navigation }: any) => {
     }
   };
   return (
+    <PermissionGuard permission={PERMISSIONS.REPORTS_TPC_VIEW.value}>
     <GestureHandlerRootView style={{flex:1}}>
       <GradientBackground colors={[ "#fdf0d0","#e0efea"]} locations={[0,30]}>
       <SafeAreaView style={style.safeAreaContainer}>
@@ -356,6 +359,7 @@ const TPC = ({ navigation }: any) => {
       </SafeAreaView>
       </GradientBackground>
     </GestureHandlerRootView>
+    </PermissionGuard>
   )
 }
 

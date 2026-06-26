@@ -20,6 +20,8 @@ import { scale } from 'react-native-size-matters';
 
 import JantriTable from '../Transaction/addTransaction/JantriTable';
 import JantariResultLandscapeModal from './JantariResultLandscapeModal';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import { PERMISSIONS } from '../../../helper/permissions';
 
 const JantariResult = ({ navigation }: any) => {
   // State for filter bottom sheet
@@ -97,7 +99,10 @@ const JantariResult = ({ navigation }: any) => {
   const fetchJantriData = async () => {
     try {
       setIsLoading(true);
-      const formattedDate = selectedDate.toLocaleDateString('en-GB');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const year = selectedDate.getFullYear();
+      const formattedDate = `${day}/${month}/${year}`;
       const payload = {
         shift_id: selectedShift || undefined,
         is_declared: 'all',
@@ -139,6 +144,7 @@ const JantariResult = ({ navigation }: any) => {
   };
 
   return (
+    <PermissionGuard permission={PERMISSIONS.RESULT_JANTRI_VIEW.value}>
     <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
       {/* Header */}
       <ScreenHeader
@@ -207,13 +213,19 @@ const JantariResult = ({ navigation }: any) => {
 
               <View >
 
-                <CustomDropdown
+                 <CustomDropdown
                   label='Shift'
                   open={shiftOpen}
                   value={selectedShift}
                   items={shiftItems}
                   setOpen={setShiftOpen}
-                  setValue={setSelectedShift}
+                  setValue={(val: any) => {
+                    if (typeof val === 'function') {
+                      setSelectedShift(val());
+                    } else {
+                      setSelectedShift(val);
+                    }
+                  }}
                   setItems={() => { }}
                   placeholder={shiftLoading ? "Loading shifts..." : "Select Shift"}
                 />
@@ -248,6 +260,7 @@ const JantariResult = ({ navigation }: any) => {
         transactions={transactions}
       />
     </SafeAreaView>
+    </PermissionGuard>
   );
 };
 
