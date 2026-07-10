@@ -44,7 +44,7 @@ export default function useSearchBar<T = any>(
       const text = selector
         ? selector(item)
         : String((item as any)?.name ?? (item as any)?.title ?? (item as any)?.shift_name ?? '');
-      return String(text).toLowerCase().includes(q);
+      return String(text).toLowerCase().startsWith(q);
     });
   }, [items, debouncedQuery, selector]);
 

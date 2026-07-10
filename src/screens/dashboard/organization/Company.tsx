@@ -237,8 +237,8 @@ const Company = ({ navigation }: any) => {
               data={getData.filter((item: any) => {
                 if (!searchText?.trim()) return true;
                 const terms = searchText.toLowerCase().split(/\s+/).filter(Boolean);
-                const haystack = `${item?.company_name || ''} ${item?.print_name || ''} ${item?.short_name || ''} ${item?.country || ''} ${item?.state || ''} ${item?.mobile || ''} ${item?.mail || ''} ${item?.username || ''}`.toLowerCase();
-                return terms.every((t: string) => haystack.includes(t));
+                const fields = [item?.company_name, item?.print_name, item?.short_name, item?.country, item?.state, item?.mobile, item?.mail, item?.username];
+                return terms.every((t: string) => fields.some(f => String(f || '').toLowerCase().startsWith(t)));
               })}
               config={[
                 { key: 'company_name', label: 'CompanyName' },

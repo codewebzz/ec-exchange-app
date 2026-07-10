@@ -474,7 +474,7 @@ const LimitVoucher = ({ navigation }: any) => {
                             <View style={{ padding: scale(16) }}>
                                 <TableGrid
                                     data={filteredItems}
-                                    showTotal={false}
+                                    showTotal={true}
                                     columns={[
                                         { key: 'sno', label: 'S.No.', width: 50 },
                                         { key: 'partyAndLimit', label: 'Party', width: 120 },

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View, RefreshControl } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -33,6 +33,7 @@ const DashboardScreen = ({ navigation }: any) => {
   const [shiftDataRes, setShiftDataRes] = useState<any>([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [shiftLoading, setShiftLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   // console.log(recentUserRes,"recentUserResrecentUserResrecentUserRes")
   // const shiftCards = Array.isArray(recentUserRes?.data)
   //   ? recentUserRes.data
@@ -90,6 +91,15 @@ const DashboardScreen = ({ navigation }: any) => {
       fetchRecentUsers();
     }, [fetchShiftData, fetchRecentUsers])
   );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      fetchShiftData(),
+      fetchRecentUsers()
+    ]);
+    setRefreshing(false);
+  }, [fetchShiftData, fetchRecentUsers]);
   // const fetchRecentUsers = useCallback(async () => {
   //   const resp = await APIService.getRecentUser();
   //   return Array.isArray(resp?.data) ? resp.data : Array.isArray(resp) ? resp : [];
@@ -139,6 +149,7 @@ const DashboardScreen = ({ navigation }: any) => {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             nestedScrollEnabled
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4f46e5']} tintColor="#4f46e5" />}
           >
             <View style={styles.topRow}>
               {shiftLoading ? (

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  RefreshControl
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,6 +41,7 @@ const JantariResult = ({ navigation }: any) => {
   const [shiftOpen, setShiftOpen] = useState(false);
   const [shiftItems, setShiftItems] = useState<any[]>([]);
   const [shiftLoading, setShiftLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Bottom sheet snap points
   const snapPoints = React.useMemo(() => ['90%'], []);
@@ -130,10 +132,16 @@ const JantariResult = ({ navigation }: any) => {
     }
   };
 
-  // Handle filter submit
   const handleFilterSubmit = () => {
     fetchJantriData();
     handleFilterClosePress();
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchShiftData();
+    await fetchJantriData();
+    setRefreshing(false);
   };
 
   // Handle date change
@@ -163,7 +171,7 @@ const JantariResult = ({ navigation }: any) => {
         </View>
       </ScreenHeader>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.BUTTONBG]} tintColor={COLORS.BUTTONBG} />}>
 
         {isLoading ? (
           <ActivityIndicator size="large" color={COLORS.BUTTONBG} style={{ marginTop: scale(50) }} />

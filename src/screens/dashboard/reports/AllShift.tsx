@@ -25,19 +25,13 @@ const AllShift = ({ navigation }: any) => {
   const [openDropdown, setOpenDropdown] = React.useState(false);
   const [dropdownValue, setDropdownValue] = React.useState<any>(null);
   const [dropdownItems, setDropdownItems] = React.useState<any[]>([]);
-  const [openDropdown1, setOpenDropdown1] = React.useState(false);
-  const [dropdownValue1, setDropdownValue1] = React.useState(null);
-  const [dropdownItems1, setDropdownItems1] = React.useState([
-    { label: 'Deal1', value: 'Deal1' },
-    { label: 'Deal2', value: 'Deal2' },
-  ]);
   const [loading, setLoading] = React.useState(false);
   const [openDropdown2, setOpenDropdown2] = React.useState(false);
-  const [dropdownValue2, setDropdownValue2] = React.useState<any>(null);
+  const [dropdownValue2, setDropdownValue2] = React.useState<any>('all');
   const [dropdownItems2, setDropdownItems2] = React.useState<any[]>([
     { label: 'All', value: 'all' },
-    { label: 'Yes', value: 'yes' },
-    { label: 'No', value: 'no' },
+    { label: 'Active', value: 'active' },
+    { label: 'Inactive', value: 'inactive' },
   ]);
   const [showSearch, setShowSearch] = useState(false);
   const [showModalTable, setShowModalTable] = React.useState(false);
@@ -158,9 +152,8 @@ const AllShift = ({ navigation }: any) => {
       const payload = {
         start_date,
         end_date,
-        agent_id: values?.agent || undefined,
-        deal: values?.deal || undefined,
-        all: values?.all || undefined,
+        agent: values?.agent || undefined,
+        party: values?.party || undefined,
       }
       const response = await APIService.GetAllShiftReport(payload);
       if (response?.success && response?.data) {
@@ -200,12 +193,12 @@ const AllShift = ({ navigation }: any) => {
 
     // Columns matching the image description
     const columns = [
-      { key: 'sno', label: 'S.No.', width: 50, align: 'center' as const },
-      { key: 'shift', label: 'Shift', width: 100, align: 'left' as const },
+      { key: 'sno', label: 'S.No.', width: 30, align: 'center' as const },
+      { key: 'shift', label: 'Shift', width: 70, align: 'left' as const },
       {
         key: 'declared_number',
         label: 'Declared Number',
-        width: 120,
+        width: 80,
         align: 'center' as const,
         renderCell: (row: any) => {
           if (startDate === endDate && row.shift_id) {
@@ -214,22 +207,22 @@ const AllShift = ({ navigation }: any) => {
           return <Text style={{ color: '#1d2238', fontSize: scale(10) }}>-</Text>;
         }
       },
-      { key: 'rate', label: 'Rate', width: 80, align: 'right' as const, numeric: true },
-      { key: 'sh_percent', label: 'SH%', width: 70, align: 'right' as const, numeric: true },
-      { key: 'tph_percent', label: 'TPH%', width: 70, align: 'right' as const, numeric: true },
-      { key: 't_sale', label: 'T-Sale', width: 90, align: 'right' as const, numeric: true },
-      { key: 'd_sale', label: 'D-Sale', width: 90, align: 'right' as const, numeric: true },
-      { key: 'a_sale', label: 'A-Sale', width: 90, align: 'right' as const, numeric: true },
-      { key: 'comm', label: 'Comm', width: 80, align: 'right' as const, numeric: true },
-      { key: 'o_dara', label: 'O-Dara', width: 90, align: 'right' as const, numeric: true },
-      { key: 'amt_d', label: 'Amt-D', width: 90, align: 'right' as const, numeric: true },
-      { key: 'o_akhar', label: 'O-Akhar', width: 90, align: 'right' as const, numeric: true },
-      { key: 'amt_a', label: 'Amt-A', width: 90, align: 'right' as const, numeric: true },
-      { key: 'tpc', label: 'TPC', width: 80, align: 'right' as const, numeric: true },
-      { key: 's_hissa', label: 'S-Hissa', width: 90, align: 'right' as const, numeric: true },
-      { key: 'tph_amt', label: 'TPH Amt', width: 100, align: 'right' as const, numeric: true },
-      { key: 'lena', label: 'Lena', width: 90, align: 'right' as const, numeric: true },
-      { key: 'dena', label: 'Dena', width: 90, align: 'right' as const, numeric: true },
+      { key: 'rate', label: 'Rate', width: 50, align: 'right' as const, numeric: true },
+      { key: 'sh_percent', label: 'SH%', width: 45, align: 'right' as const, numeric: true },
+      { key: 'tph_percent', label: 'TPH%', width: 45, align: 'right' as const, numeric: true },
+      { key: 't_sale', label: 'T-Sale', width: 65, align: 'right' as const, numeric: true },
+      { key: 'd_sale', label: 'D-Sale', width: 65, align: 'right' as const, numeric: true },
+      { key: 'a_sale', label: 'A-Sale', width: 65, align: 'right' as const, numeric: true },
+      { key: 'comm', label: 'Comm', width: 55, align: 'right' as const, numeric: true },
+      { key: 'o_dara', label: 'O-Dara', width: 65, align: 'right' as const, numeric: true },
+      { key: 'amt_d', label: 'Amt-D', width: 65, align: 'right' as const, numeric: true },
+      { key: 'o_akhar', label: 'O-Akhar', width: 65, align: 'right' as const, numeric: true },
+      { key: 'amt_a', label: 'Amt-A', width: 65, align: 'right' as const, numeric: true },
+      { key: 'tpc', label: 'TPC', width: 55, align: 'right' as const, numeric: true },
+      { key: 's_hissa', label: 'S-Hissa', width: 65, align: 'right' as const, numeric: true },
+      { key: 'tph_amt', label: 'TPH Amt', width: 70, align: 'right' as const, numeric: true },
+      { key: 'lena', label: 'Lena', width: 65, align: 'right' as const, numeric: true },
+      { key: 'dena', label: 'Dena', width: 65, align: 'right' as const, numeric: true },
     ];
 
     // Map API data to match column keys
@@ -437,21 +430,14 @@ const AllShift = ({ navigation }: any) => {
                       opendate: openDate,
                       closedate: closeDate,
                       agent: '',
-                      deal: '',
-                      all: 'all',
+                      party: 'all',
                     }}
-                    // validationSchema={AddCompanySchema}
-                    onSubmit={(values, { resetForm }) => {
+                    onSubmit={(values) => {
                       getAllShiftReport(values)
-                      //  const serializedValues = {
-                      //                         ...values,
-                      //                         date: typeof values.date === 'string' ? values.date : values.date.toString()
-                      //                     };
                       handleClosePress();
-                      // resetForm();
                     }}
                   >
-                    {({ handleChange, handleSubmit, values, errors, touched, setFieldValue }) => (
+                    {({ handleSubmit, setFieldValue }) => (
                       <View style={{ paddingVertical: scale(20) }}>
                         <CustomDateTimePicker
                           label="Open Date"
@@ -468,8 +454,6 @@ const AllShift = ({ navigation }: any) => {
                           mode={'date'}
                         />
 
-
-
                         <CustomDropdown
                           label="Agent"
                           open={openDropdown}
@@ -484,32 +468,15 @@ const AllShift = ({ navigation }: any) => {
                           setItems={setDropdownItems}
                         />
 
-
-
                         <CustomDropdown
-                          label="Deal"
-                          open={openDropdown1}
-                          value={dropdownValue1}
-                          items={dropdownItems1}
-                          setOpen={setOpenDropdown1}
-                          setValue={(val: any) => {
-                            setDropdownValue1(val());
-                            setFieldValue('deal', val());
-                          }}
-                          bottomOffset={30}
-                          setItems={setDropdownItems1}
-                        />
-
-
-                        <CustomDropdown
-                          label="All"
+                          label="Party"
                           open={openDropdown2}
                           value={dropdownValue2}
                           items={dropdownItems2}
                           setOpen={setOpenDropdown2}
                           setValue={(val: any) => {
                             setDropdownValue2(val());
-                            setFieldValue('all', val());
+                            setFieldValue('party', val());
                           }}
                           setItems={setDropdownItems2}
                         />

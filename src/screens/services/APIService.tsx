@@ -651,6 +651,10 @@ const APIService = {
   },
   DeclareShift: (params: any): Promise<CommonResponse> =>
     AxiosService.patch<CommonResponse>(`api/declare_shift`, {}, { params }),
+  ReDeclareShift: (params: any): Promise<CommonResponse> =>
+    AxiosService.patch<CommonResponse>(`api/redeclare_shift`, {}, { params }),
+  UnDeclareShift: (params: any): Promise<CommonResponse> =>
+    AxiosService.patch<CommonResponse>(`api/undeclare_shift`, {}, { params }),
   GetConsolidatedJantri: async (ledger_id: number, params?: object): Promise<any> => {
     try {
       const res = await AxiosService.post(`api/get_consolidated_jantri_of_ledger/${ledger_id}`, params);

@@ -507,7 +507,7 @@ const JournalVoucher = ({ navigation }: any) => {
             <TableGrid
               loading={loading}
               data={filteredItems}
-              showTotal={false}
+              showTotal={true}
               columns={[
                 { key: 'sno', label: 'S.No.', width: 50 },
                 { key: 'partyAndBalance', label: 'Party', width: 120 },

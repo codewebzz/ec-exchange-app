@@ -10,7 +10,8 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  RefreshControl
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { moderateScale, scale } from 'react-native-size-matters';
@@ -48,6 +49,7 @@ export const Transaction = ({ navigation }: any) => {
   const [copyLoading, setCopyLoading] = useState(false);
   const [copyItem, setCopyItem] = useState<any>(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Bottom sheet states
   const [isFilterBottomSheetOpen, setIsFilterBottomSheetOpen] = useState(true);
@@ -479,6 +481,12 @@ export const Transaction = ({ navigation }: any) => {
     }
   }, [activeDeleteShift]);
 
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchTransactions();
+    setRefreshing(false);
+  }, [activeDeleteShift, selectedShift, selectedDate, searchParty, selectedStaff]);
+
   // Fetch shift data on component mount - REMOVED
   // Data will now be fetched when dropdowns are opened
 
@@ -575,7 +583,7 @@ export const Transaction = ({ navigation }: any) => {
           </View>
         ) : null}
 
-        <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.content} keyboardShouldPersistTaps="handled" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.BUTTONBG]} tintColor={COLORS.BUTTONBG} />}>
           {/* Main Table */}
           <View style={styles.tableWrapper}>
             {loadingList ? (

@@ -8,6 +8,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  RefreshControl
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -58,6 +59,7 @@ const CollectionResult = ({ navigation }: any) => {
   const [shiftOpen, setShiftOpen] = useState(false);
   const [shiftItems, setShiftItems] = useState<any[]>([]);
   const [shiftLoading, setShiftLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Bottom sheet snap points
   const snapPoints = React.useMemo(() => ['90%'], []);
@@ -255,6 +257,15 @@ const CollectionResult = ({ navigation }: any) => {
     setIsJantriModalVisible(false);
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchShiftData();
+    if (selectedShift) {
+      await fetchCollectionData(ledgerList);
+    }
+    setRefreshing(false);
+  };
+
   return (
     <PermissionGuard permission={PERMISSIONS.RESULT_COLLECTION_VIEW.value}>
     <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
@@ -272,7 +283,7 @@ const CollectionResult = ({ navigation }: any) => {
         </TouchableOpacity>
       </ScreenHeader>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.BUTTONBG]} tintColor={COLORS.BUTTONBG} />}>
         {/* Filter Button */}
         {/* <View style={styles.filterBar}>
           <TouchableOpacity 

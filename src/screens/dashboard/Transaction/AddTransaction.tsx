@@ -38,7 +38,8 @@ import GradientBackground from '../../../components/GradientBackground';
 const { width } = Dimensions.get('window');
 
 const AddTransaction = ({ navigation, route }: any) => {
-  const { items, shiftId, editMode, transactionData, externalTransactions } = route.params || {};
+  const { items, shiftId: initialShiftId, editMode, transactionData, externalTransactions, data } = route.params || {};
+  const shiftId = initialShiftId || data?.id?.toString() || data?.shift_id?.toString();
 
   const [allTransactions, setAllTransactions] = useState<any[]>([]);
   const [shiftData, setShiftData] = useState<any>(null);

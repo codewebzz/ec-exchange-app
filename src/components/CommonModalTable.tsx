@@ -83,15 +83,19 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
 }) => {
   const viewShotRef = useRef<any>(null);
 
-  const getColumnWidth = (column: ColumnConfig): number => {
+  const getColumnWidth = (column: ColumnConfig, forCapture: boolean = false): number => {
     if (column.width) {
-      return Math.max(scale(column.width), scale(60));
+      return forCapture ? Math.max(column.width, 60) : Math.max(scale(column.width), scale(60));
     }
-    return scale(80);
+    return forCapture ? 80 : scale(80);
   };
 
   const totalTableWidth = useMemo(() => {
     return columns.reduce((sum, col) => sum + getColumnWidth(col), 0);
+  }, [columns]);
+
+  const totalTableWidthCapture = useMemo(() => {
+    return columns.reduce((sum, col) => sum + getColumnWidth(col, true), 0);
   }, [columns]);
 
   const calculateTotals = useMemo(() => {
@@ -157,18 +161,12 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
 
       const captureRef = viewShotModule.captureRef || viewShotModule.default?.captureRef;
 
-      const pixelRatio = PixelRatio.get();
-      const logicalWidth = totalTableWidth + scale(32);
-      const physicalWidth = Math.round(logicalWidth * pixelRatio);
-
       const uri = await (captureRef ? captureRef(viewShotRef, {
         format: 'png',
         quality: 1.0,
-        width: physicalWidth,
       }) : viewShotModule(viewShotRef, {
         format: 'png',
         quality: 1.0,
-        width: physicalWidth,
       }));
 
       const shareOptions = {
@@ -211,26 +209,26 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
             position: 'absolute',
             left: -9999,
             top: 0,
-            width: totalTableWidth + scale(32),
+            width: totalTableWidthCapture + 32,
             backgroundColor: '#F8F6EF',
-            padding: scale(16),
+            padding: 16,
           }}
           collapsable={false}
           ref={viewShotRef}
         >
           {/* Header */}
-          <View style={[styles.modalHeader, { backgroundColor: '#F8F6EF', paddingHorizontal: 0 }]}>
+          <View style={[styles.modalHeader, { backgroundColor: '#F8F6EF', paddingHorizontal: 0, paddingVertical: 12 }]}>
             <View style={styles.modalHeaderContent}>
-              <Text style={styles.modalTitle}>{title}</Text>
+              <Text style={[styles.modalTitle, { fontSize: 18 }]}>{title}</Text>
               {formatDateRange() && (
-                <Text style={styles.modalDate}>{formatDateRange()}</Text>
+                <Text style={[styles.modalDate, { fontSize: 12 }]}>{formatDateRange()}</Text>
               )}
             </View>
           </View>
 
           {/* Table Card */}
-          <View style={[styles.tableCard, { marginBottom: scale(16) }]}>
-            <View style={[styles.table, { minWidth: totalTableWidth }]}>
+          <View style={[styles.tableCard, { marginBottom: 16, padding: 12 }]}>
+            <View style={[styles.table, { minWidth: totalTableWidthCapture }]}>
               {/* Table Header Row */}
               <View style={styles.tableHeaderRow}>
                 {columns.map((column) => (
@@ -238,10 +236,10 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
                     key={column.key}
                     style={[
                       styles.tableHeaderCell,
-                      { width: getColumnWidth(column) },
+                      { width: getColumnWidth(column, true), padding: 8 },
                     ]}
                   >
-                    <Text style={styles.tableHeaderText}>
+                    <Text style={[styles.tableHeaderText, { fontSize: 10 }]}>
                       {column.label}
                     </Text>
                   </View>
@@ -250,11 +248,11 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
 
               {/* Data Rows or No Results */}
               {loading ? (
-                <View style={styles.emptyState}>
+                <View style={[styles.emptyState, { minHeight: 150 }]}>
                   <Text style={styles.emptyStateText}>Loading...</Text>
                 </View>
               ) : !data || data.length === 0 ? (
-                <View style={styles.emptyState}>
+                <View style={[styles.emptyState, { minHeight: 150 }]}>
                   <Text style={styles.emptyStateText}>No results found.</Text>
                 </View>
               ) : (
@@ -265,7 +263,7 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
                         key={column.key}
                         style={[
                           styles.tableDataCell,
-                          { width: getColumnWidth(column) },
+                          { width: getColumnWidth(column, true), padding: 6, minHeight: 30 },
                         ]}
                       >
                         {column.renderCell ? (
@@ -274,6 +272,7 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
                           <Text
                             style={[
                               styles.tableDataText,
+                              { fontSize: 10 },
                               column.align === 'right' && styles.textRight,
                               column.align === 'center' && styles.textCenter,
                             ]}
@@ -305,10 +304,10 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
                         key={column.key}
                         style={[
                           styles.tableTotalCell,
-                          { width: getColumnWidth(column) },
+                          { width: getColumnWidth(column, true), padding: 8 },
                         ]}
                       >
-                        <Text style={styles.tableTotalText}>
+                        <Text style={[styles.tableTotalText, { fontSize: 10 }]}>
                           {column.key === 'sno' || colIndex === 0
                             ? totalRowLabel
                             : formattedTotal}
@@ -323,17 +322,17 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
 
           {/* Summary Cards */}
           {summaryCards && summaryCards.length > 0 && (
-            <View style={[styles.summaryCardsContainer, { justifyContent: 'flex-start' }]}>
+            <View style={[styles.summaryCardsContainer, { justifyContent: 'flex-start', gap: 10, marginTop: 8 }]}>
               {summaryCards.map((card, index) => (
                 <View
                   key={index}
                   style={[
                     styles.summaryCard,
-                    { borderColor: card.borderColor, flex: 0, width: scale(140), marginRight: scale(12), marginBottom: scale(12) },
+                    { borderColor: card.borderColor, flex: 0, width: 140, marginRight: 10, marginBottom: 10, padding: 10, borderWidth: 2 },
                   ]}
                 >
-                  <Text style={styles.summaryCardLabel}>{card.label}</Text>
-                  <Text style={styles.summaryCardValue}>
+                  <Text style={[styles.summaryCardLabel, { fontSize: 10, marginBottom: 4 }]}>{card.label}</Text>
+                  <Text style={[styles.summaryCardValue, { fontSize: 14 }]}>
                     {typeof card.value === 'number'
                       ? card.value.toString()
                       : card.value}
@@ -387,7 +386,7 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
 
               {/* Table */}
               <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-                <View style={[styles.table, { maxHeight: scale(380) }]}>
+                <View style={[styles.table, { height: scale(220) }]}>
                   {/* Table Header Row */}
                   <View style={styles.tableHeaderRow}>
                     {columns.map((column) => (

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { scale } from 'react-native-size-matters';
-import { ScrollView } from 'react-native-gesture-handler';
+import { ScrollView, FlatList } from 'react-native-gesture-handler';
 import { COLORS } from '../assets/colors';
 import Icons from 'react-native-vector-icons/Ionicons';
 
@@ -252,7 +252,7 @@ const TableGrid: React.FC<TableProps> = ({
     );
 
     return (
-        <ScrollView horizontal showsHorizontalScrollIndicator={true} persistentScrollbar={true} contentContainerStyle={{ paddingHorizontal: scale(2) }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={true} persistentScrollbar={true} contentContainerStyle={{ paddingHorizontal: scale(2) }} nestedScrollEnabled={true}>
             <View
                 style={[
                     styles.container,

@@ -14,6 +14,8 @@ import {
 import { COLORS } from '../../../../assets/colors';
 import JantriTable, { JantriTableRef } from './JantriTable';
 import APIService from '../../../services/APIService';
+import Share from 'react-native-share';
+import { captureRef } from 'react-native-view-shot';
 
 interface JantriViewModalProps {
   visible: boolean;
@@ -40,6 +42,28 @@ const JantriViewModal: React.FC<JantriViewModalProps> = ({
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const tableRef = useRef<JantriTableRef>(null);
+  const viewRef = useRef<View>(null);
+
+  const handleShare = async () => {
+    try {
+      if (viewRef.current) {
+        const uri = await captureRef(viewRef, {
+          format: 'png',
+          quality: 0.9,
+        });
+
+        await Share.open({
+          url: uri,
+          title: `Share Jantri - ${title}`,
+        });
+      }
+    } catch (error: any) {
+      if (error.message !== 'User did not share') {
+        console.error('Error sharing image:', error);
+        Alert.alert('Error', 'Failed to share image');
+      }
+    }
+  };
 
   // Sync with initialData when it changes or when modal opens
   useEffect(() => {
@@ -142,9 +166,17 @@ const JantriViewModal: React.FC<JantriViewModalProps> = ({
                 {renderRadio('HPL', 'hpl-jantri', true)}
               </View>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <TouchableOpacity
+                style={styles.shareButton}
+                onPress={handleShare}
+              >
+                <Text style={styles.searchButtonText}>Share</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
@@ -154,7 +186,7 @@ const JantriViewModal: React.FC<JantriViewModalProps> = ({
                 <Text style={styles.loadingText}>Loading Jantri Data...</Text>
               </View>
             ) : (
-              <View style={styles.gridSection}>
+              <View style={[styles.gridSection, { backgroundColor: '#f7f4ec' }]} collapsable={false} ref={viewRef}>
                 <JantriTable
                   ref={tableRef}
                   externalTransactions={transactions}
@@ -279,6 +311,20 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  shareButton: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 30,
+    marginRight: 6,
+  },
+  searchButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 11,
   },
 });
 

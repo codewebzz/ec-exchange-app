@@ -39,7 +39,8 @@ const ShiftCard = ({ card, navigation }: any) => {
           return;
         }
         navigation.navigate("AddTransaction", {
-          data: card
+          data: card,
+          shiftId: card.id?.toString()
         })
       }}>
         <LinearGradient colors={gradientColors} style={styles.cityCardHeader}>

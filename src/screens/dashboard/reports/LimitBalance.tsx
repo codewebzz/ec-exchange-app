@@ -34,8 +34,12 @@ const LimitBalance = ({ navigation }: any) => {
     { label: 'Deal2', value: 'Deal2' },
   ]);
   const [openDropdown2, setOpenDropdown2] = React.useState(false);
-  const [dropdownValue2, setDropdownValue2] = React.useState(null);
-  const [dropdownItems2, setDropdownItems2] = React.useState<any[]>([]);
+  const [dropdownValue2, setDropdownValue2] = React.useState<any>('all');
+  const [dropdownItems2, setDropdownItems2] = React.useState<any[]>([
+    { label: 'All', value: 'all' },
+    { label: 'Active', value: 'active' },
+    { label: 'Inactive', value: 'inactive' },
+  ]);
   const [loading, setLoading] = React.useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
@@ -106,7 +110,6 @@ const LimitBalance = ({ navigation }: any) => {
   
   React.useEffect(() => {
     fetchAgents();
-    fetchParties();
   }, []);
 
   // Fetch agents for dropdown
@@ -128,24 +131,7 @@ const LimitBalance = ({ navigation }: any) => {
     }
   };
 
-  // Fetch parties for dropdown
-  const fetchParties = async () => {
-    try {
-      const res = await APIService.getRecentUser();
-      if (res && res.success && Array.isArray(res.data)) {
-        const items = res.data.map((user: any) => ({
-          label: user.real_name || user.name || user.mobile || `User ${user.id}`,
-          value: user.id?.toString?.() || user.user_id?.toString?.() || `${user.id}`,
-        }));
-        setDropdownItems2(items);
-      } else {
-        setDropdownItems2([]);
-      }
-    } catch (e) {
-      console.error('Failed to fetch parties:', e);
-      setDropdownItems2([]);
-    }
-  };
+
 
   // Search functionality
   const { query, setQuery, filteredItems } = useSearchBar<any>(getData, {
@@ -160,8 +146,8 @@ const LimitBalance = ({ navigation }: any) => {
       const payload = {
         start_date: values?.opendate || formatDateForAPI(openDate) || formattedDate,
         end_date: values?.closedate || formatDateForAPI(closeDate) || formattedDate,
-        agent_id: values?.agent || dropdownValue || undefined,
-        deal: values?.deal || dropdownValue1 || undefined,
+        agent: values?.agent || dropdownValue || undefined,
+        deals: values?.deals || dropdownValue1 || undefined,
         party: values?.party || dropdownValue2 || undefined,
       };
       const response = await APIService.GetLimitBalanceReport(payload);
@@ -312,11 +298,11 @@ const LimitBalance = ({ navigation }: any) => {
 
               <Formik
                 initialValues={{
-                  party: '',
+                  party: 'all',
                   opendate: openDate,
                   closedate: closeDate,
                   agent: '',
-                  deal: '',
+                  deals: '',
                 }}
                 enableReinitialize
                 onSubmit={(values, { resetForm }) => {
@@ -326,7 +312,7 @@ const LimitBalance = ({ navigation }: any) => {
                     opendate: formatDateForAPI(openDate),
                     closedate: formatDateForAPI(closeDate),
                     agent: values.agent || dropdownValue,
-                    deal: values.deal || dropdownValue1,
+                    deals: values.deals || dropdownValue1,
                     party: values.party || dropdownValue2,
                   };
                   getLimitBalanceReport(formValues);
@@ -374,7 +360,7 @@ const LimitBalance = ({ navigation }: any) => {
     setOpen={setOpenDropdown1}
     setValue={(val: any) => {
       setDropdownValue1(val());
-      setFieldValue('deal', val());
+      setFieldValue('deals', val());
     }}
       bottomOffset={30}
     setItems={setDropdownItems1}
