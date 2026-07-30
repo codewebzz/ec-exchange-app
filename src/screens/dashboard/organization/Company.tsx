@@ -30,6 +30,7 @@ import Toast from 'react-native-toast-message';
 import GradientBackground from '../../../components/GradientBackground';
 import { PermissionGuard } from '../../../components/PermissionGuard';
 import { PERMISSIONS } from '../../../helper/permissions';
+import { usePermissions } from '../../../hooks/usePermissions';
 const AddCompanySchema = Yup.object().shape({
   companyName: Yup.string().required('Company Name is required'),
   printName: Yup.string().required('Print Name is required'),
@@ -50,6 +51,7 @@ const AddCompanySchema = Yup.object().shape({
 });
 
 const Company = ({ navigation }: any) => {
+  const { hasPermission } = usePermissions();
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
   const [searchText, setSearchText] = React.useState('');
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
@@ -220,6 +222,7 @@ const Company = ({ navigation }: any) => {
               />
             </View>
             <View style={{ width: scale(10) }} />
+            {hasPermission(PERMISSIONS.ORGANIZATION_COMPANY_ADD.value) && (
             <View style={{ width: '40%' }}>
               <CustomButton
                 textColor={COLORS.WHITE}
@@ -231,6 +234,7 @@ const Company = ({ navigation }: any) => {
                 }}
               />
             </View>
+            )}
           </View>
           <ScrollView style={{ padding: 16 }} keyboardShouldPersistTaps="handled">
             <DeclareStatusCard
@@ -253,12 +257,12 @@ const Company = ({ navigation }: any) => {
                 { key: 'updated_by', label: 'Updated By' },
               ]}
               isButtonOne={false}
-              actionOneLabel="Is Active"
-              actionTwoLabel="Action"
+              actionOneLabel={hasPermission(PERMISSIONS.ORGANIZATION_COMPANY_EDIT.value) ? "Is Active" : undefined}
+              actionTwoLabel={hasPermission(PERMISSIONS.ORGANIZATION_COMPANY_EDIT.value) ? "Action" : undefined}
                 //  onActionOne={handleToggleActive}
-             onActionTwo={(item: any) => {
+             onActionTwo={hasPermission(PERMISSIONS.ORGANIZATION_COMPANY_EDIT.value) ? (item: any) => {
                 handleEditShift(item);
-              }}
+              } : undefined}
               refreshing={refreshing}
               onRefresh={getData && getData.length > 0 ? onRefresh : undefined}
             />

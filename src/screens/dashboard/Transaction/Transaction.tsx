@@ -30,10 +30,14 @@ import JantriViewModal from './addTransaction/JantriViewModal';
 import MainJantriModal from './addTransaction/MainJantriModal';
 import { PermissionGuard } from '../../../components/PermissionGuard';
 import { PERMISSIONS } from '../../../helper/permissions';
+import { usePermissions } from '../../../hooks/usePermissions';
+import { useShiftPermissions } from '../../../hooks/useShiftPermissions';
 
 const { width, height } = Dimensions.get('window');
 
 export const Transaction = ({ navigation }: any) => {
+  const { hasPermission } = usePermissions();
+  const { hasShiftPermission } = useShiftPermissions();
   const [selectedShift, setSelectedShift] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [searchParty, setSearchParty] = useState('');
@@ -224,30 +228,36 @@ export const Transaction = ({ navigation }: any) => {
       align: 'center' as const,
       renderAction: (item: any) => (
         <View style={styles.actionButtonsContainer}>
+          {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_COPY.value) && (
           <TouchableOpacity
             style={[styles.actionButton, styles.copyButton]}
             onPress={() => handleCopyTransaction(item)}
           >
             <Ionicons name="copy-outline" size={16} color="#FF8C00" />
           </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={[styles.actionButton, styles.viewButton]}
             onPress={() => handleViewTransaction(item)}
           >
             <Ionicons name="eye-outline" size={16} color="#007AFF" />
           </TouchableOpacity>
+          {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_EDIT.value) && (
           <TouchableOpacity
             style={[styles.actionButton, styles.editButton]}
             onPress={() => handleEditTransaction(item)}
           >
             <Ionicons name="pencil-outline" size={16} color="#007AFF" />
           </TouchableOpacity>
+          )}
+          {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_DELETE.value) && (
           <TouchableOpacity
             style={[styles.actionButton, styles.deleteButton]}
             onPress={() => handleDeleteTransaction(item)}
           >
             <Ionicons name="trash-outline" size={16} color="#FF3B30" />
           </TouchableOpacity>
+          )}
         </View>
       ),
     },
@@ -340,6 +350,7 @@ export const Transaction = ({ navigation }: any) => {
         transactionData: item,
         shiftId: item.shift_id?.toString?.() || selectedShift,
         externalTransactions: detailedData,
+        is_declared: false
       });
     } catch (error) {
       console.error('Error preparing edit transaction:', error);
@@ -348,6 +359,7 @@ export const Transaction = ({ navigation }: any) => {
         editMode: true,
         transactionData: item,
         shiftId: item.shift_id?.toString?.() || selectedShift,
+        is_declared: false
       });
     } finally {
       setLoadingDetails(false);
@@ -651,6 +663,7 @@ export const Transaction = ({ navigation }: any) => {
           {/* Action Buttons */}
           <View style={styles.buttonContainer}>
             {/* Debug info */}
+            {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_ADD.value) && (
             <CustomButton
               title="Add"
               onPress={() => {
@@ -659,6 +672,7 @@ export const Transaction = ({ navigation }: any) => {
                   items: tableData,
                   shiftId: selectedShift,
                   externalTransactions: summaryTableData, // pass numbers if available
+                  is_declared: false
                 });
               }}
               backgroundColor={isAddButtonActive ? COLORS.BUTTONBG : '#ccc'}
@@ -666,6 +680,8 @@ export const Transaction = ({ navigation }: any) => {
               disabled={!isAddButtonActive}
               style={{ opacity: isAddButtonActive ? 1 : 0.6 }}
             />
+            )}
+            {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_JANTRI_VIEW.value) && (
             <CustomButton
               title="Jantri View"
               onPress={handleJantriView}
@@ -675,6 +691,8 @@ export const Transaction = ({ navigation }: any) => {
               //  style={styles.actionButton}
               style={{ opacity: isJantriViewButtonActive ? 1 : 0.6 }}
             />
+            )}
+            {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_MAIN_JANTRI.value) && hasShiftPermission(selectedShift) && (
             <CustomButton
               title="Main Jantri"
               onPress={handleMainJantriView}
@@ -682,6 +700,7 @@ export const Transaction = ({ navigation }: any) => {
               textColor={COLORS.WHITE}
             //  style={styles.actionButton}
             />
+            )}
           </View>
 
           {/* Dropdown */}

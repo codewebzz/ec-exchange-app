@@ -1,45 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
+  Alert,
   Dimensions,
   Keyboard,
-  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import QuickEntryForm from './addTransaction/QuickEntry';
+import AAModal from './addTransaction/AAModal';
+import ABModal from './addTransaction/ABModal';
 import AddNumbersForm from './addTransaction/AddNumberForm';
-import CustomHeader from '../../../components/CustomHeader';
-import RandomModal from './addTransaction/RandomModal';
 import CrossModal from './addTransaction/CrossModal';
 import FromToModal from './addTransaction/FromToModal';
-import ABModal from './addTransaction/ABModal';
-import AAModal from './addTransaction/AAModal';
+import QuickEntryForm from './addTransaction/QuickEntry';
+import RandomModal from './addTransaction/RandomModal';
 // import JantriModal from './addTransaction/JantriModal';
-import JantriEmbedded from './addTransaction/JantriEmbedded';
-import ScreenHeader from '../../../components/ScreenHeader';
-import CustomDropdown from '../../../components/CustomDropdown';
-import APIService from '../../services/APIService';
-import { COLORS } from '../../../assets/colors';
-import { scale, moderateScale } from 'react-native-size-matters';
-import CountdownHeaderTitle from './addTransaction/CountdownHeaderTitle';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { scale } from 'react-native-size-matters';
 import Toast from 'react-native-toast-message';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { COLORS } from '../../../assets/colors';
+import CustomDropdown from '../../../components/CustomDropdown';
 import GradientBackground from '../../../components/GradientBackground';
+import { PermissionGuard } from '../../../components/PermissionGuard';
+import ScreenHeader from '../../../components/ScreenHeader';
+import { PERMISSIONS } from '../../../helper/permissions';
+import APIService from '../../services/APIService';
+import CountdownHeaderTitle from './addTransaction/CountdownHeaderTitle';
+import JantriEmbedded from './addTransaction/JantriEmbedded';
 const { width } = Dimensions.get('window');
 
 const AddTransaction = ({ navigation, route }: any) => {
-  const { items, shiftId: initialShiftId, editMode, transactionData, externalTransactions, data } = route.params || {};
+  const { items, shiftId: initialShiftId, editMode, transactionData, externalTransactions, data, is_declared } = route.params || {};
   const shiftId = initialShiftId || data?.id?.toString() || data?.shift_id?.toString();
+
+  let permissionKey = PERMISSIONS.TRANSACTIONS_TRANSACTION_ADD.value;
+  if (is_declared && editMode) {
+    permissionKey = PERMISSIONS.TRANSACTIONS_DECLARE_TRANSACTION_EDIT.value;
+  } else if (is_declared) {
+    permissionKey = PERMISSIONS.TRANSACTIONS_DECLARE_TRANSACTION_ADD.value;
+  } else if (editMode) {
+    permissionKey = PERMISSIONS.TRANSACTIONS_TRANSACTION_EDIT.value;
+  }
 
   const [allTransactions, setAllTransactions] = useState<any[]>([]);
   const [shiftData, setShiftData] = useState<any>(null);
@@ -71,6 +81,7 @@ const AddTransaction = ({ navigation, route }: any) => {
   // Dropdown data
   const [ledgerData, setLedgerData] = useState<any[]>([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [isFanter, setIsFanter] = useState(false);
 
   const [modeData, setModeData] = useState<any[]>([]);
   const [modeLoading, setModeLoading] = useState(false);
@@ -93,22 +104,54 @@ const AddTransaction = ({ navigation, route }: any) => {
     }
   }, [shiftId]);
 
-  // Fetch ledger dropdown data
+  // Fetch ledger dropdown data (without show_self=1, matching web)
   const fetchLedgerData = async () => {
     try {
       setLedgerLoading(true);
-      const response = await APIService.GetLedgerDropDownDataData();
-      console.log('Ledger data response:', response);
+      const response = await APIService.GetLedgerNamesWithoutSelf();
+      console.log('Ledger data response (no show_self):', response);
 
-      if (response && response.success && response.data) {
+      const rawList = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response)
+          ? response
+          : [];
+
+      console.log("listlist", rawList)
+
+      if (rawList.length > 0) {
         // Transform the API response to match dropdown format for ledgers, preserve meta
-        const transformedLedgers = response.data.map((ledger: any) => ({
-          label: ledger.real_name || ledger.name || 'Unknown Ledger',
+        const transformedLedgers = rawList.map((ledger: any) => ({
+          label: ledger.name || ledger.real_name || 'Unknown Ledger',
           value: ledger.id?.toString() || ledger.ledger_id?.toString() || '',
           meta: ledger,
         }));
         setLedgerData(transformedLedgers);
         console.log('Transformed ledger items:', transformedLedgers);
+
+        // Check user details for ledger_fanter role
+        APIService.GetMyDetails()
+          .then((userRes: any) => {
+            const user = userRes?.data || userRes;
+            const role = user?.user_role?.toString().toLowerCase();
+            const fanterCheck = role === 'ledger_fanter' || role === 'fanter' || role === 'fantar' || (!!role && (role.includes('fanter') || role.includes('fantar')));
+            setIsFanter(fanterCheck);
+
+            if (fanterCheck && transformedLedgers.length > 0 && !selectedLedger) {
+              const firstLedger = transformedLedgers[0];
+              if (firstLedger && firstLedger.value) {
+                setSelectedLedger(firstLedger.value);
+                if (firstLedger.meta) {
+                  setRate(String(firstLedger.meta?.rate ?? ''));
+                  setLimit(String(firstLedger.meta?.limit ?? ''));
+                  setCap(String(firstLedger.meta?.capping ?? ''));
+                  setSelectedLedgerPatti(firstLedger.meta?.patti ?? '');
+                }
+                fetchModeData(firstLedger.value);
+              }
+            }
+          })
+          .catch((err: any) => console.log('GetMyDetails error in AddTransaction:', err));
       } else {
         console.log('No ledger data found or API error');
         setLedgerData([]);
@@ -412,311 +455,311 @@ const AddTransaction = ({ navigation, route }: any) => {
   };
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
-        <SafeAreaView style={styles.container}>
-          <ScreenHeader
-            title={<CountdownHeaderTitle timeLimit={shiftData?.last_update_time} />}
-            navigation={navigation}
-            hideBackButton={false} showDrawerButton={false}
-          >
-            <TouchableOpacity
-              style={styles.filterButton}
-              onPress={() => setIsFilterBottomSheetOpen(true)}
+    <PermissionGuard permission={permissionKey}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
+          <SafeAreaView style={styles.container}>
+            <ScreenHeader
+              title={<CountdownHeaderTitle timeLimit={shiftData?.last_update_time} />}
+              navigation={navigation}
+              hideBackButton={false} showDrawerButton={false}
             >
-              <Ionicons name="ellipsis-horizontal-circle-outline" color={COLORS.WHITE} size={scale(20)} />
-            </TouchableOpacity>
-          </ScreenHeader>
+              <TouchableOpacity
+                style={styles.filterButton}
+                onPress={() => setIsFilterBottomSheetOpen(true)}
+              >
+                <Ionicons name="ellipsis-horizontal-circle-outline" color={COLORS.WHITE} size={scale(20)} />
+              </TouchableOpacity>
+            </ScreenHeader>
 
-          <ScrollView
-            ref={scrollViewRef}
-            style={styles.scrollContainer}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            {showJantri ? (
-              <View style={styles.formSection}>
-                <JantriEmbedded
-                  key={`jantri-${showJantri ? 'open' : 'closed'}`} // Force reload when grid opens
-                  title="Jantri - Game Results Grid"
-                  externalTransactions={allTransactions}
-                  onSave={(transactions: any[]) => {
-                    console.log('JantriEmbedded onSave called with:', transactions);
-                    handleJantriModalSave(transactions);
-                    // Don't close the grid - let user close it manually with JmtEnt button
-                  }}
-                  onCancel={() => {
-                    console.log('JantriEmbedded onCancel called');
-                    setShowJantri(false);
-                  }}
-                />
-              </View>
-            ) : (
-              <>
-
-
-                <View style={styles.selectionSection}>
-                  <View style={{ flex: 1.5, zIndex: 3000 }}>
-                    <CustomDropdown
-                      label="Select Ledger"
-                      open={ledgerOpen}
-                      value={selectedLedger}
-                      items={ledgerData}
-                      setOpen={setLedgerOpen}
-                      setValue={(val: any) => {
-                        const selectedVal = typeof val === 'function' ? val() : val;
-                        setSelectedLedger(selectedVal);
-                        const found = (ledgerData as any[]).find((it: any) => it.value === selectedVal);
-                        const meta = found?.meta || null;
-                        if (meta) {
-                          setRate(String(meta?.rate ?? ''));
-                          setLimit(String(meta?.limit ?? ''));
-                          setCap(String(meta?.capping ?? ''));
-                          setSelectedLedgerPatti(meta?.patti);
-                        } else {
-                          setRate('');
-                          setLimit('');
-                          setCap('');
-                          setSelectedLedgerPatti("");
-                        }
-
-                        // Fetch modes for the selected ledger
-                        if (selectedVal) {
-                          fetchModeData(selectedVal);
-                        } else {
-                          setModeData([]);
-                          setSelectedMode('');
-                        }
-
-                        // Auto-open mode dropdown after selecting ledger
-                        setTimeout(() => setModeOpen(true), 200);
-                      }}
-                      setItems={() => { }}
-                      placeholder={ledgerLoading ? "Loading..." : "Select Ledger"}
-                      zIndex={3000}
-                    />
-                  </View>
-
-                  <View style={{ flex: 1, marginLeft: scale(10), zIndex: 2000 }}>
-                    <CustomDropdown
-                      label="Select Mode"
-                      open={modeOpen}
-                      value={selectedMode}
-                      items={modeData}
-                      setOpen={setModeOpen}
-                      setValue={(val: any) => {
-                        const selectedVal = typeof val === 'function' ? val() : val;
-                        setSelectedMode(selectedVal);
-                        // Auto-focus QuickEntry number field after selecting mode
-                        if (selectedVal) {
-                          setTimeout(() => {
-                            quickEntryRef.current?.focus();
-                          }, 300);
-                        }
-                      }}
-                      setItems={() => { }}
-                      placeholder={modeLoading ? "Loading..." : "Select Mode"}
-                      zIndex={2000}
-                    />
-                  </View>
-                </View>
-
-                {selectedLedgerPatti && (
-                  <View style={styles.pattiContainer}>
-                    <Icon name="info-outline" size={scale(14)} color={COLORS.BUTTONBG} />
-                    <Text style={styles.pattiLabel}>Patti: </Text>
-                    <Text style={styles.pattiValue}>{selectedLedgerPatti}</Text>
-                  </View>
-                )}
-
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.scrollContainer}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              {showJantri ? (
                 <View style={styles.formSection}>
-                  <QuickEntryForm
-                    ref={quickEntryRef}
+                  <JantriEmbedded
+                    key={`jantri-${showJantri ? 'open' : 'closed'}`} // Force reload when grid opens
+                    title="Jantri - Game Results Grid"
                     externalTransactions={allTransactions}
-                    onTransactionAdd={handleTransactionAdd}
-                    onTransactionDelete={handleTransactionDelete}
+                    onSave={(transactions: any[]) => {
+                      console.log('JantriEmbedded onSave called with:', transactions);
+                      handleJantriModalSave(transactions);
+                      // Don't close the grid - let user close it manually with JmtEnt button
+                    }}
+                    onCancel={() => {
+                      console.log('JantriEmbedded onCancel called');
+                      setShowJantri(false);
+                    }}
                   />
                 </View>
+              ) : (
+                <>
 
-                <View style={styles.formSection}>
-                  <AddNumbersForm
-                    onNumbersAdd={handleNumbersAdd}
-                    onTransactionAdd={handleTransactionAdd}
-                  />
+
+                  <View style={styles.selectionSection}>
+                    <View style={{ flex: 1.5, zIndex: 3000 }}>
+                      <CustomDropdown
+                        label="Select Ledger"
+                        open={ledgerOpen}
+                        value={selectedLedger}
+                        items={ledgerData}
+                        disabled={isFanter}
+                        setOpen={setLedgerOpen}
+                        setValue={(val: any) => {
+                          const selectedVal = typeof val === 'function' ? val() : val;
+                          setSelectedLedger(selectedVal);
+                          const found = (ledgerData as any[]).find((it: any) => it.value === selectedVal);
+                          const meta = found?.meta || null;
+                          if (meta) {
+                            setRate(String(meta?.rate ?? ''));
+                            setLimit(String(meta?.limit ?? ''));
+                            setCap(String(meta?.capping ?? ''));
+                            setSelectedLedgerPatti(meta?.patti);
+                          } else {
+                            setRate('');
+                            setLimit('');
+                            setCap('');
+                            setSelectedLedgerPatti("");
+                          }
+
+                          // Fetch modes for the selected ledger
+                          if (selectedVal) {
+                            fetchModeData(selectedVal);
+                          } else {
+                            setModeData([]);
+                            setSelectedMode('');
+                          }
+
+                          // Auto-open mode dropdown after selecting ledger
+                          setTimeout(() => setModeOpen(true), 200);
+                        }}
+                        setItems={() => { }}
+                        placeholder={ledgerLoading ? "Loading..." : "Select Ledger"}
+                        zIndex={3000}
+                      />
+                    </View>
+
+                    <View style={{ flex: 1, marginLeft: scale(10), zIndex: 2000 }}>
+                      <CustomDropdown
+                        label="Select Mode"
+                        open={modeOpen}
+                        value={selectedMode}
+                        items={modeData}
+                        setOpen={setModeOpen}
+                        setValue={(val: any) => {
+                          const selectedVal = typeof val === 'function' ? val() : val;
+                          setSelectedMode(selectedVal);
+                          // Auto-focus QuickEntry number field after selecting mode
+                          if (selectedVal) {
+                            setTimeout(() => {
+                              quickEntryRef.current?.focus();
+                            }, 300);
+                          }
+                        }}
+                        setItems={() => { }}
+                        placeholder={modeLoading ? "Loading..." : "Select Mode"}
+                        zIndex={2000}
+                      />
+                    </View>
+                  </View>
+
+                  {selectedLedgerPatti && (
+                    <View style={styles.pattiContainer}>
+                      <Icon name="info-outline" size={scale(14)} color={COLORS.BUTTONBG} />
+                      <Text style={styles.pattiLabel}>Patti: </Text>
+                      <Text style={styles.pattiValue}>{selectedLedgerPatti}</Text>
+                    </View>
+                  )}
+
+                  <View style={styles.formSection}>
+                    <QuickEntryForm
+                      ref={quickEntryRef}
+                      externalTransactions={allTransactions}
+                      onTransactionAdd={handleTransactionAdd}
+                      onTransactionDelete={handleTransactionDelete}
+                    />
+                  </View>
+
+                  <View style={styles.formSection}>
+                    <AddNumbersForm
+                      onNumbersAdd={handleNumbersAdd}
+                      onTransactionAdd={handleTransactionAdd}
+                    />
+                  </View>
+                </>
+              )}
+
+              <View style={styles.bottomButtonsContainer}>
+                <Text style={styles.bottomButtonsTitle}>Quick Actions</Text>
+                <View style={styles.buttonGrid}>
+                  {bottomButtons.map((button, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.actionButton,
+                        { backgroundColor: button.color }
+                      ]}
+                      onPress={button.onPress}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.buttonTitle}>{button.title}</Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-              </>
-            )}
-
-            <View style={styles.bottomButtonsContainer}>
-              <Text style={styles.bottomButtonsTitle}>Quick Actions</Text>
-              <View style={styles.buttonGrid}>
-                {bottomButtons.map((button, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.actionButton,
-                      { backgroundColor: button.color }
-                    ]}
-                    onPress={button.onPress}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.buttonTitle}>{button.title}</Text>
-                  </TouchableOpacity>
-                ))}
               </View>
-            </View>
-          </ScrollView>
+            </ScrollView>
 
-          {/* Filter Bottom Sheet */}
-          {isFilterBottomSheetOpen && (
-            <BottomSheet
-              backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
-              ref={filterBottomSheetRef}
-              style={{ borderWidth: 1, borderRadius: scale(10) }}
-              index={0}
-              snapPoints={snapPoints}
-              enableDynamicSizing={false}
-              onChange={(index: number) => {
-                Keyboard.dismiss();
-                if (index === -1) {
+            {/* Filter Bottom Sheet */}
+            {isFilterBottomSheetOpen && (
+              <BottomSheet
+                backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
+                ref={filterBottomSheetRef}
+                style={{ borderWidth: 1, borderRadius: scale(10) }}
+                index={0}
+                snapPoints={snapPoints}
+                enableDynamicSizing={false}
+                onChange={(index: number) => {
+                  Keyboard.dismiss();
+                  if (index === -1) {
+                    setIsFilterBottomSheetOpen(false);
+                  } else {
+                    setIsFilterBottomSheetOpen(true);
+                  }
+                }}
+                backdropComponent={renderBackdrop}
+                enablePanDownToClose={true}
+                onClose={() => {
                   setIsFilterBottomSheetOpen(false);
-                } else {
-                  setIsFilterBottomSheetOpen(true);
-                }
-              }}
-              backdropComponent={renderBackdrop}
-              enablePanDownToClose={true}
-              onClose={() => {
-                setIsFilterBottomSheetOpen(false);
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: scale(20),
-                  paddingBottom: scale(10),
                 }}
               >
                 <View
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: scale(20),
+                    paddingBottom: scale(10),
                   }}
                 >
-                  <Text
+                  <View
                     style={{
-                      fontSize: scale(14),
-                      fontWeight: '600',
-                      color: COLORS.BLACK,
-                      marginEnd: scale(5),
+                      flexDirection: 'row',
+                      alignItems: 'center',
                     }}
                   >
-                    Ledger Details |
                     <Text
                       style={{
-                        fontSize: scale(10),
-                        fontWeight: '500',
+                        fontSize: scale(14),
+                        fontWeight: '600',
                         color: COLORS.BLACK,
                         marginEnd: scale(5),
                       }}
                     >
-                      {' '}
-                      View Rate, Limit, and Cap
+                      Ledger Details |
+                      <Text
+                        style={{
+                          fontSize: scale(10),
+                          fontWeight: '500',
+                          color: COLORS.BLACK,
+                          marginEnd: scale(5),
+                        }}
+                      >
+                        {' '}
+                        View Rate, Limit, and Cap
+                      </Text>
                     </Text>
-                  </Text>
-                </View>
-                <TouchableOpacity onPress={handleFilterClosePress}>
-                  <Icon name="cancel" size={scale(20)} />
-                </TouchableOpacity>
-              </View>
-              <BottomSheetScrollView
-                style={{
-                  padding: 16,
-                  backgroundColor: COLORS.BGFILESCOLOR,
-                  flex: 1,
-                }}
-              >
-                <View style={{ paddingVertical: scale(20) }}>
-
-                  {/* Bottom content rows (read-only display) */}
-                  <View style={styles.filterInfoList}>
-                    <View style={styles.infoRow}>
-                      <View style={[styles.infoIconBox, { backgroundColor: '#34D399' }]}>
-                        <Icon name="attach-money" size={scale(14)} color={COLORS.WHITE} />
-                      </View>
-                      <Text style={styles.infoLabel}>Rate:</Text>
-                      <Text style={[styles.infoValue, { color: '#059669' }]}>{rate || '--'}</Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                      <View style={[styles.infoIconBox, { backgroundColor: '#F59E0B' }]}>
-                        <Icon name="speed" size={scale(14)} color={COLORS.WHITE} />
-                      </View>
-                      <Text style={styles.infoLabel}>Limit:</Text>
-                      <Text style={[styles.infoValue, { color: '#B45309' }]}>{limit || '--'}</Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                      <View style={[styles.infoIconBox, { backgroundColor: '#EF4444' }]}>
-                        <Icon name="bolt" size={scale(14)} color={COLORS.WHITE} />
-                      </View>
-                      <Text style={styles.infoLabel}>Cap:</Text>
-                      <Text style={[styles.infoValue, { color: '#7F1D1D' }]}>{cap || '--'}</Text>
-                    </View>
-
-                    <View style={styles.infoRow}>
-                      <View style={[styles.infoIconBox, { backgroundColor: '#60A5FA' }]}>
-                        <Icon name="calendar-today" size={scale(14)} color={COLORS.WHITE} />
-                      </View>
-                      <Text style={styles.infoLabel}>Open Date:</Text>
-                      <Text style={[styles.infoValue, { color: '#1D4ED8' }]}>{shiftData?.open_date || '--'}</Text>
-                    </View>
-
-
                   </View>
-
+                  <TouchableOpacity onPress={handleFilterClosePress}>
+                    <Icon name="cancel" size={scale(20)} />
+                  </TouchableOpacity>
                 </View>
-              </BottomSheetScrollView>
-            </BottomSheet>
-          )}
+                <BottomSheetScrollView
+                  style={{
+                    padding: 16,
+                    backgroundColor: COLORS.BGFILESCOLOR,
+                    flex: 1,
+                  }}
+                >
+                  <View style={{ paddingVertical: scale(20) }}>
 
-          <RandomModal
-            visible={randomModalVisible}
-            onClose={() => setRandomModalVisible(false)}
-            onSave={handleRandomModalSave}
-            title="Random"
-          />
-          <CrossModal
-            visible={crossModalVisible}
-            onClose={() => setCrossModalVisible(false)}
-            onSave={handleCrossModalSave}
-            title="Cross"
-          />
-          <FromToModal
-            visible={fromToModalVisible}
-            onClose={() => setFromToModalVisible(false)}
-            onSave={handleFromToModalSave}
-            title="From-To"
-          />
-          <ABModal
-            visible={abModalVisible}
-            onClose={() => setAbModalVisible(false)}
-            onSave={handleABModalSave}
-            title="AB"
-          />
-          <AAModal
-            visible={aaModalVisible}
-            onClose={() => setAaModalVisible(false)}
-            onSave={handleAAModalSave}
-            title="AA"
-          />
-          {/* Embedded Jantri replaces modal/screen navigation */}
-        </SafeAreaView>
-      </GradientBackground>
-    </GestureHandlerRootView>
+                    {/* Bottom content rows (read-only display) */}
+                    <View style={styles.filterInfoList}>
+                      <View style={styles.infoRow}>
+                        <View style={[styles.infoIconBox, { backgroundColor: '#34D399' }]}>
+                          <Icon name="attach-money" size={scale(14)} color={COLORS.WHITE} />
+                        </View>
+                        <Text style={styles.infoLabel}>Rate:</Text>
+                        <Text style={[styles.infoValue, { color: '#059669' }]}>{rate || '--'}</Text>
+                      </View>
+
+                      <View style={styles.infoRow}>
+                        <View style={[styles.infoIconBox, { backgroundColor: '#F59E0B' }]}>
+                          <Icon name="speed" size={scale(14)} color={COLORS.WHITE} />
+                        </View>
+                        <Text style={styles.infoLabel}>Limit:</Text>
+                        <Text style={[styles.infoValue, { color: '#B45309' }]}>{limit || '--'}</Text>
+                      </View>
+
+                      <View style={styles.infoRow}>
+                        <View style={[styles.infoIconBox, { backgroundColor: '#EF4444' }]}>
+                          <Icon name="bolt" size={scale(14)} color={COLORS.WHITE} />
+                        </View>
+                        <Text style={styles.infoLabel}>Cap:</Text>
+                        <Text style={[styles.infoValue, { color: '#7F1D1D' }]}>{cap || '--'}</Text>
+                      </View>
+
+                      <View style={styles.infoRow}>
+                        <View style={[styles.infoIconBox, { backgroundColor: '#60A5FA' }]}>
+                          <Icon name="calendar-today" size={scale(14)} color={COLORS.WHITE} />
+                        </View>
+                        <Text style={styles.infoLabel}>Open Date:</Text>
+                        <Text style={[styles.infoValue, { color: '#1D4ED8' }]}>{shiftData?.open_date || '--'}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </BottomSheetScrollView>
+              </BottomSheet>
+            )}
+
+            <RandomModal
+              visible={randomModalVisible}
+              onClose={() => setRandomModalVisible(false)}
+              onSave={handleRandomModalSave}
+              title="Random"
+            />
+            <CrossModal
+              visible={crossModalVisible}
+              onClose={() => setCrossModalVisible(false)}
+              onSave={handleCrossModalSave}
+              title="Cross"
+            />
+            <FromToModal
+              visible={fromToModalVisible}
+              onClose={() => setFromToModalVisible(false)}
+              onSave={handleFromToModalSave}
+              title="From-To"
+            />
+            <ABModal
+              visible={abModalVisible}
+              onClose={() => setAbModalVisible(false)}
+              onSave={handleABModalSave}
+              title="AB"
+            />
+            <AAModal
+              visible={aaModalVisible}
+              onClose={() => setAaModalVisible(false)}
+              onSave={handleAAModalSave}
+              title="AA"
+            />
+            {/* Embedded Jantri replaces modal/screen navigation */}
+          </SafeAreaView>
+        </GradientBackground>
+      </GestureHandlerRootView>
+    </PermissionGuard>
   );
 };
 

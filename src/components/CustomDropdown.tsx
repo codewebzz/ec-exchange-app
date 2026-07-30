@@ -42,8 +42,8 @@ const CustomDropdown = React.forwardRef<View, DropDownProps>(({
     showClearButton = false,
     isFocused = false
 }, ref) => (
-    <View ref={ref} style={[style.container, { zIndex: open ? zIndex : 1 }, isFocused ? style.focusedContainer : null]}>
-        <Text style={style.label}>{label}</Text>
+    <View ref={ref} style={[style.container, { zIndex: open ? zIndex : 1 }, isFocused ? style.focusedContainer : null, disabled ? style.disabledContainer : null]}>
+        <Text style={[style.label, disabled ? style.disabledLabel : null]}>{label}</Text>
         <View style={style.dropdownContainer}>
             <DropDownPicker
                 open={open}
@@ -54,7 +54,8 @@ const CustomDropdown = React.forwardRef<View, DropDownProps>(({
                 setItems={setItems}
                 zIndex={zIndex}
                 zIndexInverse={zIndex}
-                style={[style.DropDownStyle, isFocused ? style.focusedDropDownStyle : null]}
+                style={[style.DropDownStyle, isFocused ? style.focusedDropDownStyle : null, disabled ? style.disabledDropDownStyle : null]}
+                disabledStyle={style.disabledDropDownStyle}
                 dropDownContainerStyle={style.dropDownContainerStyle}
                 bottomOffset={bottomOffset}
                 placeholder={placeholder}
@@ -76,7 +77,7 @@ const CustomDropdown = React.forwardRef<View, DropDownProps>(({
                     animationType: "slide"
                 }}
                 // Custom styling for dropdown list
-                textStyle={style.dropdownText}
+                textStyle={[style.dropdownText, disabled ? style.disabledText : null]}
                 placeholderStyle={style.placeholderStyle}
                 // Ensure proper value display
                 selectedItemContainerStyle={style.selectedItemContainer}
@@ -85,6 +86,7 @@ const CustomDropdown = React.forwardRef<View, DropDownProps>(({
                 autoScroll={true}
                 // Close dropdown after selection
                 closeAfterSelecting={true}
+                arrowIconStyle={disabled ? { opacity: 0.4 } : undefined}
             />
             {showClearButton && (value !== null && value !== undefined && value !== '') && (
                 <TouchableOpacity
@@ -116,6 +118,9 @@ const style = StyleSheet.create({
         // Ensure container doesn't clip content
         overflow: 'visible',
     },
+    disabledContainer: {
+        opacity: 0.8,
+    },
     focusedContainer: {
         // Placeholder for container-level focus
     },
@@ -138,6 +143,12 @@ const style = StyleSheet.create({
         },
         shadowOpacity: 0.1,
         shadowRadius: 3.84,
+    },
+    disabledDropDownStyle: {
+        backgroundColor: '#E2E8F0',
+        borderColor: '#CBD5E1',
+        elevation: 0,
+        shadowOpacity: 0,
     },
     focusedDropDownStyle: {
         borderColor: COLORS.BLACK,
@@ -177,6 +188,9 @@ const style = StyleSheet.create({
         color: '#333',
         fontWeight: "800"
     },
+    disabledLabel: {
+        color: '#64748B',
+    },
     error: {
         color: 'red',
         fontSize: scale(12),
@@ -185,6 +199,10 @@ const style = StyleSheet.create({
     dropdownText: {
         fontSize: scale(14),
         color: '#333',
+    },
+    disabledText: {
+        color: '#64748B',
+        fontWeight: '600',
     },
     placeholderStyle: {
         fontSize: scale(14),

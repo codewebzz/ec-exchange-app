@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 
 type PermissionValue = string;
@@ -17,17 +18,17 @@ export const usePermissions = () => {
         (state: any) => state?.permissions?.error ?? null
     );
 
-    const hasPermission = (permission: PermissionValue): boolean => {
+    const hasPermission = useCallback((permission: PermissionValue): boolean => {
         return userPermissions.includes(permission);
-    };
+    }, [userPermissions]);
 
-    const hasAnyPermission = (permissions: PermissionValue[]): boolean => {
+    const hasAnyPermission = useCallback((permissions: PermissionValue[]): boolean => {
         return permissions.some(p => userPermissions.includes(p));
-    };
+    }, [userPermissions]);
 
-    const hasAllPermissions = (permissions: PermissionValue[]): boolean => {
+    const hasAllPermissions = useCallback((permissions: PermissionValue[]): boolean => {
         return permissions.every(p => userPermissions.includes(p));
-    };
+    }, [userPermissions]);
 
     return {
         userPermissions,

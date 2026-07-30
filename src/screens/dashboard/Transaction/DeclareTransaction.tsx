@@ -29,10 +29,14 @@ import GradientBackground from '../../../components/GradientBackground';
 import useSearchBar from '../../../hooks/useSearchBar';
 import { PermissionGuard } from '../../../components/PermissionGuard';
 import { PERMISSIONS } from '../../../helper/permissions';
+import { usePermissions } from '../../../hooks/usePermissions';
+import { useShiftPermissions } from '../../../hooks/useShiftPermissions';
 
 const { width, height } = Dimensions.get('window');
 
 const DeclareTransaction = ({ navigation }: any) => {
+  const { hasPermission } = usePermissions();
+  const { hasShiftPermission } = useShiftPermissions();
   const [selectedShift, setSelectedShift] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [searchParty, setSearchParty] = useState('');
@@ -223,30 +227,36 @@ const DeclareTransaction = ({ navigation }: any) => {
       align: 'center' as const,
       renderAction: (item: any) => (
         <View style={styles.actionButtonsContainer}>
+          {hasPermission(PERMISSIONS.TRANSACTIONS_DECLARE_COPY.value) && (
           <TouchableOpacity
             style={[styles.actionButton, styles.copyButton]}
             onPress={() => handleCopyTransaction(item)}
           >
             <Ionicons name="copy-outline" size={16} color="#FF8C00" />
           </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={[styles.actionButton, styles.viewButton]}
             onPress={() => handleViewTransaction(item)}
           >
             <Ionicons name="eye-outline" size={16} color="#007AFF" />
           </TouchableOpacity>
+          {hasPermission(PERMISSIONS.TRANSACTIONS_DECLARE_TRANSACTION_EDIT.value) && (
           <TouchableOpacity
             style={[styles.actionButton, styles.editButton]}
             onPress={() => handleEditTransaction(item)}
           >
             <Ionicons name="pencil-outline" size={16} color="#007AFF" />
           </TouchableOpacity>
+          )}
+          {hasPermission(PERMISSIONS.TRANSACTIONS_DECLARE_DELETE.value) && (
           <TouchableOpacity
             style={[styles.actionButton, styles.deleteButton]}
             onPress={() => handleDeleteTransaction(item)}
           >
             <Ionicons name="trash-outline" size={16} color="#FF3B30" />
           </TouchableOpacity>
+          )}
         </View>
       ),
     },
@@ -323,7 +333,8 @@ const DeclareTransaction = ({ navigation }: any) => {
   const handleEditTransaction = (item: any) => {
     navigation.navigate('AddTransaction', {
       editMode: true,
-      transactionData: item
+      transactionData: item,
+      is_declared: true
     });
   };
 
@@ -586,6 +597,7 @@ const DeclareTransaction = ({ navigation }: any) => {
             {/* Debug info */}
 
 
+            {hasPermission(PERMISSIONS.TRANSACTIONS_DECLARE_TRANSACTION_ADD.value) && (
             <CustomButton
               title="Add"
               onPress={() => {
@@ -594,6 +606,7 @@ const DeclareTransaction = ({ navigation }: any) => {
                   items: tableData,
                   shiftId: selectedShift,
                   externalTransactions: summaryTableData, // pass numbers if available
+                  is_declared: true
                 });
               }}
               backgroundColor={isAddButtonActive ? COLORS.BUTTONBG : '#ccc'}
@@ -601,6 +614,8 @@ const DeclareTransaction = ({ navigation }: any) => {
               disabled={!isAddButtonActive}
               style={{ opacity: isAddButtonActive ? 1 : 0.6 }}
             />
+            )}
+            {hasPermission(PERMISSIONS.TRANSACTIONS_DECLARE_JANTRI_VIEW.value) && (
             <CustomButton
               title="Jantri View"
               onPress={handleJantriView}
@@ -610,6 +625,8 @@ const DeclareTransaction = ({ navigation }: any) => {
               //  style={styles.actionButton}
               style={{ opacity: isJantriViewButtonActive ? 1 : 0.6 }}
             />
+            )}
+            {hasPermission(PERMISSIONS.TRANSACTIONS_DECLARE_MAIN_JANTRI.value) && hasShiftPermission(selectedShift) && (
             <CustomButton
               title="Main Jantri"
               onPress={handleMainJantriView}
@@ -617,6 +634,7 @@ const DeclareTransaction = ({ navigation }: any) => {
               textColor={COLORS.WHITE}
               style={styles.actionButton}
             />
+            )}
           </View>
 
           {/* Dropdown */}

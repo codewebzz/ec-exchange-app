@@ -31,6 +31,7 @@ import useSearchBar from '../../../hooks/useSearchBar';
 import APIService from '../../services/APIService';
 import { PermissionGuard } from '../../../components/PermissionGuard';
 import { PERMISSIONS } from '../../../helper/permissions';
+import { usePermissions } from '../../../hooks/usePermissions';
 const AddShiftSchema = Yup.object().shape({
   name: Yup.string().required('Shift Name is required'),
   openTime: Yup.string()
@@ -41,6 +42,7 @@ const AddShiftSchema = Yup.object().shape({
 });
 
 const Shift = ({ navigation }: any) => {
+  const { hasPermission } = usePermissions();
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
   const [getData, setData] = useState([]);
   // Search hook for filtering shifts by name
@@ -346,6 +348,7 @@ const Shift = ({ navigation }: any) => {
                   style={{ backgroundColor: COLORS.WHITE, minHeight: 40, borderRadius: 8, paddingHorizontal: 12 }}
                 />
               </View>
+              {hasPermission(PERMISSIONS.MASTER_SHIFT_ADD.value) && (
               <View style={{ width: '45%' }}>
                 <CustomButton
                   textColor={COLORS.WHITE}
@@ -353,6 +356,7 @@ const Shift = ({ navigation }: any) => {
                   onPress={handleAddShift}
                 />
               </View>
+              )}
             </View>
 
             <ScrollView style={{ padding: 16 }} keyboardShouldPersistTaps="handled">
@@ -370,14 +374,14 @@ const Shift = ({ navigation }: any) => {
                   { key: 'open_date', label: 'Open Date' },
                   { key: 'updated_by', label: 'Updated By' },
                 ]}
-                actionOneLabel="Is Active"
-                actionTwoLabel="Edit"
-                onActionOne={handleToggleActive}
-                onActionTwo={(item: any) => {
+                actionOneLabel={hasPermission(PERMISSIONS.MASTER_SHIFT_ACTION.value) ? "Is Active" : undefined}
+                actionTwoLabel={hasPermission(PERMISSIONS.MASTER_SHIFT_ACTION.value) ? "Edit" : undefined}
+                onActionOne={hasPermission(PERMISSIONS.MASTER_SHIFT_ACTION.value) ? handleToggleActive : undefined}
+                onActionTwo={hasPermission(PERMISSIONS.MASTER_SHIFT_ACTION.value) ? (item: any) => {
                   handleEditShift(item);
-                }}
-                useToggleOne={true}
-                activeKey={'is_active'}
+                } : undefined}
+                useToggleOne={hasPermission(PERMISSIONS.MASTER_SHIFT_ACTION.value) ? true : undefined}
+                activeKey={hasPermission(PERMISSIONS.MASTER_SHIFT_ACTION.value) ? 'is_active' : undefined}
                 refreshing={refreshing}
                 onRefresh={getData && getData.length > 0 ? onRefresh : undefined}
               />

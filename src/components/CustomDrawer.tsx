@@ -14,6 +14,8 @@ import { clearAuth } from '../redux/reducers/authToken';
 import { usePermissions } from '../hooks/usePermissions';
 import { PERMISSIONS } from '../helper/permissions';
 
+import ChangePasswordModal from './ChangePasswordModal';
+
 const DrawerSection = ({ title, icon, items, route, navigation }: any) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -67,6 +69,7 @@ const DrawerSection = ({ title, icon, items, route, navigation }: any) => {
 const CustomDrawer = (props: any) => {
   const dispatch = useDispatch();
   const { hasPermission } = usePermissions();
+  const [changePasswordVisible, setChangePasswordVisible] = useState(false);
 
   const allSections = [
     {
@@ -231,9 +234,21 @@ const CustomDrawer = (props: any) => {
           <DrawerSection key={index} {...section} navigation={props.navigation} />
         ))}
 
+        {/* Change Password Button */}
+        <TouchableOpacity
+          style={[styles.sectionHeader, { marginTop: 24 }]}
+          onPress={() => {
+            props.navigation.closeDrawer();
+            setChangePasswordVisible(true);
+          }}
+        >
+          <Icon name="key-outline" size={18} color="#999" />
+          <Text style={styles.sectionTitle}>Change Password</Text>
+        </TouchableOpacity>
+
         {/* Logout Button */}
         <TouchableOpacity
-          style={[styles.sectionHeader, { marginTop: 28 }]}
+          style={[styles.sectionHeader, { marginTop: 12 }]}
           onPress={() => {
             dispatch(clearAuth());
             // RootStack will react to token removal and show Login
@@ -244,6 +259,11 @@ const CustomDrawer = (props: any) => {
           <Text style={styles.sectionTitle}>Logout</Text>
         </TouchableOpacity>
       </View>
+
+      <ChangePasswordModal
+        visible={changePasswordVisible}
+        onClose={() => setChangePasswordVisible(false)}
+      />
     </DrawerContentScrollView>
   );
 };

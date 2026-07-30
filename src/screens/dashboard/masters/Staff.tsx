@@ -31,6 +31,7 @@ import useSearchBar from '../../../hooks/useSearchBar';
 import APIService from '../../services/APIService';
 import { PermissionGuard } from '../../../components/PermissionGuard';
 import { PERMISSIONS } from '../../../helper/permissions';
+import { usePermissions } from '../../../hooks/usePermissions';
 const AddStaffSchema = Yup.object().shape({
   staffName: Yup.string().required('Staff Name is required'),
   role: Yup.string().required('Role is required'),
@@ -74,6 +75,7 @@ interface SelectedCompany {
   };
 }
 const Staff = ({ navigation }: any) => {
+  const { hasPermission } = usePermissions();
   const [open, setOpen] = useState(false);
   const shifts = useSelector((state: any) => state.shift);
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
@@ -441,12 +443,14 @@ const Staff = ({ navigation }: any) => {
                         zIndex={1}
                       />
                     </View>
+                    {hasPermission(PERMISSIONS.MASTER_STAFF_ADD.value) && (
                     <CustomButton
                       textColor={COLORS.WHITE}
                       title="+ Add Staff"
                       onPress={handleAddShift}
                       style={{ width: '50%' }}
                     />
+                    )}
                   </View>
                 )
               )}
@@ -463,12 +467,12 @@ const Staff = ({ navigation }: any) => {
                   { key: 'updated_by', label: 'Updated By' },
                   { key: 'updated_at', label: 'Updated At' },
                 ]}
-                actionOneLabel="Is Active"
-                actionTwoLabel="Action"
-                onActionOne={handleToggleActive}
-                onActionTwo={(item: any) => {
+                actionOneLabel={hasPermission(PERMISSIONS.MASTER_STAFF_ACTION.value) ? "Is Active" : undefined}
+                actionTwoLabel={hasPermission(PERMISSIONS.MASTER_STAFF_ACTION.value) ? "Action" : undefined}
+                onActionOne={hasPermission(PERMISSIONS.MASTER_STAFF_ACTION.value) ? handleToggleActive : undefined}
+                onActionTwo={hasPermission(PERMISSIONS.MASTER_STAFF_ACTION.value) ? (item: any) => {
                   handleEditShift(item);
-                }}
+                } : undefined}
                 refreshing={refreshing}
                 onRefresh={getData && getData.length > 0 ? onRefresh : undefined}
               />)}

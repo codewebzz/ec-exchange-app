@@ -20,6 +20,7 @@ import GradientBackground from '../../../components/GradientBackground';
 import { PermissionGuard } from '../../../components/PermissionGuard';
 import ScreenHeader from '../../../components/ScreenHeader';
 import { PERMISSIONS } from '../../../helper/permissions';
+import { usePermissions } from '../../../hooks/usePermissions';
 import useSearchBar from '../../../hooks/useSearchBar';
 import APIService from '../../services/APIService';
 
@@ -38,6 +39,7 @@ interface DropdownItem {
   value: string;
 }
 const Agent = ({ navigation }: any) => {
+  const { hasPermission } = usePermissions();
   const [open, setOpen] = useState(false);
   const shifts = useSelector((state: any) => state.shift);
   const [getData, setData] = useState([]);
@@ -326,6 +328,7 @@ const Agent = ({ navigation }: any) => {
                     style={{ backgroundColor: COLORS.WHITE, minHeight: 40, borderRadius: 8, paddingHorizontal: 12, }}
                   />
                 </View>
+                {hasPermission(PERMISSIONS.MASTER_AGENTS_ADD.value) && (
                 <View style={{ width: '45%' }}>
                   <CustomButton
                     textColor={COLORS.WHITE}
@@ -333,6 +336,7 @@ const Agent = ({ navigation }: any) => {
                     onPress={handleAddShift}
                   />
                 </View>
+                )}
               </View>
               <ScrollView style={{ padding: 16 }} keyboardShouldPersistTaps="handled" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.BUTTONBG]} tintColor={COLORS.BUTTONBG} />}>
                 <DeclareStatusCard
@@ -345,14 +349,14 @@ const Agent = ({ navigation }: any) => {
                     { key: 'updated_at', label: 'Updated At' },
                     { key: 'updated_by', label: 'Updated By' },
                   ]}
-                  actionOneLabel="Is Active"
-                  actionTwoLabel="Action"
+                  actionOneLabel={hasPermission(PERMISSIONS.MASTER_AGENTS_ACTION.value) ? "Is Active" : undefined}
+                  actionTwoLabel={hasPermission(PERMISSIONS.MASTER_AGENTS_ACTION.value) ? "Action" : undefined}
                   isButtonOne={false}
                   // statusKey="status"
-                  onActionOne={handleToggleActive}
-                  onActionTwo={(item: any) => {
+                  onActionOne={hasPermission(PERMISSIONS.MASTER_AGENTS_ACTION.value) ? handleToggleActive : undefined}
+                  onActionTwo={hasPermission(PERMISSIONS.MASTER_AGENTS_ACTION.value) ? (item: any) => {
                     handleEditShift(item);
-                  }}
+                  } : undefined}
                 />
               </ScrollView>
               {isOpenBottomSheet && (

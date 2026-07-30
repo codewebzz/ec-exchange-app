@@ -29,8 +29,10 @@ import { PermissionsSelector } from '../../../components/PermissionsSelector';
 import StaffShiftsPopup from '../../../components/StaffShiftsPopup';
 import { PermissionGuard } from '../../../components/PermissionGuard';
 import { PERMISSIONS } from '../../../helper/permissions';
+import { usePermissions } from '../../../hooks/usePermissions';
 
 const RolePermissions = ({ navigation }: any) => {
+  const { hasPermission } = usePermissions();
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
   const [permissionStates, setPermissionStates] = useState<string[]>([]);
   const [selectedParty, setSelectedParty] = useState<any>(null);
@@ -254,19 +256,19 @@ const RolePermissions = ({ navigation }: any) => {
                     { key: 'created_by', label: 'Added By' },
                     { key: 'updated_by', label: 'Updated By' },
                   ]}
-                  isButtonOne={true}
-                  actionOneLabel="Permissions"
+                  isButtonOne={hasPermission(PERMISSIONS.ORGANIZATION_PERMISSIONS_ADD.value)}
+                  actionOneLabel={hasPermission(PERMISSIONS.ORGANIZATION_PERMISSIONS_ADD.value) ? "Permissions" : undefined}
                   isButtonTwo={true}
                   actionTwoLabel="Shifts"
                   actionTwoIcon="access-time"
                   useToggleOne={false}
-                  onActionOne={(item: any) => {
+                  onActionOne={hasPermission(PERMISSIONS.ORGANIZATION_PERMISSIONS_ADD.value) ? (item: any) => {
                     setSelectedParty(item);
                     setIsOpenBottomSheet(true);
                     setIsDefaultPermissions(false);
                     setPermissionStates([]);
                     fetchPermissionsForStaff(item.id);
-                  }}
+                  } : undefined}
                   onActionTwo={(item: any) => {
                     setSelectedStaffForShifts(item);
                     setIsShiftsPopupOpen(true);

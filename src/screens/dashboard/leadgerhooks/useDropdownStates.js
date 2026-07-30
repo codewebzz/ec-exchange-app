@@ -70,14 +70,14 @@ export const useDropdownStates = () => {
       setRolesLoading(true);
       const response = await APIService.GetSupportedUserRoles();
       console.log('Roles data response:', response);
-      
+
       if (response && response.success && response.data) {
         const transformedRoles = response.data.map((role) => ({
           label: role.name || 'Unknown Role',
           value: role.id?.toString() || ''
         }));
         setDropdownItems(transformedRoles);
-        
+
         // Select first item by default
         if (transformedRoles.length > 0 && !dropdownValue) {
           setDropdownValue(transformedRoles[0].value);
@@ -101,7 +101,7 @@ export const useDropdownStates = () => {
       setAgentLoading(true);
       const response = await APIService.GetAgentDropDownDataData();
       console.log('Agent data response:', response);
-      
+
       if (response && response.success && response.data) {
         // Transform the API response to match dropdown format for agents
         const transformedAgents = response.data.map((agent) => ({
@@ -128,19 +128,19 @@ export const useDropdownStates = () => {
       setLedgerLoading(true);
       const response = await APIService.GetLedgerDropDownDataData();
       console.log('Ledger data response:', response);
-      
+
       if (response && response.success && response.data) {
         // Transform the API response to match dropdown format for ledgers
         const transformedLedgers = response.data.map((ledger) => ({
           label: ledger.real_name || ledger.name || 'Unknown Ledger',
           value: ledger.id?.toString() || ledger.ledger_id?.toString() || ''
         }));
-        
+
         // Set the same data for all party dropdowns
         setDropdownItemsParty(transformedLedgers);
         setDropdownItemsWapsiParty(transformedLedgers);
         setDropdownItemsPattiParty(transformedLedgers);
-        
+
         console.log('Transformed ledger items:', transformedLedgers);
       } else {
         console.log('No ledger data found or API error');
@@ -164,14 +164,14 @@ export const useDropdownStates = () => {
       setDistributorLoading(true);
       const response = await APIService.GetDistributorDropDownDataData();
       console.log('Distributor data response:', response);
-      
+
       if (response && response.success && response.data) {
         // Transform the API response to match dropdown format for distributors
         const transformedDistributors = response.data.map((distributor) => ({
           label: distributor.name || distributor.distributor_name || 'Unknown Distributor',
           value: distributor.id?.toString() || distributor.distributor_id?.toString() || ''
         }));
-        
+
         setDropdownItemsDistributor(transformedDistributors);
         console.log('Transformed distributor items:', transformedDistributors);
       } else {
@@ -206,7 +206,7 @@ export const useDropdownStates = () => {
     setDropdownValueDistributor(null);
     setDropdownValue3(null);
     setDropdownValueLimit('1'); // Reset to default 'Yes'
-    
+
     // Close all dropdowns
     setOpenDropdown(false);
     setOpenDropdownParty(false);

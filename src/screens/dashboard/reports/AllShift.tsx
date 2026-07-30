@@ -149,11 +149,14 @@ const AllShift = ({ navigation }: any) => {
       setLoading(true);
       const start_date = openDate ? openDate.toLocaleDateString('en-GB') : formattedDate;
       const end_date = closeDate ? closeDate.toLocaleDateString('en-GB') : formattedDate;
-      const payload = {
+      const payload: any = {
         start_date,
         end_date,
         agent: values?.agent || undefined,
-        party: values?.party || undefined,
+      };
+      
+      if (values?.party && values?.party !== 'all') {
+        payload.party = values.party;
       }
       const response = await APIService.GetAllShiftReport(payload);
       if (response?.success && response?.data) {

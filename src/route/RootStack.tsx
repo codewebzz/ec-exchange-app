@@ -7,6 +7,7 @@ import { COLORS } from '../assets/colors';
 import Login from '../screens/auth/Login';
 import DrawerStack from './DrawerStack';
 import { fetchUserPermissions, clearPermissions } from '../redux/reducers/permissionsSlice';
+import { fetchShiftPermissions, clearShiftPermissions } from '../redux/reducers/shiftPermissionsSlice';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,9 +19,11 @@ const RootStack = () => {
   React.useEffect(() => {
     if (token) {
       dispatch(fetchUserPermissions() as any);
+      dispatch(fetchShiftPermissions() as any);
     } else {
       // Clear stale permissions on logout
       dispatch(clearPermissions());
+      dispatch(clearShiftPermissions());
     }
   }, [token, dispatch]);
 

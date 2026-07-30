@@ -59,6 +59,31 @@ const Checkbox = ({ checked, onPress, disabled, label }: any) => (
 export const PermissionsSelector: React.FC<Props> = ({ selectedPermissions, onPermissionsChange }) => {
     const modules = useMemo<Module[]>(() => [
         {
+            name: "Dashboard",
+            icon: "dashboard",
+            color: "#3F51B5",
+            submodules: [
+                {
+                    name: "Shift Cards",
+                    permissions: [
+                        { id: PERMISSIONS.DASHBOARD_SHIFT_VIEW.value, name: "View" },
+                    ]
+                },
+                {
+                    name: "Recent Ledgers",
+                    permissions: [
+                        { id: PERMISSIONS.DASHBOARD_RECENT_LEDGERS_VIEW.value, name: "View" },
+                    ]
+                },
+                {
+                    name: "Redeclare Transactions",
+                    permissions: [
+                        { id: PERMISSIONS.DASHBOARD_REDECLARE_TRANSACTIONS_VIEW.value, name: "View" },
+                    ]
+                }
+            ]
+        },
+        {
             name: "Organization",
             icon: "settings",
             color: "#2196F3",

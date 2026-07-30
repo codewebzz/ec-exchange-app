@@ -176,7 +176,7 @@ const MainJantriModal: React.FC<MainJantriModalProps> = ({
                 <JantriTable
                   ref={tableRef}
                   externalTransactions={transactions}
-                  isEditable={false}
+                  isEditable={true}
                 />
               </View>
             )}

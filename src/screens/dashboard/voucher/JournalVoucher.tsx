@@ -32,6 +32,7 @@ import useSearchBar from '../../../hooks/useSearchBar';
 import APIService from '../../services/APIService';
 import { PermissionGuard } from '../../../components/PermissionGuard';
 import { PERMISSIONS } from '../../../helper/permissions';
+import { usePermissions } from '../../../hooks/usePermissions';
 
 const AddStaffSchema = Yup.object().shape({
   date: Yup.string().required('Please Select Date'),
@@ -43,6 +44,7 @@ const AddStaffSchema = Yup.object().shape({
 });
 
 const JournalVoucher = ({ navigation }: any) => {
+  const { hasPermission } = usePermissions();
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
   const [isFilterBottomSheetOpen, setIsFilterBottomSheetOpen] = React.useState(true);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
@@ -316,7 +318,7 @@ const JournalVoucher = ({ navigation }: any) => {
         lena_dena: Number(values.crAnddr),
         amount: Number(values.amount),
         remark: values.remark || '',
-        date: values.date
+        date: values.date instanceof Date ? `${values.date.getDate().toString().padStart(2, '0')}/${(values.date.getMonth() + 1).toString().padStart(2, '0')}/${values.date.getFullYear()}` : values.date
       };
 
       const response = await APIService.createJornalVoucher(voucherData);
@@ -351,7 +353,7 @@ const JournalVoucher = ({ navigation }: any) => {
         lena_dena: Number(values.crAnddr),
         amount: Number(values.amount),
         remark: values.remark || '',
-        date: formatDateForAPI(values.date)
+        date: values.date instanceof Date ? `${values.date.getDate().toString().padStart(2, '0')}/${(values.date.getMonth() + 1).toString().padStart(2, '0')}/${values.date.getFullYear()}` : values.date
       };
 
       const response = await APIService.UpdateJornalVoucher(voucherData, selectedCompany?.id);
@@ -476,6 +478,7 @@ const JournalVoucher = ({ navigation }: any) => {
                   alignItems: 'flex-end',
                 }}
               >
+                {hasPermission(PERMISSIONS.VOUCHER_JOURNAL_ADD.value) && (
                 <CustomButton
                   textColor={COLORS.WHITE}
                   title="+ Add (F2)"
@@ -489,6 +492,7 @@ const JournalVoucher = ({ navigation }: any) => {
                   }}
                   style={{ width: '50%' }}
                 />
+                )}
               </View>
             )}
 
@@ -522,16 +526,15 @@ const JournalVoucher = ({ navigation }: any) => {
                   width: 100,
                   renderCell: (row) => (
                     <View style={{ flexDirection: 'row', gap: scale(10) }}>
+                      {hasPermission(PERMISSIONS.VOUCHER_JOURNAL_EDIT.value) && (
                       <TouchableOpacity
+                        style={{ marginRight: 15 }}
                         onPress={() => {
                           setSelectedCompany(row);
-                          // Set dropdown values for edit mode
                           if (row.originalData?.user_id?.id) {
                             setPartyDropdownValue(row.originalData.user_id.id.toString());
                           }
-                          if (row.originalData?.lena_dena?.id) {
-                            setDropdownValue(row.originalData.lena_dena.id.toString());
-                          }
+                          setDropdownValue(row.cr_dr === 'Cr' ? '1' : '2');
                           if (row.originalData?.opposite_user_id?.id) {
                             setOppositPartyDropdownValue(row.originalData.opposite_user_id.id.toString());
                           }
@@ -540,9 +543,12 @@ const JournalVoucher = ({ navigation }: any) => {
                       >
                         <Icon name="pencil" size={18} color={COLORS.BUTTONBG} />
                       </TouchableOpacity>
+                      )}
+                      {hasPermission(PERMISSIONS.VOUCHER_JOURNAL_DELETE.value) && (
                       <TouchableOpacity onPress={() => handleDeleteJournalVoucher(row)}>
                         <Icon name="trash" size={18} color="red" />
                       </TouchableOpacity>
+                      )}
                     </View>
                   )
                 }

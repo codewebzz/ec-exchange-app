@@ -1,11 +1,16 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View, RefreshControl } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
 import GradientBackground from '../../components/GradientBackground';
+import { PermissionGuard } from '../../components/PermissionGuard';
 import ScreenHeader from '../../components/ScreenHeader';
 import ShiftCard from '../../components/ShiftCard';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import ChangePasswordModal from '../../components/ChangePasswordModal';
+import { PERMISSIONS } from '../../helper/permissions';
+import { usePermissions } from '../../hooks/usePermissions';
 import APIService from '../services/APIService';
 
 const { height } = Dimensions.get('window');
@@ -29,17 +34,14 @@ const formatDateTime = (value?: string) => {
 
 
 const DashboardScreen = ({ navigation }: any) => {
+  const { userPermissions } = usePermissions();
   const [recentUserRes, setRecentUserRes] = useState<any>([]);
   const [shiftDataRes, setShiftDataRes] = useState<any>([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [shiftLoading, setShiftLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  // console.log(recentUserRes,"recentUserResrecentUserResrecentUserRes")
-  // const shiftCards = Array.isArray(recentUserRes?.data)
-  //   ? recentUserRes.data
-  //   : Array.isArray(recentUserRes)
-  //   ? recentUserRes
-  //   : [];
+  const [userDetails, setUserDetails] = useState<any>(null);
+  const [changePasswordVisible, setChangePasswordVisible] = useState(false);
 
   const redeclareRows: Array<{
     id: number;
@@ -48,11 +50,28 @@ const DashboardScreen = ({ navigation }: any) => {
     transactions: number;
   }> = [];
 
+  const fetchUserDetails = useCallback(async () => {
+    try {
+      const response = await APIService.GetMyDetails();
+      const user = response?.data || response;
+      if (user) {
+        setUserDetails(user);
+      }
+    } catch (error) {
+      console.error('fetchUserDetails fetch failed', error);
+    }
+  }, []);
+
   const fetchRecentUsers = useCallback(async () => {
+    if (!userPermissions.includes(PERMISSIONS.DASHBOARD_RECENT_LEDGERS_VIEW.value)) {
+      console.log('[fetchRecentUsers] skipped due to missing permission');
+      setRecentUserRes([]);
+      return;
+    }
     console.log('[fetchRecentUsers] called');
     try {
+      setLedgerLoading(true);
       const response = await APIService.getRecentUser();
-      // const response = await APIService.GetLeadger({ active: 1, per_page: 25 });
       const data = Array.isArray(response?.data) ? response.data : [];
       const formatted = data.map((item: any, index: number) => [
         (index + 1).toString(),
@@ -64,12 +83,14 @@ const DashboardScreen = ({ navigation }: any) => {
         item?.active_status ? 'Active' : 'Inactive',
       ]);
       setRecentUserRes(formatted);
-
     } catch (error) {
       console.error('Recent fetchRecentUsers fetch failed', error);
-      setRecentUserRes([]); // keep state consistent
+      setRecentUserRes([]);
+    } finally {
+      setLedgerLoading(false);
     }
-  }, []);
+  }, [userPermissions]);
+
   const fetchShiftData = useCallback(async () => {
     console.log('[fetchShiftData] called');
     try {
@@ -85,21 +106,24 @@ const DashboardScreen = ({ navigation }: any) => {
       setShiftLoading(false);
     }
   }, []);
+
   useFocusEffect(
     useCallback(() => {
       fetchShiftData();
       fetchRecentUsers();
-    }, [fetchShiftData, fetchRecentUsers])
+      fetchUserDetails();
+    }, [fetchShiftData, fetchRecentUsers, fetchUserDetails])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([
       fetchShiftData(),
-      fetchRecentUsers()
+      fetchRecentUsers(),
+      fetchUserDetails(),
     ]);
     setRefreshing(false);
-  }, [fetchShiftData, fetchRecentUsers]);
+  }, [fetchShiftData, fetchRecentUsers, fetchUserDetails]);
   // const fetchRecentUsers = useCallback(async () => {
   //   const resp = await APIService.getRecentUser();
   //   return Array.isArray(resp?.data) ? resp.data : Array.isArray(resp) ? resp : [];
@@ -138,6 +162,13 @@ const DashboardScreen = ({ navigation }: any) => {
   // useEffect(() => {
   //   fetchDashboardMeta();
   // }, [fetchDashboardMeta]);
+  const userRoleRaw = (userDetails?.user_role?.name || userDetails?.user_role || userDetails?.role || '').toString();
+  const userRoleLower = userRoleRaw.toLowerCase();
+  const isLedgerFanter = userRoleLower === 'ledger_fanter';
+  const userName = userDetails?.real_name || userDetails?.name || userDetails?.username || '-';
+
+  console.log('userDetails', userDetails)
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
@@ -151,6 +182,31 @@ const DashboardScreen = ({ navigation }: any) => {
             nestedScrollEnabled
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4f46e5']} tintColor="#4f46e5" />}
           >
+            {isLedgerFanter && userDetails && (
+              <View style={styles.userCard}>
+                <View style={styles.userAvatar}>
+                  <Text style={styles.userAvatarText}>
+                    {userName.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={styles.userInfoContainer}>
+                  <Text style={styles.userName}>{userName}</Text>
+                  <View style={styles.roleBadge}>
+                    <Text style={styles.roleBadgeText}>
+                      Fanter
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={styles.changePasswordBtn}
+                  onPress={() => setChangePasswordVisible(true)}
+                >
+                  <Icon name="key-outline" size={20} color="#4f46e5" />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* <PermissionGuard permission={PERMISSIONS.DASHBOARD_SHIFT_VIEW.value} fallback={null}> */}
             <View style={styles.topRow}>
               {shiftLoading ? (
                 <View style={styles.shiftLoading}>
@@ -175,56 +231,66 @@ const DashboardScreen = ({ navigation }: any) => {
                 </View>
               )}
             </View>
+            {/* </PermissionGuard> */}
 
             <View style={styles.sectionsRow}>
-              <View style={styles.sectionCard}>
-                <SectionHeader
-                  title="Recent Ledgers"
-                  subtitle="Latest declarations"
-                  actionLabel="Export"
-                  onAction={() => { }}
-                />
-                <DashboardTable
-                  headers={['S.No.', 'Name', 'Username', 'Role', 'Created By', 'Created At', 'Status']}
-                  rows={recentUserRes}
-                  statusColumnIndex={6}
-                  columnWidths={[60, 160, 140, 120, 140, 170, 100]}
-                  loading={ledgerLoading}
-                  emptyText="No ledgers found"
-                  maxHeight={height * 0.5}
-                />
-              </View>
-
-              <View style={styles.sectionCard}>
-                <SectionHeader
-                  title="Redeclare Transaction"
-                  subtitle="Audit trail"
-                  actionLabel="Export"
-                  onAction={() => { }}
-                />
-                {redeclareRows.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Text style={styles.emptyStateText}>No results found.</Text>
-                  </View>
-                ) : (
-                  <DashboardTable
-                    headers={['S.No.', 'Shift Name', 'Date', 'Transactions', 'Action']}
-                    rows={redeclareRows.map(item => [
-                      item.id.toString(),
-                      item.shiftName,
-                      item.date,
-                      item.transactions.toString(),
-                      'View',
-                    ])}
+              <PermissionGuard permission={PERMISSIONS.DASHBOARD_RECENT_LEDGERS_VIEW.value} fallback={null}>
+                <View style={styles.sectionCard}>
+                  <SectionHeader
+                    title="Recent Ledgers"
+                    subtitle="Latest declarations"
+                    actionLabel="Export"
+                    onAction={() => { }}
                   />
-                )}
-              </View>
+                  <DashboardTable
+                    headers={['S.No.', 'Name', 'Username', 'Role', 'Created By', 'Created At', 'Status']}
+                    rows={recentUserRes}
+                    statusColumnIndex={6}
+                    columnWidths={[60, 160, 140, 120, 140, 170, 100]}
+                    loading={ledgerLoading}
+                    emptyText="No ledgers found"
+                    maxHeight={height * 0.5}
+                  />
+                </View>
+              </PermissionGuard>
+
+              <PermissionGuard permission={PERMISSIONS.DASHBOARD_REDECLARE_TRANSACTIONS_VIEW.value} fallback={null}>
+                <View style={styles.sectionCard}>
+                  <SectionHeader
+                    title="Redeclare Transaction"
+                    subtitle="Audit trail"
+                    actionLabel="Export"
+                    onAction={() => { }}
+                  />
+                  {redeclareRows.length === 0 ? (
+                    <View style={styles.emptyState}>
+                      <Text style={styles.emptyStateText}>No results found.</Text>
+                    </View>
+                  ) : (
+                    <DashboardTable
+                      headers={['S.No.', 'Shift Name', 'Date', 'Transactions', 'Action']}
+                      rows={redeclareRows.map(item => [
+                        item.id.toString(),
+                        item.shiftName,
+                        item.date,
+                        item.transactions.toString(),
+                        'View',
+                      ])}
+                    />
+                  )}
+                </View>
+              </PermissionGuard>
             </View>
 
           </ScrollView>
 
         </SafeAreaView>
       </GradientBackground>
+
+      <ChangePasswordModal
+        visible={changePasswordVisible}
+        onClose={() => setChangePasswordVisible(false)}
+      />
 
     </GestureHandlerRootView>
   );
@@ -321,33 +387,33 @@ const DashboardTable = ({
         >
           {rows.map((row, rowIndex) => (
             <View
-            key={rowIndex}
-            style={[styles.tableRow, rowIndex % 2 === 1 && styles.tableRowStriped]}
-          >
-            {row.map((value, colIndex) => (
-              <View
-                key={`${rowIndex}-${colIndex}`}
-                style={[
-                  styles.cellWrapper,
-                  columnWidths?.[colIndex]
-                    ? { minWidth: columnWidths[colIndex], maxWidth: columnWidths[colIndex] }
-                    : null,
-                ]}
-              >
-                <Text
+              key={rowIndex}
+              style={[styles.tableRow, rowIndex % 2 === 1 && styles.tableRowStriped]}
+            >
+              {row.map((value, colIndex) => (
+                <View
+                  key={`${rowIndex}-${colIndex}`}
                   style={[
-                    styles.cell,
-                    statusColumnIndex === colIndex && value === 'Active' && styles.activeBadge,
-                    colIndex === 0 && styles.cellCenter,
-                    statusColumnIndex === colIndex && styles.cellCenter,
+                    styles.cellWrapper,
+                    columnWidths?.[colIndex]
+                      ? { minWidth: columnWidths[colIndex], maxWidth: columnWidths[colIndex] }
+                      : null,
                   ]}
                 >
-                  {value}
-                </Text>
-              </View>
-            ))}
-          </View>
-        ))}
+                  <Text
+                    style={[
+                      styles.cell,
+                      statusColumnIndex === colIndex && value === 'Active' && styles.activeBadge,
+                      colIndex === 0 && styles.cellCenter,
+                      statusColumnIndex === colIndex && styles.cellCenter,
+                    ]}
+                  >
+                    {value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ))}
         </ScrollView>
       )}
     </View>
@@ -367,8 +433,10 @@ const styles = StyleSheet.create({
   },
   topRow: {
     flexDirection: 'row',
-    gap: 8, // Reduced from 16
     flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 12,
+    alignItems: 'flex-start',
   },
   statusHighlightDeclared: {
     color: '#065f46',
@@ -482,6 +550,61 @@ const styles = StyleSheet.create({
   shiftLoading: {
     width: '100%',
     paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 14,
+    gap: 12,
+    elevation: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    marginBottom: 4,
+  },
+  userAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#4f46e5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userAvatarText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  userInfoContainer: {
+    flex: 1,
+    gap: 4,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1b2635',
+  },
+  roleBadge: {
+    backgroundColor: '#eef2ff',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  roleBadgeText: {
+    color: '#4f46e5',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  changePasswordBtn: {
+    padding: 8,
+    borderRadius: 10,
+    backgroundColor: '#eef2ff',
     alignItems: 'center',
     justifyContent: 'center',
   },

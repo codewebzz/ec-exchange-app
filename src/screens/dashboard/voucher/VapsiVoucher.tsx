@@ -16,10 +16,11 @@ import CustomTextInput from '../../../components/CustomTextInput';
 import GradientBackground from '../../../components/GradientBackground';
 import TableGrid from '../../../components/TableGridView';
 import ScreenHeader from '../../../components/ScreenHeader';
-import useSearchBar from '../../../hooks/useSearchBar';
-import APIService from '../../services/APIService';
 import { PermissionGuard } from '../../../components/PermissionGuard';
 import { PERMISSIONS } from '../../../helper/permissions';
+import { usePermissions } from '../../../hooks/usePermissions';
+import useSearchBar from '../../../hooks/useSearchBar';
+import APIService from '../../services/APIService';
 
 const AddStaffSchema = Yup.object().shape({
     date: Yup.string().required('Please Select Date'),
@@ -31,6 +32,7 @@ const AddStaffSchema = Yup.object().shape({
 });
 
 const VapsiVoucher = ({ navigation }: any) => {
+    const { hasPermission } = usePermissions();
     const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
     const [isFilterBottomSheetOpen, setIsFilterBottomSheetOpen] = React.useState(true);
     const [selectedCompany, setSelectedCompany] = useState<any>(null);
@@ -274,7 +276,7 @@ const VapsiVoucher = ({ navigation }: any) => {
                 lena_dena: Number(values.crAnddr),
                 amount: Number(values.amount),
                 remark: values.remark || '',
-                date: values.date
+                date: values.date instanceof Date ? `${values.date.getDate().toString().padStart(2, '0')}/${(values.date.getMonth() + 1).toString().padStart(2, '0')}/${values.date.getFullYear()}` : values.date
             };
 
             const response = await APIService.createVapsiVoucher(voucherData);
@@ -309,7 +311,7 @@ const VapsiVoucher = ({ navigation }: any) => {
                 lena_dena: Number(values.crAnddr),
                 amount: Number(values.amount),
                 remark: values.remark || '',
-                date: formatDateForAPI(values.date)
+                date: values.date instanceof Date ? `${values.date.getDate().toString().padStart(2, '0')}/${(values.date.getMonth() + 1).toString().padStart(2, '0')}/${values.date.getFullYear()}` : values.date
             };
 
             const response = await APIService.UpdateVapsiVoucher(voucherData, selectedCompany?.id);
@@ -458,6 +460,7 @@ const VapsiVoucher = ({ navigation }: any) => {
                             </View>
                         ) : (
                             <View style={{ marginVertical: scale(10), marginHorizontal: scale(15), alignItems: "flex-end" }}>
+                                {hasPermission(PERMISSIONS.VOUCHER_VAPSI_ADD.value) && (
                                 <CustomButton
                                     textColor={COLORS.WHITE}
                                     title="+ Add (F2)"
@@ -471,6 +474,7 @@ const VapsiVoucher = ({ navigation }: any) => {
                                     }}
                                     style={{ width: '50%' }}
                                 />
+                                )}
                             </View>
                         )}
 
@@ -504,6 +508,7 @@ const VapsiVoucher = ({ navigation }: any) => {
                                             width: 100,
                                             renderCell: (row) => (
                                                 <View style={{ flexDirection: 'row', gap: scale(10) }}>
+                                                    {hasPermission(PERMISSIONS.VOUCHER_VAPSI_EDIT.value) && (
                                                     <TouchableOpacity
                                                         onPress={() => {
                                                             setSelectedCompany(row);
@@ -522,9 +527,12 @@ const VapsiVoucher = ({ navigation }: any) => {
                                                     >
                                                         <Icon name="pencil" size={18} color={COLORS.BUTTONBG} />
                                                     </TouchableOpacity>
+                                                    )}
+                                                    {hasPermission(PERMISSIONS.VOUCHER_VAPSI_DELETE.value) && (
                                                     <TouchableOpacity onPress={() => handleDeleteVapsiVoucher(row)}>
                                                         <Icon name="trash" size={18} color="red" />
                                                     </TouchableOpacity>
+                                                    )}
                                                 </View>
                                             )
                                         }

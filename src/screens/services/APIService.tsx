@@ -492,7 +492,16 @@ const APIService = {
       const res = await AxiosService.get(`api/master/get_all_ledger_names?show_self=1`);
       return res;
     } catch (err: any) {
-      console.log('GetLimitVoucher Error:', err?.response?.data || err.message);
+      console.log('GetLedgerDropDownDataData Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  GetLedgerNamesWithoutSelf: async (): Promise<any> => {
+    try {
+      const res = await AxiosService.get(`api/master/get_all_ledger_names`);
+      return res;
+    } catch (err: any) {
+      console.log('GetLedgerNamesWithoutSelf Error:', err?.response?.data || err.message);
       throw err;
     }
   },
@@ -691,6 +700,20 @@ const APIService = {
       throw err;
     }
   },
+  GetMyDetails: async (): Promise<any> => {
+    try {
+      const res = await AxiosService.get('api/my_details');
+      return res;
+    } catch (err: any) {
+      console.log('GetMyDetails Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  ChangePassword: (data: { old_password: string; new_password: string }): Promise<CommonResponse> =>
+    AxiosService.post<CommonResponse>(`api/change_password`, {
+      old_password: data.old_password,
+      new_password: data.new_password,
+    }),
   GetAllPermissionsRoles: async (): Promise<any> => {
     try {
       const res = await AxiosService.get('api/all_permission_roles');
@@ -771,6 +794,16 @@ const APIService = {
     } catch (err: any) {
       console.log('GetMyPermissions Error:', err?.response?.data || err.message);
       return { success: false, message: err?.message || 'Failed to fetch permissions' };
+    }
+  },
+
+  GetMyShiftPermissions: async (): Promise<any> => {
+    try {
+      const res = await AxiosService.get('api/my_shift_permissions');
+      return { ...res, success: true };
+    } catch (err: any) {
+      console.log('GetMyShiftPermissions Error:', err?.response?.data || err.message);
+      return { success: false, message: err?.message || 'Failed to fetch shift permissions' };
     }
   },
 };

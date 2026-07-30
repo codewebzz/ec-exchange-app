@@ -52,6 +52,7 @@ import { PattiModal } from '../leadgerModal/PattiModal';
 import GradientBackground from '../../../components/GradientBackground';
 import { PermissionGuard } from '../../../components/PermissionGuard';
 import { PERMISSIONS } from '../../../helper/permissions';
+import { usePermissions } from '../../../hooks/usePermissions';
 
 
 const LedgerSchema = Yup.object().shape({
@@ -63,6 +64,7 @@ interface DropdownItem {
 }
 
 const Ledger = ({ navigation }: any) => {
+  const { hasPermission } = usePermissions();
   const [showSearch, setShowSearch] = useState(false);
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
   const [selectedCompany, setSelectedCompany] = React.useState<any>(null);
@@ -711,12 +713,14 @@ const Ledger = ({ navigation }: any) => {
                         zIndex={1}
                       />
                     </View>
+                    {hasPermission(PERMISSIONS.MASTER_LEDGER_ADD.value) && (
                     <CustomButton
                       textColor={COLORS.WHITE}
                       title="+ Add (F2)"
                       onPress={handleAddLedger}
                       style={{ width: '40%', bottom: scale(2), paddingVertical: scale(12.0) }}
                     />
+                    )}
                   </View>
                 )
               )}
@@ -743,16 +747,16 @@ const Ledger = ({ navigation }: any) => {
                     { key: 'updated_by', label: 'Updated By' },
                   ]}
                   isButtonOne={false}
-                  actionOneLabel="Is Active"
-                  actionTwoLabel="Action"
+                  actionOneLabel={hasPermission(PERMISSIONS.MASTER_LEDGER_ACTION.value) ? "Is Active" : undefined}
+                  actionTwoLabel={hasPermission(PERMISSIONS.MASTER_LEDGER_ACTION.value) ? "Action" : undefined}
                   actionThreeLabel="Copy"
                   isButtonThree={true}
                   // statusKey="status"
-                  onActionOne={handleToggleActive}
-                  onActionTwo={(item: any) => {
+                  onActionOne={hasPermission(PERMISSIONS.MASTER_LEDGER_ACTION.value) ? handleToggleActive : undefined}
+                  onActionTwo={hasPermission(PERMISSIONS.MASTER_LEDGER_ACTION.value) ? (item: any) => {
                     handleEditLedger(item);
                     console.log(item, "[][][][][][shhshdghsghds][][][][]")
-                  }}
+                  } : undefined}
                   onActionThree={handleCopyUsernamePassword}
                   refreshing={refreshing}
                   onRefresh={getData && getData.length > 0 ? onRefresh : undefined}
