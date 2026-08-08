@@ -1,58 +1,53 @@
-import React, { useState } from 'react';
-import {
-  ScrollView,
-  Button,
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Keyboard,
-  Alert,
-  TouchableOpacity,
-  Modal,
-  ActivityIndicator,
-} from 'react-native';
-import { useSelector } from 'react-redux';
-import DeclareStatusCard from '../../../components/DeclareStatusCard';
 import BottomSheet, {
   BottomSheetBackdrop,
-  BottomSheetScrollView,
-  BottomSheetView,
+  BottomSheetScrollView
 } from '@gorhom/bottom-sheet';
 import { Formik } from 'formik';
-import CustomDropdown from '../../../components/CustomDropdown';
-import CustomDateTimePicker from '../../../components/CustomDatePicker';
-import * as Yup from 'yup';
-import CustomTextInput from '../../../components/CustomTextInput';
-import CustomButton from '../../../components/CustomButton';
-import { COLORS } from '../../../assets/colors';
-import { scale } from 'react-native-size-matters';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ScreenHeader from '../../../components/ScreenHeader';
-import TabHeader from '../../../components/TabHeader';
-import APIService from '../../services/APIService';
+import { scale } from 'react-native-size-matters';
 import Toast from 'react-native-toast-message';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import useSearchBar from '../../../hooks/useSearchBar';
-import { useFormLogic } from '../leadgerhooks/FormLogicHook';
-import { useTPCommission } from '../leadgerhooks/TPCommissionHook';
-import { BasicFormFields } from '../leadgersections/BasicFormFields';
-import { RateCommissionFields } from '../leadgersections/RateCommissionFields';
-import { TPCommissionSection } from '../leadgersections/TPCommissionSection';
-import { TPCommissionModal } from '../leadgerModal/TPCommissionModal';
-import { useDropdownStates } from '../leadgerhooks/useDropdownStates';
-import { useTPWapsi } from '../leadgerhooks/wapsiManagmentHook';
-import { useTPPatti } from '../leadgerhooks/useTPPatti';
-import { WapsiSection } from '../leadgersections/WapsiSection';
-import { PattiSection } from '../leadgersections/PattiSection';
-import { ContactAndAdditionalFields } from '../leadgersections/ContactAndAdditionalField';
-import { WapsiModal } from '../leadgerModal/WapsiModal';
-import { PattiModal } from '../leadgerModal/PattiModal';
+import * as Yup from 'yup';
+import { COLORS } from '../../../assets/colors';
+import CustomButton from '../../../components/CustomButton';
+import CustomDropdown from '../../../components/CustomDropdown';
+import CustomTextInput from '../../../components/CustomTextInput';
+import DeclareStatusCard from '../../../components/DeclareStatusCard';
 import GradientBackground from '../../../components/GradientBackground';
 import { PermissionGuard } from '../../../components/PermissionGuard';
+import ScreenHeader from '../../../components/ScreenHeader';
+import TabHeader from '../../../components/TabHeader';
 import { PERMISSIONS } from '../../../helper/permissions';
 import { usePermissions } from '../../../hooks/usePermissions';
+import useSearchBar from '../../../hooks/useSearchBar';
+import APIService from '../../services/APIService';
+import { PattiModal } from '../leadgerModal/PattiModal';
+import { TPCommissionModal } from '../leadgerModal/TPCommissionModal';
+import { WapsiModal } from '../leadgerModal/WapsiModal';
+import { useFormLogic } from '../leadgerhooks/FormLogicHook';
+import { useTPCommission } from '../leadgerhooks/TPCommissionHook';
+import { useDropdownStates } from '../leadgerhooks/useDropdownStates';
+import { useTPPatti } from '../leadgerhooks/useTPPatti';
+import { useTPWapsi } from '../leadgerhooks/wapsiManagmentHook';
+import { BasicFormFields } from '../leadgersections/BasicFormFields';
+import { ContactAndAdditionalFields } from '../leadgersections/ContactAndAdditionalField';
+import { PattiSection } from '../leadgersections/PattiSection';
+import { RateCommissionFields } from '../leadgersections/RateCommissionFields';
+import { TPCommissionSection } from '../leadgersections/TPCommissionSection';
+import { WapsiSection } from '../leadgersections/WapsiSection';
 
 
 const LedgerSchema = Yup.object().shape({
@@ -399,19 +394,22 @@ const Ledger = ({ navigation }: any) => {
       // Common payload structure for both Create and Update
       const commonPayload = {
         // Ensure all required fields have fallback values
-        real_name: values?.leadgerName || '',
+        real_name: values?.realName || '',
         user_role: Number(values?.group) || '',
         mobile: values?.mobile || '',
         password: values?.password || '',
         address: values?.address || '',
         // Handle null/undefined numeric values safely
+        capping: values?.capping ? Number(values.capping) : null,
+        grantor_name: values?.grantorName || '',
         dhai_rate: values?.dhaniRate ? Number(values.dhaniRate) : null,
         dhai_rate_commission: values?.commission ? Number(values.commission) : null,
         harup_rate: values?.harupRate ? Number(values.harupRate) : null,
         harup_rate_commission: values?.harupCommission ? Number(values.harupCommission) : null,
         limit_vouters_id: Number(values?.limit) || null,
         distributer_user_id: Number(values?.distributor) || null,
-        agent: values?.agent && values?.agent !== '' ? Number(values.agent) : (selectedCompany?.agent_user?.id ?? ""),
+        agent_user_id: values?.agent && values?.agent !== '' ? Number(values.agent) : (selectedCompany?.agent_user?.id ?? ""),
+        agent: values?.agent && values?.agent !== '' ? Number(values.agent) : (selectedCompany?.agent_user?.id ?? ""), // kept for backward compatibility
         active_status: 1,
         limit_type: values?.limit && Number(values.limit) > 0 ? '1' : '2', // 'yes' if limit > 0, 'no' if limit = 0
         hide_account: 0,
@@ -652,811 +650,811 @@ const Ledger = ({ navigation }: any) => {
 
   return (
     <PermissionGuard permission={PERMISSIONS.MASTER_LEDGER_VIEW.value}>
-    <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
 
-      <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
-        <SafeAreaView
-          style={style.safeAreaContainer}
-          edges={['top']}
-        >
-          <View style={style.headerContainer}>
-            <ScreenHeader
-              title={'Ledger'}
-              navigation={navigation}
-              hideBackButton={true} showDrawerButton={true}
-            >
-              <TouchableOpacity onPress={() => setShowSearch((s) => !s)}>
-                <Ionicons name={showSearch ? 'close' : 'search'} size={20} color={showSearch ? COLORS.WHITE : COLORS.WHITE} />
-              </TouchableOpacity>
-            </ScreenHeader>
-          </View>
-          <View style={style.container}>
-            <View
-              style={{
-                marginVertical: scale(10),
-                marginHorizontal: scale(15),
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                position: 'relative',
-                // zIndex: 1, // Lower z-index to stay below bottom sheet
-              }}
-            >
-              {/* Toggle between search bar and status filter/add button */}
-              {!isOpenBottomSheet && (
-                showSearch ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(10), width: '100%' }}>
-                    <View style={{ flex: 1 }}>
-                      <CustomTextInput
-                        placeholder="Search by party name..."
-                        value={query}
-                        onChangeText={setQuery}
-                        style={{ backgroundColor: COLORS.WHITE, minHeight: 40, borderRadius: 8, paddingHorizontal: 12, elevation: 10 }}
-                      />
-                    </View>
-                    <TouchableOpacity onPress={() => { setQuery(''); setShowSearch(false); }}>
-                      <Ionicons name={'close-circle'} size={22} color={"red"} />
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <View style={{ flexDirection: 'row', alignItems: "flex-end", justifyContent: "space-between", width: '100%' }}>
-                    <View style={[style.statusFilterContainer]}>
-                      <CustomDropdown
-                        label={"Status Filter:"}
-                        open={statusDropdownOpen}
-                        value={selectedStatus}
-                        items={statusDropdownItems}
-                        setOpen={setStatusDropdownOpen}
-                        setValue={setSelectedStatus}
-                        setItems={() => { }}
-                        placeholder="Select Status"
-                        zIndex={1}
-                      />
-                    </View>
-                    {hasPermission(PERMISSIONS.MASTER_LEDGER_ADD.value) && (
-                    <CustomButton
-                      textColor={COLORS.WHITE}
-                      title="+ Add (F2)"
-                      onPress={handleAddLedger}
-                      style={{ width: '40%', bottom: scale(2), paddingVertical: scale(12.0) }}
-                    />
-                    )}
-                  </View>
-                )
-              )}
-
+        <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
+          <SafeAreaView
+            style={style.safeAreaContainer}
+            edges={['top']}
+          >
+            <View style={style.headerContainer}>
+              <ScreenHeader
+                title={'Ledger'}
+                navigation={navigation}
+                hideBackButton={true} showDrawerButton={true}
+              >
+                <TouchableOpacity onPress={() => setShowSearch((s) => !s)}>
+                  <Ionicons name={showSearch ? 'close' : 'search'} size={20} color={showSearch ? COLORS.WHITE : COLORS.WHITE} />
+                </TouchableOpacity>
+              </ScreenHeader>
             </View>
-            <ScrollView style={{ padding: 16 }} keyboardShouldPersistTaps="handled">
-              {Array.isArray(getData) && getData.length === 0 ? (
-                <Text style={style.noResultsText}>No data found</Text>
-              ) : (
-                <DeclareStatusCard
-                  data={filteredItems}
-                  config={[
-                    { key: 'real_name', label: 'Party Name' },
-                    { key: 'username', label: 'User Name' },
-                    // { key: 'user_role', label: 'Group' },
-                    // { key: 'agent_user', label: 'Agent' },
-                    // { key: 'dhai_rate', label: 'Dhai' },
-                    // { key: 'harup_rate', label: 'Harup' },
-                    // { key: 'limit', label: 'Limit' },
-                    // { key: 'wapsi', label: 'Wapsi' },
-                    // { key: 'created_at', label: 'Created At' },
-                    // { key: 'created_by', label: 'Created By' },
-                    // { key: 'updated_at', label: 'Updated At' },
-                    { key: 'updated_by', label: 'Updated By' },
-                  ]}
-                  isButtonOne={false}
-                  actionOneLabel={hasPermission(PERMISSIONS.MASTER_LEDGER_ACTION.value) ? "Is Active" : undefined}
-                  actionTwoLabel={hasPermission(PERMISSIONS.MASTER_LEDGER_ACTION.value) ? "Action" : undefined}
-                  actionThreeLabel="Copy"
-                  isButtonThree={true}
-                  // statusKey="status"
-                  onActionOne={hasPermission(PERMISSIONS.MASTER_LEDGER_ACTION.value) ? handleToggleActive : undefined}
-                  onActionTwo={hasPermission(PERMISSIONS.MASTER_LEDGER_ACTION.value) ? (item: any) => {
-                    handleEditLedger(item);
-                    console.log(item, "[][][][][][shhshdghsghds][][][][]")
-                  } : undefined}
-                  onActionThree={handleCopyUsernamePassword}
-                  refreshing={refreshing}
-                  onRefresh={getData && getData.length > 0 ? onRefresh : undefined}
-                />
-              )}
-            </ScrollView>
-            {isOpenBottomSheet && (
-              <BottomSheet
-                backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
-                ref={bottomSheetRef}
-                style={{ borderWidth: 1, borderRadius: scale(10), zIndex: 10 }}
-                index={0}
-                snapPoints={snapPoints}
-                enableDynamicSizing={false}
-                onChange={handleSheetChanges}
-                backdropComponent={renderBackdrop}
-                enablePanDownToClose={true}
-                keyboardBehavior="extend"
-                keyboardBlurBehavior="restore"
-                onClose={() => {
-                  // Modal is being closed - reset edit state only when user manually closes
-                  setIsOpenBottomSheet(false);
-                  setIsEditing(false);
-                  setSelectedCompany(null);
-                  passwordFetchedRef.current = null; // Reset password fetch ref
+            <View style={style.container}>
+              <View
+                style={{
+                  marginVertical: scale(10),
+                  marginHorizontal: scale(15),
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  position: 'relative',
+                  // zIndex: 1, // Lower z-index to stay below bottom sheet
                 }}
               >
-                <BottomSheetScrollView
-                  style={{
-                    backgroundColor: COLORS.BGFILESCOLOR,
-                    flex: 1,
-                  }}
-                  contentContainerStyle={{
-                    paddingHorizontal: 16,
-                    paddingBottom: scale(350) // Drastically increase padding to ensure last inputs can be scrolled up
-                  }}
-                  keyboardShouldPersistTaps="handled"
-                >
-                  {/* Show TabHeader only when editing */}
-                  {isEditing && (
-                    <View style={{ marginBottom: scale(10) }}>
-                      <Text style={{
-                        fontSize: scale(18),
-                        fontWeight: 'bold',
-                        color: COLORS.BLACK,
-                        textAlign: 'center',
-                        marginBottom: scale(10)
-                      }}>
-                        Update Ledger Entry
-                      </Text>
-                      <Text style={{
-                        fontSize: scale(12),
-                        color: COLORS.BLACK,
-                        textAlign: 'center',
-                        marginBottom: scale(15)
-                      }}>
-                        Keep Records Accurate
-                      </Text>
-                      <TabHeader
-                        tabs={["Info", "Re-Name", "Re-Config", "Password", "Account"]}
-                        activeTab={activeTab}
-                        onTabPress={(idx) => setActiveTab(idx)}
-                        height={35}
-                        textStyle={{ fontSize: scale(8) }}
-                        containerStyle={{ marginHorizontal: 0, marginVertical: scale(5) }}
-                      />
+                {/* Toggle between search bar and status filter/add button */}
+                {!isOpenBottomSheet && (
+                  showSearch ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(10), width: '100%' }}>
+                      <View style={{ flex: 1 }}>
+                        <CustomTextInput
+                          placeholder="Search by party name..."
+                          value={query}
+                          onChangeText={setQuery}
+                          style={{ backgroundColor: COLORS.WHITE, minHeight: 40, borderRadius: 8, paddingHorizontal: 12, elevation: 10 }}
+                        />
+                      </View>
+                      <TouchableOpacity onPress={() => { setQuery(''); setShowSearch(false); }}>
+                        <Ionicons name={'close-circle'} size={22} color={"red"} />
+                      </TouchableOpacity>
                     </View>
-                  )}
+                  ) : (
+                    <View style={{ flexDirection: 'row', alignItems: "flex-end", justifyContent: "space-between", width: '100%' }}>
+                      <View style={[style.statusFilterContainer]}>
+                        <CustomDropdown
+                          label={"Status Filter:"}
+                          open={statusDropdownOpen}
+                          value={selectedStatus}
+                          items={statusDropdownItems}
+                          setOpen={setStatusDropdownOpen}
+                          setValue={setSelectedStatus}
+                          setItems={() => { }}
+                          placeholder="Select Status"
+                          zIndex={1}
+                        />
+                      </View>
+                      {hasPermission(PERMISSIONS.MASTER_LEDGER_ADD.value) && (
+                        <CustomButton
+                          textColor={COLORS.WHITE}
+                          title="+ Add (F2)"
+                          onPress={handleAddLedger}
+                          style={{ width: '40%', bottom: scale(2), paddingVertical: scale(12.0) }}
+                        />
+                      )}
+                    </View>
+                  )
+                )}
 
-                  <Formik
-                    key={selectedCompany?.id || 'new'}
-                    initialValues={{
-                      leadgerName: selectedCompany?.real_name || '',
-                      realName: selectedCompany?.real_name
-                        || '',
-                      capping: selectedCompany?.capping?.toString() || '',
-                      group: selectedCompany?.user_role?.id?.toString() || '',
-                      dhaniRate: selectedCompany?.dhai_rate?.toString() || '0',
-                      commission: selectedCompany?.dhai_rate_commission?.toString() || '0',
-                      harupRate: selectedCompany?.harup_rate?.toString() || '0',
-                      harupCommission: selectedCompany?.harup_rate_commission?.toString() || '0',
-                      wMode: selectedCompany?.work_mode?.id?.toString() || '1',
-                      username: selectedCompany?.username || '',
-                      password: '',
-                      agent: selectedCompany?.agent_user?.id?.toString() || '',
-                      mobile: selectedCompany?.mobile || '',
-                      address: selectedCompany?.address || '',
-                      // Map API arrays into form-friendly shapes
-                      tpCommissions: Array.isArray(selectedCompany?.third_party_commission)
-                        ? selectedCompany.third_party_commission.map((item: any) => ({
-                          partyName: getLedgerNameById(item.third_party_commission_userid),
-                          partyId: item.third_party_commission_userid?.toString?.() || '',
-                          dComm: item.third_party_commission_dhai?.toString?.() || '',
-                          hComm: item.third_party_commission_harup?.toString?.() || '',
-                        }))
-                        : [],
-                      wapsi: selectedCompany?.wapsi?.toString() || '0',
-                      tpWapsi: Array.isArray(selectedCompany?.third_party_wapsi)
-                        ? selectedCompany.third_party_wapsi.map((item: any) => ({
-                          partyName: getLedgerNameById(item.third_party_wapsi_userid),
-                          partyId: item.third_party_wapsi_userid?.toString?.() || '',
-                          wapsiAmount: item.third_party_wapsi?.toString?.() || '',
-                        }))
-                        : [],
-                      tpPatti: Array.isArray(selectedCompany?.patti)
-                        ? selectedCompany.patti.map((item: any) => ({
-                          partyName: getLedgerNameById(item.patti_userid),
-                          partyId: item.patti_userid?.toString?.() || '',
-                          percentage: item.patti_percentage?.toString?.() || '',
-                        }))
-                        : [],
-                      distributor: selectedCompany?.distributer_user_id?.toString() || '',
-                      limit: selectedCompany?.limit?.toString() || '0',
-                      grantorName: selectedCompany?.grantor_name || '',
+              </View>
+              <ScrollView style={{ padding: 16 }} keyboardShouldPersistTaps="handled">
+                {Array.isArray(getData) && getData.length === 0 ? (
+                  <Text style={style.noResultsText}>No data found</Text>
+                ) : (
+                  <DeclareStatusCard
+                    data={filteredItems}
+                    config={[
+                      { key: 'real_name', label: 'Party Name' },
+                      { key: 'username', label: 'User Name' },
+                      // { key: 'user_role', label: 'Group' },
+                      // { key: 'agent_user', label: 'Agent' },
+                      // { key: 'dhai_rate', label: 'Dhai' },
+                      // { key: 'harup_rate', label: 'Harup' },
+                      // { key: 'limit', label: 'Limit' },
+                      // { key: 'wapsi', label: 'Wapsi' },
+                      // { key: 'created_at', label: 'Created At' },
+                      // { key: 'created_by', label: 'Created By' },
+                      // { key: 'updated_at', label: 'Updated At' },
+                      { key: 'updated_by', label: 'Updated By' },
+                    ]}
+                    isButtonOne={false}
+                    actionOneLabel={hasPermission(PERMISSIONS.MASTER_LEDGER_ACTION.value) ? "Is Active" : undefined}
+                    actionTwoLabel={hasPermission(PERMISSIONS.MASTER_LEDGER_ACTION.value) ? "Action" : undefined}
+                    actionThreeLabel="Copy"
+                    isButtonThree={true}
+                    // statusKey="status"
+                    onActionOne={hasPermission(PERMISSIONS.MASTER_LEDGER_ACTION.value) ? handleToggleActive : undefined}
+                    onActionTwo={hasPermission(PERMISSIONS.MASTER_LEDGER_ACTION.value) ? (item: any) => {
+                      handleEditLedger(item);
+                      console.log(item, "[][][][][][shhshdghsghds][][][][]")
+                    } : undefined}
+                    onActionThree={handleCopyUsernamePassword}
+                    refreshing={refreshing}
+                    onRefresh={getData && getData.length > 0 ? onRefresh : undefined}
+                  />
+                )}
+              </ScrollView>
+              {isOpenBottomSheet && (
+                <BottomSheet
+                  backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
+                  ref={bottomSheetRef}
+                  style={{ borderWidth: 1, borderRadius: scale(10), zIndex: 10 }}
+                  index={0}
+                  snapPoints={snapPoints}
+                  enableDynamicSizing={false}
+                  onChange={handleSheetChanges}
+                  backdropComponent={renderBackdrop}
+                  enablePanDownToClose={true}
+                  keyboardBehavior="extend"
+                  keyboardBlurBehavior="restore"
+                  onClose={() => {
+                    // Modal is being closed - reset edit state only when user manually closes
+                    setIsOpenBottomSheet(false);
+                    setIsEditing(false);
+                    setSelectedCompany(null);
+                    passwordFetchedRef.current = null; // Reset password fetch ref
+                  }}
+                >
+                  <BottomSheetScrollView
+                    style={{
+                      backgroundColor: COLORS.BGFILESCOLOR,
+                      flex: 1,
                     }}
-                    validationSchema={LedgerSchema}
-                    onSubmit={handleFormSubmit}
+                    contentContainerStyle={{
+                      paddingHorizontal: 16,
+                      paddingBottom: scale(350) // Drastically increase padding to ensure last inputs can be scrolled up
+                    }}
+                    keyboardShouldPersistTaps="handled"
                   >
-                    {({
-                      handleChange,
-                      handleSubmit,
-                      values,
-                      errors,
-                      touched,
-                      setFieldValue,
-                    }) => {
-                      const dropdownStates = useDropdownStates();
-                      const formLogic = useFormLogic(values, setFieldValue);
+                    {/* Show TabHeader only when editing */}
+                    {isEditing && (
+                      <View style={{ marginBottom: scale(10) }}>
+                        <Text style={{
+                          fontSize: scale(18),
+                          fontWeight: 'bold',
+                          color: COLORS.BLACK,
+                          textAlign: 'center',
+                          marginBottom: scale(10)
+                        }}>
+                          Update Ledger Entry
+                        </Text>
+                        <Text style={{
+                          fontSize: scale(12),
+                          color: COLORS.BLACK,
+                          textAlign: 'center',
+                          marginBottom: scale(15)
+                        }}>
+                          Keep Records Accurate
+                        </Text>
+                        <TabHeader
+                          tabs={["Info", "Re-Name", "Re-Config", "Password", "Account"]}
+                          activeTab={activeTab}
+                          onTabPress={(idx) => setActiveTab(idx)}
+                          height={35}
+                          textStyle={{ fontSize: scale(8) }}
+                          containerStyle={{ marginHorizontal: 0, marginVertical: scale(5) }}
+                        />
+                      </View>
+                    )}
 
-                      // Sync group value with dropdown default for new ledgers
-                      React.useEffect(() => {
-                        if (!isEditing && dropdownStates.dropdownValue && !values.group) {
-                          setFieldValue('group', dropdownStates.dropdownValue);
-                        }
-                      }, [dropdownStates.dropdownValue, isEditing, values.group, setFieldValue]);
+                    <Formik
+                      key={selectedCompany?.id || 'new'}
+                      initialValues={{
+                        leadgerName: selectedCompany?.real_name || '',
+                        realName: selectedCompany?.real_name
+                          || '',
+                        capping: selectedCompany?.capping?.toString() || '',
+                        group: selectedCompany?.user_role?.id?.toString() || '',
+                        dhaniRate: selectedCompany?.dhai_rate?.toString() || '0',
+                        commission: selectedCompany?.dhai_rate_commission?.toString() || '0',
+                        harupRate: selectedCompany?.harup_rate?.toString() || '0',
+                        harupCommission: selectedCompany?.harup_rate_commission?.toString() || '0',
+                        wMode: selectedCompany?.work_mode?.id?.toString() || '1',
+                        username: selectedCompany?.username || '',
+                        password: '',
+                        agent: selectedCompany?.agent_user?.id?.toString() || '',
+                        mobile: selectedCompany?.mobile || '',
+                        address: selectedCompany?.address || '',
+                        // Map API arrays into form-friendly shapes
+                        tpCommissions: Array.isArray(selectedCompany?.third_party_commission)
+                          ? selectedCompany.third_party_commission.map((item: any) => ({
+                            partyName: getLedgerNameById(item.third_party_commission_userid),
+                            partyId: item.third_party_commission_userid?.toString?.() || '',
+                            dComm: item.third_party_commission_dhai?.toString?.() || '',
+                            hComm: item.third_party_commission_harup?.toString?.() || '',
+                          }))
+                          : [],
+                        wapsi: selectedCompany?.wapsi?.toString() || '0',
+                        tpWapsi: Array.isArray(selectedCompany?.third_party_wapsi)
+                          ? selectedCompany.third_party_wapsi.map((item: any) => ({
+                            partyName: getLedgerNameById(item.third_party_wapsi_userid),
+                            partyId: item.third_party_wapsi_userid?.toString?.() || '',
+                            wapsiAmount: item.third_party_wapsi?.toString?.() || '',
+                          }))
+                          : [],
+                        tpPatti: Array.isArray(selectedCompany?.patti)
+                          ? selectedCompany.patti.map((item: any) => ({
+                            partyName: getLedgerNameById(item.patti_userid),
+                            partyId: item.patti_userid?.toString?.() || '',
+                            percentage: item.patti_percentage?.toString?.() || '',
+                          }))
+                          : [],
+                        distributor: selectedCompany?.distributer_user_id?.toString() || '',
+                        limit: selectedCompany?.limit?.toString() || '0',
+                        grantorName: selectedCompany?.grantor_name || '',
+                      }}
+                      validationSchema={LedgerSchema}
+                      onSubmit={handleFormSubmit}
+                    >
+                      {({
+                        handleChange,
+                        handleSubmit,
+                        values,
+                        errors,
+                        touched,
+                        setFieldValue,
+                      }) => {
+                        const dropdownStates = useDropdownStates();
+                        const formLogic = useFormLogic(values, setFieldValue);
 
-                      // Set agent dropdown value when editing
-                      React.useEffect(() => {
-                        if (selectedCompany?.agent_user?.id && dropdownStates.dropdownItems3.length > 0) {
-                          const agentValue = selectedCompany.agent_user.id.toString();
-                          dropdownStates.setDropdownValue3(agentValue);
-                        }
-                      }, [selectedCompany?.agent_user?.id, dropdownStates.dropdownItems3]);
+                        // Sync group value with dropdown default for new ledgers
+                        React.useEffect(() => {
+                          if (!isEditing && dropdownStates.dropdownValue && !values.group) {
+                            setFieldValue('group', dropdownStates.dropdownValue);
+                          }
+                        }, [dropdownStates.dropdownValue, isEditing, values.group, setFieldValue]);
 
-                      // Clear all dropdowns when shouldClearDropdowns is true
-                      React.useEffect(() => {
-                        if (shouldClearDropdowns) {
-                          dropdownStates.clearAllDropdownStates();
-                          setShouldClearDropdowns(false);
-                        }
-                      }, [shouldClearDropdowns, dropdownStates]);
+                        // Set agent dropdown value when editing
+                        React.useEffect(() => {
+                          if (selectedCompany?.agent_user?.id && dropdownStates.dropdownItems3.length > 0) {
+                            const agentValue = selectedCompany.agent_user.id.toString();
+                            dropdownStates.setDropdownValue3(agentValue);
+                          }
+                        }, [selectedCompany?.agent_user?.id, dropdownStates.dropdownItems3]);
 
-                      // Debug: Log form values when they change
-                      React.useEffect(() => {
-                        console.log('Form values changed:', values);
-                        console.log('Agent value in form:', values.agent);
-                      }, [values]);
+                        // Clear all dropdowns when shouldClearDropdowns is true
+                        React.useEffect(() => {
+                          if (shouldClearDropdowns) {
+                            dropdownStates.clearAllDropdownStates();
+                            setShouldClearDropdowns(false);
+                          }
+                        }, [shouldClearDropdowns, dropdownStates]);
 
-                      // Fetch password when Password tab is opened during edit
-                      React.useEffect(() => {
-                        const fetchPassword = async () => {
-                          // Only fetch if: editing mode, Password tab is active, username exists, and we haven't fetched for this username yet
-                          if (isEditing && activeTab === 3 && selectedCompany?.username) {
-                            // Check if we've already fetched password for this username
-                            if (passwordFetchedRef.current === selectedCompany.username && values.password) {
-                              return; // Already fetched and password is set
-                            }
+                        // Debug: Log form values when they change
+                        React.useEffect(() => {
+                          console.log('Form values changed:', values);
+                          console.log('Agent value in form:', values.agent);
+                        }, [values]);
 
-                            try {
-                              setPasswordLoading(true);
-                              // API expects (params, userName) - pass empty object as first param, username as second
-                              const response = await APIService.getPassword({}, selectedCompany.username);
-                              if (response?.success && response?.data) {
-                                setFieldValue('password', response.data);
-                                passwordFetchedRef.current = selectedCompany.username; // Mark as fetched
-                                Toast.show({
-                                  type: 'success',
-                                  text1: 'Success',
-                                  text2: 'Password generated successfully',
-                                  position: 'bottom',
-                                });
-                              } else {
+                        // Fetch password when Password tab is opened during edit
+                        React.useEffect(() => {
+                          const fetchPassword = async () => {
+                            // Only fetch if: editing mode, Password tab is active, username exists, and we haven't fetched for this username yet
+                            if (isEditing && activeTab === 3 && selectedCompany?.username) {
+                              // Check if we've already fetched password for this username
+                              if (passwordFetchedRef.current === selectedCompany.username && values.password) {
+                                return; // Already fetched and password is set
+                              }
+
+                              try {
+                                setPasswordLoading(true);
+                                // API expects (params, userName) - pass empty object as first param, username as second
+                                const response = await APIService.getPassword({}, selectedCompany.username);
+                                if (response?.success && response?.data) {
+                                  setFieldValue('password', response.data);
+                                  passwordFetchedRef.current = selectedCompany.username; // Mark as fetched
+                                  Toast.show({
+                                    type: 'success',
+                                    text1: 'Success',
+                                    text2: 'Password generated successfully',
+                                    position: 'bottom',
+                                  });
+                                } else {
+                                  Toast.show({
+                                    type: 'error',
+                                    text1: 'Error',
+                                    text2: response?.message || 'Failed to generate password',
+                                    position: 'bottom',
+                                  });
+                                }
+                              } catch (error: any) {
+                                console.error('Get password failed', error);
                                 Toast.show({
                                   type: 'error',
                                   text1: 'Error',
-                                  text2: response?.message || 'Failed to generate password',
+                                  text2: error?.response?.data?.message || error?.message || 'Failed to generate password',
                                   position: 'bottom',
                                 });
+                              } finally {
+                                setPasswordLoading(false);
                               }
-                            } catch (error: any) {
-                              console.error('Get password failed', error);
-                              Toast.show({
-                                type: 'error',
-                                text1: 'Error',
-                                text2: error?.response?.data?.message || error?.message || 'Failed to generate password',
-                                position: 'bottom',
-                              });
-                            } finally {
-                              setPasswordLoading(false);
                             }
-                          }
-                        };
-                        fetchPassword();
-                      }, [isEditing, activeTab, selectedCompany?.username, setFieldValue, values.password]);
-                      const tpCommission = useTPCommission(
-                        values,
-                        setFieldValue,
-                        formLogic.editingTPIndex,
-                      );
+                          };
+                          fetchPassword();
+                        }, [isEditing, activeTab, selectedCompany?.username, setFieldValue, values.password]);
+                        const tpCommission = useTPCommission(
+                          values,
+                          setFieldValue,
+                          formLogic.editingTPIndex,
+                        );
 
-                      const tpWapsi = useTPWapsi(
-                        values,
-                        setFieldValue,
-                        formLogic.editingTPWapsiIndex,
-                        formLogic.setEditingTPWapsiIndex,
-                      );
-                      const tpPatti = useTPPatti(
-                        values,
-                        setFieldValue,
-                        formLogic.editingPattiIndex,
-                        formLogic.setEditingPattiIndex,
-                      );
+                        const tpWapsi = useTPWapsi(
+                          values,
+                          setFieldValue,
+                          formLogic.editingTPWapsiIndex,
+                          formLogic.setEditingTPWapsiIndex,
+                        );
+                        const tpPatti = useTPPatti(
+                          values,
+                          setFieldValue,
+                          formLogic.editingPattiIndex,
+                          formLogic.setEditingPattiIndex,
+                        );
 
-                      return (
-                        <View style={{ marginBottom: scale(30) }}>
-                          {/* Show content based on active tab when editing */}
-                          {isEditing ? (
-                            <>
-                              {activeTab === 0 && (
-                                <View>
-                                  {/* Info tab - Read-only ledger data display */}
-                                  <View style={style.infoContainer}>
-                                    {/* First Row */}
-                                    <View style={style.infoRow}>
-                                      <View style={style.infoField}>
-                                        <Text style={style.infoLabel}>Distributor</Text>
-                                        <TextInput
-                                          style={[style.infoInput, style.disabledInput]}
-                                          value={values.distributor}
-                                          editable={false}
-                                          placeholder=""
-                                        />
+                        return (
+                          <View style={{ marginBottom: scale(30) }}>
+                            {/* Show content based on active tab when editing */}
+                            {isEditing ? (
+                              <>
+                                {activeTab === 0 && (
+                                  <View>
+                                    {/* Info tab - Read-only ledger data display */}
+                                    <View style={style.infoContainer}>
+                                      {/* First Row */}
+                                      <View style={style.infoRow}>
+                                        <View style={style.infoField}>
+                                          <Text style={style.infoLabel}>Distributor</Text>
+                                          <TextInput
+                                            style={[style.infoInput, style.disabledInput]}
+                                            value={values.distributor}
+                                            editable={false}
+                                            placeholder=""
+                                          />
+                                        </View>
+                                        <View style={style.infoField}>
+                                          <Text style={style.infoLabel}>Rate</Text>
+                                          <TextInput
+                                            style={[style.infoInput, style.disabledInput]}
+                                            value={`${values.dhaniRate || '0'}/${values.harupRate || '0'} ${values.commission || '0'}/${values.harupCommission || '0'}`}
+                                            editable={false}
+                                            placeholder=""
+                                          />
+                                        </View>
+                                        <View style={style.infoField}>
+                                          <Text style={style.infoLabel}>Wapsi</Text>
+                                          <TextInput
+                                            style={[style.infoInput, style.disabledInput]}
+                                            value={values.wapsi || '0'}
+                                            editable={false}
+                                            placeholder=""
+                                          />
+                                        </View>
+                                        <View style={style.infoField}>
+                                          <Text style={style.infoLabel}>3rd Party Commission</Text>
+                                          <TextInput
+                                            style={[style.infoInput, style.disabledInput]}
+                                            value={Array.isArray(values.tpCommissions) && values.tpCommissions.length > 0 ? 'D-O/H-O | Active' : 'D-O/H-O | -- 0/0'}
+                                            editable={false}
+                                          />
+                                        </View>
                                       </View>
-                                      <View style={style.infoField}>
-                                        <Text style={style.infoLabel}>Rate</Text>
-                                        <TextInput
-                                          style={[style.infoInput, style.disabledInput]}
-                                          value={`${values.dhaniRate || '0'}/${values.harupRate || '0'} ${values.commission || '0'}/${values.harupCommission || '0'}`}
-                                          editable={false}
-                                          placeholder=""
-                                        />
-                                      </View>
-                                      <View style={style.infoField}>
-                                        <Text style={style.infoLabel}>Wapsi</Text>
-                                        <TextInput
-                                          style={[style.infoInput, style.disabledInput]}
-                                          value={values.wapsi || '0'}
-                                          editable={false}
-                                          placeholder=""
-                                        />
-                                      </View>
-                                      <View style={style.infoField}>
-                                        <Text style={style.infoLabel}>3rd Party Commission</Text>
-                                        <TextInput
-                                          style={[style.infoInput, style.disabledInput]}
-                                          value={Array.isArray(values.tpCommissions) && values.tpCommissions.length > 0 ? 'D-O/H-O | Active' : 'D-O/H-O | -- 0/0'}
-                                          editable={false}
-                                        />
-                                      </View>
-                                    </View>
 
-                                    {/* Second Row */}
-                                    <View style={style.infoRow}>
-                                      <View style={style.infoField}>
-                                        <Text style={style.infoLabel}>Limit</Text>
-                                        <TextInput
-                                          style={[style.infoInput, style.disabledInput]}
-                                          value={values.capping || '0'}
-                                          editable={false}
-                                          placeholder=""
-                                        />
+                                      {/* Second Row */}
+                                      <View style={style.infoRow}>
+                                        <View style={style.infoField}>
+                                          <Text style={style.infoLabel}>Limit</Text>
+                                          <TextInput
+                                            style={[style.infoInput, style.disabledInput]}
+                                            value={values.capping || '0'}
+                                            editable={false}
+                                            placeholder=""
+                                          />
+                                        </View>
+                                        <View style={style.infoField}>
+                                          <Text style={style.infoLabel}>Agent</Text>
+                                          <TextInput
+                                            style={[style.infoInput, style.disabledInput]}
+                                            value={selectedCompany?.agent_user?.name}
+                                            editable={false}
+                                            placeholder=""
+                                          />
+                                        </View>
+                                        <View style={style.infoField}>
+                                          <Text style={style.infoLabel}>Real Name</Text>
+                                          <TextInput
+                                            style={[style.infoInput, style.disabledInput]}
+                                            value={values.realName}
+                                            editable={false}
+                                          />
+                                        </View>
+                                        <View style={style.infoField}>
+                                          <Text style={style.infoLabel}>3rd Party Wapsi</Text>
+                                          <TextInput
+                                            style={[style.infoInput, style.disabledInput]}
+                                            value={Array.isArray(values.tpWapsi) && values.tpWapsi.length > 0 ? 'Active 0%' : '0%'}
+                                            editable={false}
+                                            placeholder=""
+                                          />
+                                        </View>
                                       </View>
-                                      <View style={style.infoField}>
-                                        <Text style={style.infoLabel}>Agent</Text>
-                                        <TextInput
-                                          style={[style.infoInput, style.disabledInput]}
-                                          value={selectedCompany?.agent_user?.name}
-                                          editable={false}
-                                          placeholder=""
-                                        />
-                                      </View>
-                                      <View style={style.infoField}>
-                                        <Text style={style.infoLabel}>Real Name</Text>
-                                        <TextInput
-                                          style={[style.infoInput, style.disabledInput]}
-                                          value={values.realName}
-                                          editable={false}
-                                        />
-                                      </View>
-                                      <View style={style.infoField}>
-                                        <Text style={style.infoLabel}>3rd Party Wapsi</Text>
-                                        <TextInput
-                                          style={[style.infoInput, style.disabledInput]}
-                                          value={Array.isArray(values.tpWapsi) && values.tpWapsi.length > 0 ? 'Active 0%' : '0%'}
-                                          editable={false}
-                                          placeholder=""
-                                        />
-                                      </View>
-                                    </View>
 
-                                    {/* Third Row */}
-                                    <View style={style.infoRow}>
-                                      <View style={style.infoField}>
-                                        <Text style={style.infoLabel}>Grantor</Text>
-                                        <TextInput
-                                          placeholder=''
-                                          placeholderTextColor="#888"
-                                          style={[style.infoInput, style.disabledInput]}
-                                          value={values.grantorName}
-                                          editable={false}
-                                        />
-                                      </View>
-                                      <View style={style.infoField}>
-                                        <Text style={style.infoLabel}>Mobile</Text>
-                                        <TextInput
-                                          placeholder='Mobile'
-                                          style={[style.infoInput, style.disabledInput]}
-                                          value={values.mobile}
-                                          editable={false}
-                                        />
-                                      </View>
-                                      <View style={style.infoField}>
-                                        <Text style={style.infoLabel}>Address</Text>
-                                        <TextInput
-                                          placeholder='Address'
-                                          style={[style.infoInput, style.disabledInput]}
-                                          value={values.address}
-                                          editable={false}
-                                        />
-                                      </View>
-                                      <View style={style.infoField}>
-                                        <Text style={style.infoLabel}>Patti</Text>
-                                        <TextInput
-                                          style={[style.infoInput, style.disabledInput]}
-                                          value={Array.isArray(values.tpPatti) && values.tpPatti.length > 0 ? 'Active' : '--'}
-                                          editable={false}
-                                          placeholder="Patti"
-                                        />
+                                      {/* Third Row */}
+                                      <View style={style.infoRow}>
+                                        <View style={style.infoField}>
+                                          <Text style={style.infoLabel}>Grantor</Text>
+                                          <TextInput
+                                            placeholder=''
+                                            placeholderTextColor="#888"
+                                            style={[style.infoInput, style.disabledInput]}
+                                            value={values.grantorName}
+                                            editable={false}
+                                          />
+                                        </View>
+                                        <View style={style.infoField}>
+                                          <Text style={style.infoLabel}>Mobile</Text>
+                                          <TextInput
+                                            placeholder='Mobile'
+                                            style={[style.infoInput, style.disabledInput]}
+                                            value={values.mobile}
+                                            editable={false}
+                                          />
+                                        </View>
+                                        <View style={style.infoField}>
+                                          <Text style={style.infoLabel}>Address</Text>
+                                          <TextInput
+                                            placeholder='Address'
+                                            style={[style.infoInput, style.disabledInput]}
+                                            value={values.address}
+                                            editable={false}
+                                          />
+                                        </View>
+                                        <View style={style.infoField}>
+                                          <Text style={style.infoLabel}>Patti</Text>
+                                          <TextInput
+                                            style={[style.infoInput, style.disabledInput]}
+                                            value={Array.isArray(values.tpPatti) && values.tpPatti.length > 0 ? 'Active' : '--'}
+                                            editable={false}
+                                            placeholder="Patti"
+                                          />
+                                        </View>
                                       </View>
                                     </View>
                                   </View>
-                                </View>
-                              )}
+                                )}
 
-                              {activeTab === 1 && (
-                                <View>
-                                  <CustomTextInput
-                                    label="Ledger Name"
-                                    value={values.leadgerName}
-                                    onChangeText={handleChange('leadgerName')}
-                                    onFocus={() => setFocusedField(null)}
-                                    returnKeyType="done"
-                                    onSubmitEditing={() => handleSubmit()}
-                                  />
-                                </View>
-                              )}
+                                {activeTab === 1 && (
+                                  <View>
+                                    <CustomTextInput
+                                      label="Ledger Name"
+                                      value={values.leadgerName}
+                                      onChangeText={handleChange('leadgerName')}
+                                      onFocus={() => setFocusedField(null)}
+                                      returnKeyType="done"
+                                      onSubmitEditing={() => handleSubmit()}
+                                    />
+                                  </View>
+                                )}
 
-                              {activeTab === 2 && (
-                                <View>
-                                  {/* Re-Config tab - Same layout as Create Ledger */}
+                                {activeTab === 2 && (
+                                  <View>
+                                    {/* Re-Config tab - Same layout as Create Ledger */}
 
 
-                                  <RateCommissionFields
-                                    values={values}
-                                    errors={errors}
-                                    touched={touched}
-                                    handleChange={handleChange}
-                                    formLogic={formLogic}
-                                    inputRefs={inputRefs}
-                                    setFocusedField={setFocusedField}
-                                  />
+                                    <RateCommissionFields
+                                      values={values}
+                                      errors={errors}
+                                      touched={touched}
+                                      handleChange={handleChange}
+                                      formLogic={formLogic}
+                                      inputRefs={inputRefs}
+                                      setFocusedField={setFocusedField}
+                                    />
 
-                                  <TPCommissionSection
-                                    values={values}
-                                    tpCommission={tpCommission}
-                                    formLogic={formLogic}
-                                    dropdownItemsParty={dropdownStates.dropdownItemsParty}
-                                    setDropdownValueParty={
-                                      dropdownStates.setDropdownValueParty
-                                    }
-                                  />
+                                    <TPCommissionSection
+                                      values={values}
+                                      tpCommission={tpCommission}
+                                      formLogic={formLogic}
+                                      dropdownItemsParty={dropdownStates.dropdownItemsParty}
+                                      setDropdownValueParty={
+                                        dropdownStates.setDropdownValueParty
+                                      }
+                                    />
 
-                                  <WapsiSection
-                                    values={values}
-                                    errors={errors}
-                                    touched={touched}
-                                    handleChange={handleChange}
-                                    tpWapsi={tpWapsi}
-                                    formLogic={formLogic}
-                                    inputRefs={inputRefs}
-                                    setFocusedField={setFocusedField}
-                                  />
+                                    <WapsiSection
+                                      values={values}
+                                      errors={errors}
+                                      touched={touched}
+                                      handleChange={handleChange}
+                                      tpWapsi={tpWapsi}
+                                      formLogic={formLogic}
+                                      inputRefs={inputRefs}
+                                      setFocusedField={setFocusedField}
+                                    />
 
-                                  <PattiSection
-                                    values={values}
-                                    tpPatti={tpPatti}
-                                    formLogic={formLogic}
-                                    allLedgers={getData}
-                                  />
-                                </View>
-                              )}
+                                    <PattiSection
+                                      values={values}
+                                      tpPatti={tpPatti}
+                                      formLogic={formLogic}
+                                      allLedgers={getData}
+                                    />
+                                  </View>
+                                )}
 
-                              {activeTab === 3 && (
-                                <View>
-                                  <CustomTextInput
-                                    label="Password"
-                                    value={values.password}
-                                    onChangeText={handleChange('password')}
-                                    secureTextEntry={false}
-                                    editable={!passwordLoading}
-                                    onFocus={() => setFocusedField(null)}
-                                    returnKeyType="done"
-                                    onSubmitEditing={() => handleSubmit()}
-                                  />
-                                  {passwordLoading && (
-                                    <View style={{ marginTop: scale(10), alignItems: 'center' }}>
-                                      <ActivityIndicator size="small" color={COLORS.BLACK} />
-                                      <Text style={{ marginTop: scale(5), fontSize: scale(12), color: COLORS.BLACK }}>
-                                        Generating password...
-                                      </Text>
-                                    </View>
-                                  )}
-                                </View>
-                              )}
-
-                              {activeTab === 4 && (
-                                <View>
-                                  {/* Account tab - 4 status buttons */}
-                                  <View style={style.accountContainer}>
-                                    {/* Login Status Button */}
-                                    <View style={style.buttonContainer}>
-                                      <Text style={style.buttonLabel}>Login Status</Text>
-                                      <TouchableOpacity
-                                        style={[
-                                          style.statusButton,
-                                          accountStatus.isLocked ? style.inactiveButton : style.activeButton
-                                        ]}
-                                        onPress={() => handleLoginStatusToggle()}
-                                        disabled={buttonLoading.loginStatus}
-                                      >
-                                        <Text style={[
-                                          style.buttonText,
-                                          accountStatus.isLocked ? style.inactiveButtonText : style.activeButtonText
-                                        ]}>
-                                          {accountStatus.isLocked ? 'Inactive' : 'Active'}
+                                {activeTab === 3 && (
+                                  <View>
+                                    <CustomTextInput
+                                      label="Password"
+                                      value={values.password}
+                                      onChangeText={handleChange('password')}
+                                      secureTextEntry={false}
+                                      editable={!passwordLoading}
+                                      onFocus={() => setFocusedField(null)}
+                                      returnKeyType="done"
+                                      onSubmitEditing={() => handleSubmit()}
+                                    />
+                                    {passwordLoading && (
+                                      <View style={{ marginTop: scale(10), alignItems: 'center' }}>
+                                        <ActivityIndicator size="small" color={COLORS.BLACK} />
+                                        <Text style={{ marginTop: scale(5), fontSize: scale(12), color: COLORS.BLACK }}>
+                                          Generating password...
                                         </Text>
-                                        {buttonLoading.loginStatus && <ActivityIndicator size="small" color="#FFF" style={{ marginLeft: 8 }} />}
-                                      </TouchableOpacity>
-                                    </View>
+                                      </View>
+                                    )}
+                                  </View>
+                                )}
 
-                                    {/* Account Status Button */}
-                                    <View style={style.buttonContainer}>
-                                      <Text style={style.buttonLabel}>Account Status</Text>
-                                      <TouchableOpacity
-                                        style={[
-                                          style.statusButton,
-                                          accountStatus.isDeactivated ? style.inactiveButton : style.activeButton
-                                        ]}
-                                        onPress={() => handleAccountStatusToggle()}
-                                        disabled={buttonLoading.accountStatus}
-                                      >
-                                        <Text style={[
-                                          style.buttonText,
-                                          accountStatus.isDeactivated ? style.inactiveButtonText : style.activeButtonText
-                                        ]}>
-                                          {accountStatus.isDeactivated ? 'Inactive' : 'Active'}
-                                        </Text>
-                                        {buttonLoading.accountStatus && <ActivityIndicator size="small" color="#FFF" style={{ marginLeft: 8 }} />}
-                                      </TouchableOpacity>
-                                    </View>
+                                {activeTab === 4 && (
+                                  <View>
+                                    {/* Account tab - 4 status buttons */}
+                                    <View style={style.accountContainer}>
+                                      {/* Login Status Button */}
+                                      <View style={style.buttonContainer}>
+                                        <Text style={style.buttonLabel}>Login Status</Text>
+                                        <TouchableOpacity
+                                          style={[
+                                            style.statusButton,
+                                            accountStatus.isLocked ? style.inactiveButton : style.activeButton
+                                          ]}
+                                          onPress={() => handleLoginStatusToggle()}
+                                          disabled={buttonLoading.loginStatus}
+                                        >
+                                          <Text style={[
+                                            style.buttonText,
+                                            accountStatus.isLocked ? style.inactiveButtonText : style.activeButtonText
+                                          ]}>
+                                            {accountStatus.isLocked ? 'Inactive' : 'Active'}
+                                          </Text>
+                                          {buttonLoading.loginStatus && <ActivityIndicator size="small" color="#FFF" style={{ marginLeft: 8 }} />}
+                                        </TouchableOpacity>
+                                      </View>
 
-                                    {/* Is Hide Button */}
-                                    <View style={style.buttonContainer}>
-                                      <Text style={style.buttonLabel}>Is Hide</Text>
-                                      <TouchableOpacity
-                                        style={[
-                                          style.statusButton,
-                                          accountStatus.isHidden ? style.hiddenButton : style.visibleButton
-                                        ]}
-                                        onPress={() => handleHideToggle()}
-                                        disabled={buttonLoading.hideStatus}
-                                      >
-                                        <Text style={[
-                                          style.buttonText,
-                                          accountStatus.isHidden ? style.hiddenButtonText : style.visibleButtonText
-                                        ]}>
-                                          {accountStatus.isHidden ? 'Hidden' : 'Visible'}
-                                        </Text>
-                                        {buttonLoading.hideStatus && <ActivityIndicator size="small" color="#FFF" style={{ marginLeft: 8 }} />}
-                                      </TouchableOpacity>
-                                    </View>
+                                      {/* Account Status Button */}
+                                      <View style={style.buttonContainer}>
+                                        <Text style={style.buttonLabel}>Account Status</Text>
+                                        <TouchableOpacity
+                                          style={[
+                                            style.statusButton,
+                                            accountStatus.isDeactivated ? style.inactiveButton : style.activeButton
+                                          ]}
+                                          onPress={() => handleAccountStatusToggle()}
+                                          disabled={buttonLoading.accountStatus}
+                                        >
+                                          <Text style={[
+                                            style.buttonText,
+                                            accountStatus.isDeactivated ? style.inactiveButtonText : style.activeButtonText
+                                          ]}>
+                                            {accountStatus.isDeactivated ? 'Inactive' : 'Active'}
+                                          </Text>
+                                          {buttonLoading.accountStatus && <ActivityIndicator size="small" color="#FFF" style={{ marginLeft: 8 }} />}
+                                        </TouchableOpacity>
+                                      </View>
 
-                                    {/* Delete/Restore Button */}
-                                    <View style={style.buttonContainer}>
-                                      <Text style={style.buttonLabel}>Delete/Restore</Text>
-                                      <TouchableOpacity
-                                        style={[
-                                          style.statusButton,
-                                          accountStatus.isDeleted ? style.restoreButton : style.deleteButton
-                                        ]}
-                                        onPress={() => handleDeleteRestoreToggle()}
-                                        disabled={buttonLoading.deleteStatus}
-                                      >
-                                        <Text style={[
-                                          style.buttonText,
-                                          accountStatus.isDeleted ? style.restoreButtonText : style.deleteButtonText
-                                        ]}>
-                                          {accountStatus.isDeleted ? 'Restore' : 'Delete Now'}
-                                        </Text>
-                                        {buttonLoading.deleteStatus && <ActivityIndicator size="small" color="#FFF" style={{ marginLeft: 8 }} />}
-                                      </TouchableOpacity>
+                                      {/* Is Hide Button */}
+                                      <View style={style.buttonContainer}>
+                                        <Text style={style.buttonLabel}>Is Hide</Text>
+                                        <TouchableOpacity
+                                          style={[
+                                            style.statusButton,
+                                            accountStatus.isHidden ? style.hiddenButton : style.visibleButton
+                                          ]}
+                                          onPress={() => handleHideToggle()}
+                                          disabled={buttonLoading.hideStatus}
+                                        >
+                                          <Text style={[
+                                            style.buttonText,
+                                            accountStatus.isHidden ? style.hiddenButtonText : style.visibleButtonText
+                                          ]}>
+                                            {accountStatus.isHidden ? 'Hidden' : 'Visible'}
+                                          </Text>
+                                          {buttonLoading.hideStatus && <ActivityIndicator size="small" color="#FFF" style={{ marginLeft: 8 }} />}
+                                        </TouchableOpacity>
+                                      </View>
+
+                                      {/* Delete/Restore Button */}
+                                      <View style={style.buttonContainer}>
+                                        <Text style={style.buttonLabel}>Delete/Restore</Text>
+                                        <TouchableOpacity
+                                          style={[
+                                            style.statusButton,
+                                            accountStatus.isDeleted ? style.restoreButton : style.deleteButton
+                                          ]}
+                                          onPress={() => handleDeleteRestoreToggle()}
+                                          disabled={buttonLoading.deleteStatus}
+                                        >
+                                          <Text style={[
+                                            style.buttonText,
+                                            accountStatus.isDeleted ? style.restoreButtonText : style.deleteButtonText
+                                          ]}>
+                                            {accountStatus.isDeleted ? 'Restore' : 'Delete Now'}
+                                          </Text>
+                                          {buttonLoading.deleteStatus && <ActivityIndicator size="small" color="#FFF" style={{ marginLeft: 8 }} />}
+                                        </TouchableOpacity>
+                                      </View>
                                     </View>
                                   </View>
-                                </View>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              {/* Show all form sections when adding new (not editing) */}
-                              <BasicFormFields
-                                values={values}
-                                errors={errors}
-                                touched={touched}
-                                handleChange={handleChange}
-                                dropdownProps={{ ...dropdownStates, setFieldValue }}
-                                inputRefs={inputRefs}
-                                focusedField={focusedField}
-                                setFocusedField={setFocusedField}
-                              />
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                {/* Show all form sections when adding new (not editing) */}
+                                <BasicFormFields
+                                  values={values}
+                                  errors={errors}
+                                  touched={touched}
+                                  handleChange={handleChange}
+                                  dropdownProps={{ ...dropdownStates, setFieldValue }}
+                                  inputRefs={inputRefs}
+                                  focusedField={focusedField}
+                                  setFocusedField={setFocusedField}
+                                />
 
-                              <RateCommissionFields
-                                values={values}
-                                errors={errors}
-                                touched={touched}
-                                handleChange={handleChange}
-                                formLogic={formLogic}
-                                inputRefs={inputRefs}
-                                setFocusedField={setFocusedField}
-                              />
+                                <RateCommissionFields
+                                  values={values}
+                                  errors={errors}
+                                  touched={touched}
+                                  handleChange={handleChange}
+                                  formLogic={formLogic}
+                                  inputRefs={inputRefs}
+                                  setFocusedField={setFocusedField}
+                                />
 
-                              <TPCommissionSection
-                                values={values}
-                                tpCommission={tpCommission}
-                                formLogic={formLogic}
-                                dropdownItemsParty={dropdownStates.dropdownItemsParty}
-                                setDropdownValueParty={
-                                  dropdownStates.setDropdownValueParty
-                                }
-                              />
+                                <TPCommissionSection
+                                  values={values}
+                                  tpCommission={tpCommission}
+                                  formLogic={formLogic}
+                                  dropdownItemsParty={dropdownStates.dropdownItemsParty}
+                                  setDropdownValueParty={
+                                    dropdownStates.setDropdownValueParty
+                                  }
+                                />
 
-                              <WapsiSection
-                                values={values}
-                                errors={errors}
-                                touched={touched}
-                                handleChange={handleChange}
-                                tpWapsi={tpWapsi}
-                                formLogic={formLogic}
-                                inputRefs={inputRefs}
-                                setFocusedField={setFocusedField}
-                              />
+                                <WapsiSection
+                                  values={values}
+                                  errors={errors}
+                                  touched={touched}
+                                  handleChange={handleChange}
+                                  tpWapsi={tpWapsi}
+                                  formLogic={formLogic}
+                                  inputRefs={inputRefs}
+                                  setFocusedField={setFocusedField}
+                                />
 
-                              <PattiSection
-                                values={values}
-                                tpPatti={tpPatti}
-                                formLogic={formLogic}
-                                allLedgers={getData}
-                              />
+                                <PattiSection
+                                  values={values}
+                                  tpPatti={tpPatti}
+                                  formLogic={formLogic}
+                                  allLedgers={getData}
+                                />
 
-                              <ContactAndAdditionalFields
-                                values={values}
-                                errors={errors}
-                                touched={touched}
-                                handleChange={handleChange}
-                                dropdownStates={dropdownStates}
-                                setFieldValue={setFieldValue}
-                                inputRefs={inputRefs}
-                                focusedField={focusedField}
-                                setFocusedField={setFocusedField}
-                              />
-                            </>
-                          )}
+                                <ContactAndAdditionalFields
+                                  values={values}
+                                  errors={errors}
+                                  touched={touched}
+                                  handleChange={handleChange}
+                                  dropdownStates={dropdownStates}
+                                  setFieldValue={setFieldValue}
+                                  inputRefs={inputRefs}
+                                  focusedField={focusedField}
+                                  setFocusedField={setFocusedField}
+                                />
+                              </>
+                            )}
 
-                          {/* Show save button only when editing and on Re-Config tab, or when adding new */}
-                          {((isEditing && activeTab === 2) || !isEditing) && (
-                            <CustomButton
-                              title={isEditing ? "Submit" : "Save"}
-                              onPress={handleSubmit}
-                              textColor={COLORS.BGFILESCOLOR}
+                            {/* Show save button only when editing and on Re-Config tab, or when adding new */}
+                            {((isEditing && activeTab === 2) || !isEditing) && (
+                              <CustomButton
+                                title={isEditing ? "Submit" : "Save"}
+                                onPress={handleSubmit}
+                                textColor={COLORS.BGFILESCOLOR}
+                              />
+                            )}
+
+                            {/* Show submit button for other tabs when editing */}
+                            {isEditing && activeTab !== 2 && activeTab !== 4 && (
+                              <CustomButton
+                                title="Submit"
+                                onPress={handleSubmit}
+                                textColor={COLORS.BGFILESCOLOR}
+                              />
+                            )}
+
+                            {/* All modals with proper props */}
+                            <TPCommissionModal
+                              isOpen={tpCommission.isTPModalOpen}
+                              modalData={tpCommission.tpModalData}
+                              setModalData={tpCommission.setTpModalData}
+                              onClose={tpCommission.closeModal}
+                              onAdd={tpCommission.handleAddTPCommission}
+                              values={values}
+                              editingTPIndex={formLogic.editingTPIndex}
+                              dropdownProps={{
+                                openDropdownParty: dropdownStates.openDropdownParty,
+                                setOpenDropdownParty:
+                                  dropdownStates.setOpenDropdownParty,
+                                dropdownValueParty:
+                                  dropdownStates.dropdownValueParty,
+                                setDropdownValueParty:
+                                  dropdownStates.setDropdownValueParty,
+                                dropdownItemsParty:
+                                  dropdownStates.dropdownItemsParty,
+                                setDropdownItemsParty:
+                                  dropdownStates.setDropdownItemsParty,
+                                ledgerLoading: dropdownStates.ledgerLoading,
+                              }}
                             />
-                          )}
-
-                          {/* Show submit button for other tabs when editing */}
-                          {isEditing && activeTab !== 2 && activeTab !== 4 && (
-                            <CustomButton
-                              title="Submit"
-                              onPress={handleSubmit}
-                              textColor={COLORS.BGFILESCOLOR}
+                            <WapsiModal
+                              isOpen={tpWapsi.isTPWapsiModalOpen}
+                              modalData={tpWapsi.tpWapsiModalData}
+                              setModalData={tpWapsi.setTpWapsiModalData}
+                              onClose={tpWapsi.closeModal}
+                              onAdd={tpWapsi.handleAddTPWapsi}
+                              values={values}
+                              editingTPWapsiIndex={formLogic.editingTPWapsiIndex}
+                              calculateRemainingWapsi={
+                                tpWapsi.calculateRemainingWapsi
+                              }
+                              dropdownProps={{
+                                openDropdownWapsiParty:
+                                  dropdownStates.openDropdownWapsiParty,
+                                setOpenDropdownWapsiParty:
+                                  dropdownStates.setOpenDropdownWapsiParty,
+                                dropdownValueWapsiParty:
+                                  dropdownStates.dropdownValueWapsiParty,
+                                setDropdownValueWapsiParty:
+                                  dropdownStates.setDropdownValueWapsiParty,
+                                dropdownItemsWapsiParty:
+                                  dropdownStates.dropdownItemsWapsiParty,
+                                setDropdownItemsWapsiParty:
+                                  dropdownStates.setDropdownItemsWapsiParty,
+                                ledgerLoading: dropdownStates.ledgerLoading,
+                              }}
+                              onDelete={tpWapsi.handleDeleteTPWapsi}
                             />
-                          )}
-
-                          {/* All modals with proper props */}
-                          <TPCommissionModal
-                            isOpen={tpCommission.isTPModalOpen}
-                            modalData={tpCommission.tpModalData}
-                            setModalData={tpCommission.setTpModalData}
-                            onClose={tpCommission.closeModal}
-                            onAdd={tpCommission.handleAddTPCommission}
-                            values={values}
-                            editingTPIndex={formLogic.editingTPIndex}
-                            dropdownProps={{
-                              openDropdownParty: dropdownStates.openDropdownParty,
-                              setOpenDropdownParty:
-                                dropdownStates.setOpenDropdownParty,
-                              dropdownValueParty:
-                                dropdownStates.dropdownValueParty,
-                              setDropdownValueParty:
-                                dropdownStates.setDropdownValueParty,
-                              dropdownItemsParty:
-                                dropdownStates.dropdownItemsParty,
-                              setDropdownItemsParty:
-                                dropdownStates.setDropdownItemsParty,
-                              ledgerLoading: dropdownStates.ledgerLoading,
-                            }}
-                          />
-                          <WapsiModal
-                            isOpen={tpWapsi.isTPWapsiModalOpen}
-                            modalData={tpWapsi.tpWapsiModalData}
-                            setModalData={tpWapsi.setTpWapsiModalData}
-                            onClose={tpWapsi.closeModal}
-                            onAdd={tpWapsi.handleAddTPWapsi}
-                            values={values}
-                            editingTPWapsiIndex={formLogic.editingTPWapsiIndex}
-                            calculateRemainingWapsi={
-                              tpWapsi.calculateRemainingWapsi
-                            }
-                            dropdownProps={{
-                              openDropdownWapsiParty:
-                                dropdownStates.openDropdownWapsiParty,
-                              setOpenDropdownWapsiParty:
-                                dropdownStates.setOpenDropdownWapsiParty,
-                              dropdownValueWapsiParty:
-                                dropdownStates.dropdownValueWapsiParty,
-                              setDropdownValueWapsiParty:
-                                dropdownStates.setDropdownValueWapsiParty,
-                              dropdownItemsWapsiParty:
-                                dropdownStates.dropdownItemsWapsiParty,
-                              setDropdownItemsWapsiParty:
-                                dropdownStates.setDropdownItemsWapsiParty,
-                              ledgerLoading: dropdownStates.ledgerLoading,
-                            }}
-                            onDelete={tpWapsi.handleDeleteTPWapsi}
-                          />
-                          <PattiModal
-                            isOpen={tpPatti.isPattiModalOpen}
-                            modalData={tpPatti.pattiModalData}
-                            setModalData={tpPatti.setPattiModalData}
-                            onClose={tpPatti.closeModal}
-                            onAdd={tpPatti.handleAddPatti}
-                            values={values}
-                            editingPattiIndex={formLogic.editingPattiIndex}
-                            calculateRemainingPercentage={
-                              tpPatti.calculateRemainingPercentage
-                            }
-                            dropdownProps={{
-                              openDropdownPattiParty:
-                                dropdownStates.openDropdownPattiParty,
-                              setOpenDropdownPattiParty:
-                                dropdownStates.setOpenDropdownPattiParty,
-                              dropdownValuePattiParty:
-                                dropdownStates.dropdownValuePattiParty,
-                              setDropdownValuePattiParty:
-                                dropdownStates.setDropdownValuePattiParty,
-                              dropdownItemsPattiParty:
-                                dropdownStates.dropdownItemsPattiParty,
-                              setDropdownItemsPattiParty:
-                                dropdownStates.setDropdownItemsPattiParty,
-                              ledgerLoading: dropdownStates.ledgerLoading,
-                            }}
-                          />
-                        </View>
-                      );
-                    }}
-                  </Formik>
-                </BottomSheetScrollView>
-              </BottomSheet>
-            )}
-          </View>
-        </SafeAreaView>
-      </GradientBackground>
-    </GestureHandlerRootView>
+                            <PattiModal
+                              isOpen={tpPatti.isPattiModalOpen}
+                              modalData={tpPatti.pattiModalData}
+                              setModalData={tpPatti.setPattiModalData}
+                              onClose={tpPatti.closeModal}
+                              onAdd={tpPatti.handleAddPatti}
+                              values={values}
+                              editingPattiIndex={formLogic.editingPattiIndex}
+                              calculateRemainingPercentage={
+                                tpPatti.calculateRemainingPercentage
+                              }
+                              dropdownProps={{
+                                openDropdownPattiParty:
+                                  dropdownStates.openDropdownPattiParty,
+                                setOpenDropdownPattiParty:
+                                  dropdownStates.setOpenDropdownPattiParty,
+                                dropdownValuePattiParty:
+                                  dropdownStates.dropdownValuePattiParty,
+                                setDropdownValuePattiParty:
+                                  dropdownStates.setDropdownValuePattiParty,
+                                dropdownItemsPattiParty:
+                                  dropdownStates.dropdownItemsPattiParty,
+                                setDropdownItemsPattiParty:
+                                  dropdownStates.setDropdownItemsPattiParty,
+                                ledgerLoading: dropdownStates.ledgerLoading,
+                              }}
+                            />
+                          </View>
+                        );
+                      }}
+                    </Formik>
+                  </BottomSheetScrollView>
+                </BottomSheet>
+              )}
+            </View>
+          </SafeAreaView>
+        </GradientBackground>
+      </GestureHandlerRootView>
     </PermissionGuard>
   );
 };

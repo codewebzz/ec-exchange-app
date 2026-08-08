@@ -184,25 +184,50 @@ const DashboardScreen = ({ navigation }: any) => {
           >
             {isLedgerFanter && userDetails && (
               <View style={styles.userCard}>
-                <View style={styles.userAvatar}>
-                  <Text style={styles.userAvatarText}>
-                    {userName.charAt(0).toUpperCase()}
-                  </Text>
+                <View style={styles.userCardHeader}>
+                  <View style={styles.userAvatar}>
+                    <Text style={styles.userAvatarText}>
+                      {userName.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.userInfoContainer}>
+                    <Text style={styles.userName}>{userName}</Text>
+                    <View style={styles.roleBadge}>
+                      <Text style={styles.roleBadgeText}>
+                        Fanter
+                      </Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.changePasswordBtn}
+                    onPress={() => setChangePasswordVisible(true)}
+                  >
+                    <Icon name="key-outline" size={20} color="#4f46e5" />
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.userInfoContainer}>
-                  <Text style={styles.userName}>{userName}</Text>
-                  <View style={styles.roleBadge}>
-                    <Text style={styles.roleBadgeText}>
-                      Fanter
+
+                <View style={styles.userStatsContainer}>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statLabel}>Rate</Text>
+                    <Text style={styles.statValue}>
+                      {userDetails?.rate !== undefined && userDetails?.rate !== null ? userDetails.rate : '-'}
+                    </Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statBox}>
+                    <Text style={styles.statLabel}>Limit</Text>
+                    <Text style={styles.statValue}>
+                      {userDetails?.limit !== undefined && userDetails?.limit !== null ? userDetails.limit : '-'}
+                    </Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statBox}>
+                    <Text style={styles.statLabel}>Balance</Text>
+                    <Text style={styles.statValue}>
+                      {userDetails?.balance !== undefined && userDetails?.balance !== null ? userDetails.balance : '-'}
                     </Text>
                   </View>
                 </View>
-                <TouchableOpacity
-                  style={styles.changePasswordBtn}
-                  onPress={() => setChangePasswordVisible(true)}
-                >
-                  <Icon name="key-outline" size={20} color="#4f46e5" />
-                </TouchableOpacity>
               </View>
             )}
 
@@ -554,18 +579,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   userCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 14,
-    gap: 12,
     elevation: 2,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 6,
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  userCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   userAvatar: {
     width: 44,
@@ -607,5 +634,35 @@ const styles = StyleSheet.create({
     backgroundColor: '#eef2ff',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  userStatsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginTop: 12,
+  },
+  statBox: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#64748b',
+    marginBottom: 2,
+  },
+  statValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  statDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: '#e2e8f0',
   },
 });

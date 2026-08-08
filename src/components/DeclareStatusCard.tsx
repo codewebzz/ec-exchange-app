@@ -87,15 +87,23 @@ const DeclareStatusCard = ({
       return value;
     }
 
-    // Only try to parse as date if it's not a number and not an amount field
-    if (typeof value === 'string' && !isNaN(Date.parse(value)) && !key.toLowerCase().includes('amount')) {
-      const date = new Date(value);
-      if (key.toLowerCase().includes('time') || key.toLowerCase().includes('timestamp') ||
-        key.toLowerCase().includes('datetime') || key.toLowerCase().includes('created') ||
-        key.toLowerCase().includes('updated')) {
-        return date.toLocaleString();
+    // Only try to parse as date if it looks like an ISO date or the key suggests it's a date
+    if (typeof value === 'string' && !key.toLowerCase().includes('amount') && isNaN(Number(value))) {
+      const isDateKey = key.toLowerCase().includes('date') || 
+                        key.toLowerCase().includes('time') || 
+                        key.toLowerCase().includes('created') || 
+                        key.toLowerCase().includes('updated');
+      const isIsoDate = /^\d{4}-\d{2}-\d{2}/.test(value);
+      
+      if ((isDateKey || isIsoDate) && !isNaN(Date.parse(value))) {
+        const date = new Date(value);
+        if (key.toLowerCase().includes('time') || key.toLowerCase().includes('timestamp') ||
+          key.toLowerCase().includes('datetime') || key.toLowerCase().includes('created') ||
+          key.toLowerCase().includes('updated')) {
+          return date.toLocaleString();
+        }
+        return date.toLocaleDateString();
       }
-      return date.toLocaleDateString();
     }
 
     if (Array.isArray(value)) {
