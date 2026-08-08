@@ -4,8 +4,8 @@ import Toast from 'react-native-toast-message';
 import { reset } from '../../helper/NavigationService';
 import { GlobalLoaderController } from '../../context/GlobalLoaderContext';
 
-// const DEFAULT_BASE_URL = 'http://ec2-51-21-190-78.eu-north-1.compute.amazonaws.com:8000/';
-const DEFAULT_BASE_URL = 'https://jc110.online/';
+const DEFAULT_BASE_URL = 'http://ec2-51-21-190-78.eu-north-1.compute.amazonaws.com:8000/';
+// const DEFAULT_BASE_URL = 'https://jc110.online/';
 
 let axiosInstance: AxiosInstance = createAxiosInstance();
 let pendingRequestCount = 0;
