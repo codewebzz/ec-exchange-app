@@ -25,7 +25,7 @@ const DrawerSection = ({ title, icon, items, route, navigation }: any) => {
     if (hasSubItems) {
       setExpanded(!expanded);
     } else if (route) {
-      navigation.navigate(route);
+      navigation.navigate(route, { _key: Date.now() });
     }
   };
 
@@ -53,9 +53,9 @@ const DrawerSection = ({ title, icon, items, route, navigation }: any) => {
           style={styles.item}
           onPress={() => {
             if (typeof item.route === 'string') {
-              navigation.navigate(item.route);
+              navigation.navigate(item.route, { _key: Date.now() });
             } else if (typeof item.route === 'object' && item.route.name) {
-              navigation.navigate(item.route.name, item.route.params);
+              navigation.navigate(item.route.name, { ...item.route.params, _key: Date.now() });
             }
           }}
         >

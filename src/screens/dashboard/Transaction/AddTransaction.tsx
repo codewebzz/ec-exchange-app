@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Alert,
   Dimensions,
@@ -52,6 +52,13 @@ const AddTransaction = ({ navigation, route }: any) => {
   }
 
   const [allTransactions, setAllTransactions] = useState<any[]>([]);
+  const totalAmount = useMemo(() => {
+    if (!Array.isArray(allTransactions)) return 0;
+    return allTransactions.reduce((acc: number, cur: any) => {
+      const amt = typeof cur?.amount === 'string' ? parseFloat(cur.amount) : (Number(cur?.amount) || 0);
+      return acc + (isNaN(amt) ? 0 : amt);
+    }, 0);
+  }, [allTransactions]);
   const [shiftData, setShiftData] = useState<any>(null);
   const [randomModalVisible, setRandomModalVisible] = useState(false);
   const [crossModalVisible, setCrossModalVisible] = useState(false);
@@ -90,6 +97,8 @@ const AddTransaction = ({ navigation, route }: any) => {
   useEffect(() => {
     fetchLedgerData();
   }, []);
+
+  console.log("modedata", modeData)
 
   // Fetch shift details by ID
   useEffect(() => {
@@ -137,7 +146,7 @@ const AddTransaction = ({ navigation, route }: any) => {
             const fanterCheck = role === 'ledger_fanter' || role === 'fanter' || role === 'fantar' || (!!role && (role.includes('fanter') || role.includes('fantar')));
             setIsFanter(fanterCheck);
 
-            if (fanterCheck && transformedLedgers.length > 0 && !selectedLedger) {
+            if (fanterCheck && transformedLedgers.length > 0 && !selectedLedger && !editMode) {
               const firstLedger = transformedLedgers[0];
               if (firstLedger && firstLedger.value) {
                 setSelectedLedger(firstLedger.value);
@@ -164,12 +173,55 @@ const AddTransaction = ({ navigation, route }: any) => {
     }
   };
 
+  // Sync ledger metadata when ledgerData or selectedLedger changes
+  useEffect(() => {
+    if (selectedLedger && ledgerData.length > 0) {
+      const found = ledgerData.find((it: any) => it.value === selectedLedger.toString());
+      if (found?.meta) {
+        setRate(String(found.meta?.rate ?? ''));
+        setLimit(String(found.meta?.limit ?? ''));
+        setCap(String(found.meta?.capping ?? ''));
+        setSelectedLedgerPatti(found.meta?.patti ?? '');
+      }
+    }
+  }, [selectedLedger, ledgerData]);
+
+  // Reset state and params on unmount and blur
+  useEffect(() => {
+    const resetScreen = () => {
+      setAllTransactions([]);
+      setSelectedLedger('');
+      setSelectedMode('');
+      setModeData([]);
+      setRate('');
+      setLimit('');
+      setCap('');
+      setSelectedLedgerPatti('');
+      setShowJantri(false);
+      setLedgerOpen(false);
+      setModeOpen(false);
+      navigation.setParams({
+        editMode: false,
+        transactionData: null,
+        externalTransactions: undefined,
+        items: undefined,
+      });
+    };
+
+    const unsubscribe = navigation.addListener('blur', resetScreen);
+
+    return () => {
+      unsubscribe();
+      resetScreen();
+    };
+  }, [navigation]);
+
   // Fetch mode dropdown data
-  const fetchModeData = async (ledgerId: string) => {
+  const fetchModeData = async (ledgerId: string, preselectedMode?: string) => {
     try {
       setModeLoading(true);
+      console.log('Mode data ledger:', ledgerId, 'preselectedMode:', preselectedMode);
       const response = await APIService.GetLedgerTransactionModes(ledgerId);
-      console.log('Mode data response:', response);
 
       if (response && response.success && response.data && response.data.length > 0) {
         const transformedModes = response.data.map((item: any) => ({
@@ -177,12 +229,32 @@ const AddTransaction = ({ navigation, route }: any) => {
           value: item.id.toString(),
         }));
         setModeData(transformedModes);
-        setSelectedMode(response.data[0].id.toString());
+
+        const target = preselectedMode !== undefined && preselectedMode !== null && preselectedMode !== ''
+          ? preselectedMode.toString()
+          : '';
+
+        if (target) {
+          const match = transformedModes.find(
+            (m: any) =>
+              m.value === target ||
+              m.label?.toLowerCase() === target.toLowerCase()
+          );
+          if (match) {
+            setSelectedMode(match.value);
+          } else {
+            setSelectedMode(target);
+          }
+        } else {
+          setSelectedMode(transformedModes[0].value);
+        }
         console.log('Transformed mode items:', transformedModes);
       } else {
         console.log('No mode data found or API error');
         setModeData([]);
-        setSelectedMode('');
+        if (!preselectedMode) {
+          setSelectedMode('');
+        }
       }
     } catch (error) {
       console.error('Error fetching mode data:', error);
@@ -312,9 +384,18 @@ const AddTransaction = ({ navigation, route }: any) => {
   };
 
   useEffect(() => {
-    const incoming = Array.isArray(externalTransactions)
-      ? externalTransactions
-      : (Array.isArray(items) ? items : []);
+    let incoming: any[] = [];
+    if (Array.isArray(externalTransactions) && externalTransactions.length > 0) {
+      incoming = externalTransactions;
+    } else if (Array.isArray(items) && items.length > 0) {
+      incoming = items;
+    } else if (editMode && transactionData) {
+      if (Array.isArray(transactionData.transactions) && transactionData.transactions.length > 0) {
+        incoming = transactionData.transactions;
+      } else if (Array.isArray(transactionData.transaction_data) && transactionData.transaction_data.length > 0) {
+        incoming = transactionData.transaction_data;
+      }
+    }
 
     if (incoming.length > 0) {
       // Accept both {number, amount} and table rows with number/amount
@@ -331,16 +412,33 @@ const AddTransaction = ({ navigation, route }: any) => {
     }
 
     if (editMode && transactionData) {
-      // Prefill ledger, mode, shift, and transactions
-      setSelectedLedger(transactionData.ledger_id?.toString() || '');
-      setSelectedMode(transactionData.mode?.toString() || '');
+      const targetLedger = (
+        transactionData.ledger_id?.id ??
+        transactionData.ledger_info?.id ??
+        transactionData.ledger_id
+      )?.toString() || '';
 
-      if (transactionData.transaction_data) {
-        setAllTransactions(transactionData.transaction_data.map((t: any) => ({
-          ...t,
-          number: t.number?.toString() || '',
-          amount: t.amount?.toString() || '',
-        })));
+      const targetMode = (
+        transactionData.mode?.id ??
+        transactionData.mode_id ??
+        transactionData.mode ??
+        transactionData.groupType
+      )?.toString() || '';
+
+      setSelectedLedger(targetLedger);
+      setSelectedMode(targetMode);
+
+      if (targetLedger) {
+        fetchModeData(targetLedger, targetMode);
+      }
+
+      if (transactionData.ledger_info) {
+        if (transactionData.ledger_info.rate !== undefined) setRate(String(transactionData.ledger_info.rate ?? ''));
+        if (transactionData.ledger_info.limit !== undefined) setLimit(String(transactionData.ledger_info.limit ?? ''));
+        if (transactionData.ledger_info.capping !== undefined) setCap(String(transactionData.ledger_info.capping ?? ''));
+        if (transactionData.ledger_info.patti !== undefined) setSelectedLedgerPatti(String(transactionData.ledger_info.patti ?? ''));
+      } else if (transactionData.rate !== undefined) {
+        setRate(String(transactionData.rate ?? ''));
       }
     }
   }, [externalTransactions, items, editMode, transactionData]);
@@ -479,6 +577,68 @@ const AddTransaction = ({ navigation, route }: any) => {
               contentContainerStyle={styles.scrollContent}
               keyboardShouldPersistTaps="handled"
             >
+              {/* Shift Status Card (as in web ThirdSection) */}
+              {shiftData?.shift_name && (
+                <View style={[
+                  styles.shiftCard,
+                  shiftData?.is_declared ? styles.shiftCardDeclared : styles.shiftCardLive
+                ]}>
+                  <View style={styles.shiftCardContent}>
+                    <Text style={[
+                      styles.shiftCardName,
+                      shiftData?.is_declared ? styles.shiftCardNameDeclared : styles.shiftCardNameLive
+                    ]}>
+                      {shiftData.shift_name}
+                    </Text>
+                    <View style={[
+                      styles.shiftStatusBadge,
+                      shiftData?.is_declared ? styles.shiftStatusBadgeDeclared : styles.shiftStatusBadgeLive
+                    ]}>
+                      <Ionicons
+                        name={shiftData?.is_declared ? "checkmark-circle" : "time-outline"}
+                        size={scale(12)}
+                        color={COLORS.WHITE}
+                      />
+                      <Text style={styles.shiftStatusBadgeText}>
+                        {shiftData?.is_declared ? "Declared" : "Live"}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              {/* Grand Total Section (as in web ThirdSection) */}
+              <View style={styles.grandTotalCard}>
+                <View style={styles.grandTotalHeader}>
+                  <View style={styles.grandTotalHeaderLeft}>
+                    <Text style={styles.hashIconText}>#</Text>
+                    <Text style={styles.grandTotalHeaderText}>Grand Total</Text>
+                  </View>
+                  {allTransactions.length > 0 && (
+                    <View style={styles.grandTotalEntriesBadge}>
+                      <Text style={styles.grandTotalEntriesText}>
+                        {allTransactions.length} {allTransactions.length === 1 ? 'entry' : 'entries'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.grandTotalBody}>
+                  <View style={styles.grandTotalRow}>
+                    <View style={styles.grandTotalLabelContainer}>
+                      <View style={styles.rupeeIconCircle}>
+                        <Text style={styles.rupeeIconText}>₹</Text>
+                      </View>
+                      <Text style={styles.grandTotalLabel}>Total Amount</Text>
+                    </View>
+                    <View style={styles.grandTotalValueBadge}>
+                      <Text style={styles.grandTotalValueText}>
+                        {totalAmount || 0}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
               {showJantri ? (
                 <View style={styles.formSection}>
                   <JantriEmbedded
@@ -528,6 +688,7 @@ const AddTransaction = ({ navigation, route }: any) => {
 
                           // Fetch modes for the selected ledger
                           if (selectedVal) {
+                            setSelectedMode('');
                             fetchModeData(selectedVal);
                           } else {
                             setModeData([]);
@@ -776,6 +937,159 @@ const styles = StyleSheet.create({
   },
   formSection: {
     marginBottom: 0,
+  },
+  shiftCard: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    borderRadius: scale(10),
+    paddingHorizontal: scale(14),
+    paddingVertical: scale(10),
+    borderWidth: 1.5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  shiftCardLive: {
+    backgroundColor: '#FFF1F2',
+    borderColor: '#FDA4AF',
+  },
+  shiftCardDeclared: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#86EFAC',
+  },
+  shiftCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  shiftCardName: {
+    fontSize: scale(18),
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  shiftCardNameLive: {
+    color: '#9F1239',
+  },
+  shiftCardNameDeclared: {
+    color: '#166534',
+  },
+  shiftStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: scale(8),
+    paddingVertical: scale(4),
+    borderRadius: scale(12),
+    gap: scale(4),
+  },
+  shiftStatusBadgeLive: {
+    backgroundColor: '#E11D48',
+  },
+  shiftStatusBadgeDeclared: {
+    backgroundColor: '#16A34A',
+  },
+  shiftStatusBadgeText: {
+    color: '#FFFFFF',
+    fontSize: scale(11),
+    fontWeight: '700',
+  },
+  grandTotalCard: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 4,
+    borderRadius: scale(10),
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CFFAFE',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  grandTotalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(236, 254, 255, 0.5)',
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(8),
+    borderBottomWidth: 1,
+    borderBottomColor: '#CFFAFE',
+  },
+  grandTotalHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(6),
+  },
+  hashIconText: {
+    fontSize: scale(14),
+    fontWeight: '700',
+    color: '#06B6D4',
+  },
+  grandTotalHeaderText: {
+    fontSize: scale(13),
+    fontWeight: '600',
+    color: '#155E75',
+  },
+  grandTotalEntriesBadge: {
+    backgroundColor: 'rgba(6, 182, 212, 0.12)',
+    paddingHorizontal: scale(8),
+    paddingVertical: scale(2),
+    borderRadius: scale(12),
+  },
+  grandTotalEntriesText: {
+    fontSize: scale(11),
+    fontWeight: '600',
+    color: '#0E7490',
+  },
+  grandTotalBody: {
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(10),
+    backgroundColor: '#FFFFFF',
+  },
+  grandTotalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  grandTotalLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(6),
+  },
+  rupeeIconCircle: {
+    width: scale(20),
+    height: scale(20),
+    borderRadius: scale(10),
+    backgroundColor: 'rgba(6, 182, 212, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rupeeIconText: {
+    fontSize: scale(12),
+    fontWeight: '700',
+    color: '#0891B2',
+  },
+  grandTotalLabel: {
+    fontSize: scale(13),
+    color: '#0E7490',
+    fontWeight: '500',
+  },
+  grandTotalValueBadge: {
+    backgroundColor: 'rgba(236, 254, 255, 0.6)',
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(4),
+    borderRadius: scale(6),
+    borderWidth: 1,
+    borderColor: '#CFFAFE',
+  },
+  grandTotalValueText: {
+    fontSize: scale(16),
+    fontWeight: '700',
+    color: '#155E75',
   },
   selectionSection: {
     marginHorizontal: 16,

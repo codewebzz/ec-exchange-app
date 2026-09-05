@@ -330,12 +330,65 @@ const DeclareTransaction = ({ navigation }: any) => {
   };
 
   // Handle Edit Transaction
-  const handleEditTransaction = (item: any) => {
-    navigation.navigate('AddTransaction', {
-      editMode: true,
-      transactionData: item,
-      is_declared: true
-    });
+  const handleEditTransaction = async (item: any) => {
+    try {
+      setLoadingDetails(true);
+      const response = await APIService.GetTransactionData({}, item.id);
+      let detailedData: any[] = [];
+      const txData = response?.data || {};
+      if (response && response.success && txData && Array.isArray(txData.transactions)) {
+        detailedData = txData.transactions.map((t: any, idx: number) => ({
+          id: t.id ?? idx + 1,
+          number: t.number?.toString?.() || '',
+          amount: t.amount?.toString?.() || '0',
+          timestamp: new Date().toLocaleString(),
+        }));
+      }
+
+      const mergedTransactionData = {
+        ...item,
+        ...txData,
+        id: item.id || txData.id,
+        ledger_id:
+          txData.ledger_id?.id ??
+          txData.ledger_info?.id ??
+          txData.ledger_id ??
+          item.ledger_id ??
+          item.ledger_info?.id,
+        ledger_info: txData.ledger_info || item.ledger_info,
+        mode:
+          txData.mode?.id ??
+          txData.mode_id ??
+          txData.mode ??
+          item.mode_id ??
+          item.mode?.id ??
+          item.mode ??
+          item.groupType,
+        shift_id:
+          txData.shift_id?.id ??
+          txData.shift_id ??
+          item.shift_id ??
+          selectedShift,
+      };
+
+      navigation.navigate('AddTransaction', {
+        editMode: true,
+        transactionData: mergedTransactionData,
+        shiftId: mergedTransactionData.shift_id?.toString?.() || selectedShift,
+        externalTransactions: detailedData,
+        is_declared: true
+      });
+    } catch (error) {
+      console.error('Error preparing edit transaction:', error);
+      navigation.navigate('AddTransaction', {
+        editMode: true,
+        transactionData: item,
+        shiftId: item.shift_id?.toString?.() || selectedShift,
+        is_declared: true
+      });
+    } finally {
+      setLoadingDetails(false);
+    }
   };
 
   // Handle Delete Transaction
@@ -398,11 +451,17 @@ const DeclareTransaction = ({ navigation }: any) => {
           party: item.ledger_info?.real_name || '',
           rate: item.ledger_info?.rate || '',
           amount: `₹ ${item.transactions_total?.toLocaleString() || '0'}`,
-          groupType: item.mode?.name || '',
+          groupType: item.mode?.name || item.mode || '',
           addedBy: item.created_by || '',
           addedDate: new Date(item.created_at).toLocaleString('en-GB'),
           updatedBy: item.updated_by || '',
           updatedDate: new Date(item.updated_at).toLocaleString('en-GB'),
+          ledger_id: item.ledger_info?.id ?? item.ledger_id,
+          ledger_info: item.ledger_info,
+          mode: item.mode?.id ?? item.mode_id ?? item.mode,
+          mode_id: item.mode?.id ?? item.mode_id,
+          shift_id: item.shift_id?.id ?? item.shift_id,
+          rawData: item,
         }));
 
         setTableData(processedTableData);
@@ -603,9 +662,11 @@ const DeclareTransaction = ({ navigation }: any) => {
               onPress={() => {
                 console.log('Navigating to AddTransaction screen...');
                 navigation.navigate('AddTransaction', {
-                  items: tableData,
+                  editMode: false,
+                  transactionData: null,
+                  externalTransactions: [],
+                  items: [],
                   shiftId: selectedShift,
-                  externalTransactions: summaryTableData, // pass numbers if available
                   is_declared: true
                 });
               }}

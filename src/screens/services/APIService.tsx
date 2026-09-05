@@ -806,6 +806,19 @@ const APIService = {
       return { success: false, message: err?.message || 'Failed to fetch shift permissions' };
     }
   },
+
+  CheckAppVersion: async (platform: string, appVersion: string): Promise<any> => {
+    try {
+      const res = await AxiosService.get('api/app/is-latest', {
+        platform,
+        version: appVersion,
+      });
+      return res;
+    } catch (err: any) {
+      console.log('CheckAppVersion Error:', err?.response?.data || err.message);
+      throw err;
+    }
+  },
 };
 
 export default APIService;
