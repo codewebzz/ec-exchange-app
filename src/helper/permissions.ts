@@ -1,9 +1,5 @@
 export const PERMISSIONS = {
     // Dashboard Module
-    DASHBOARD_SHIFT_VIEW: {
-        value: "perm_dash01shift",
-        dependsOn: undefined
-    },
     DASHBOARD_RECENT_LEDGERS_VIEW: {
         value: "perm_dash02ledger",
         dependsOn: undefined

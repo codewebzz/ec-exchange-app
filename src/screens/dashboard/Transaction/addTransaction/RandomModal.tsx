@@ -23,6 +23,22 @@ interface RandomModalProps {
   title?: string;
 }
 
+const formatted = (num: string): string => {
+  if (num === "100") return "00";
+  if (/^\d$/.test(num)) return `0${num}`;
+  return num.padStart(2, "0");
+};
+
+// Reverse a number string
+const reverseNumber = (numStr: string): string => {
+  return numStr.padStart(2, "0").split('').reverse().join('');
+};
+
+const isSameDigits = (numStr: string): boolean => {
+  const f = formatted(numStr);
+  return f.length === 2 && f[0] === f[1];
+};
+
 const RandomModal: React.FC<RandomModalProps> = ({
   visible,
   onClose,
@@ -44,9 +60,10 @@ const RandomModal: React.FC<RandomModalProps> = ({
 
   // Calculate total amount (amount * number of valid entries)
   const validEntries = numberEntries.filter(entry => entry.number.trim());
+  const validPltEntries = validEntries.filter(entry => !isSameDigits(entry.number.trim()));
   const amountValue = parseFloat(amount) || 0;
   const pltAmountValue = parseFloat(pltAmount) || 0;
-  const totalAmount = (amountValue + pltAmountValue) * validEntries.length;
+  const totalAmount = amountValue * validEntries.length + pltAmountValue * validPltEntries.length;
 
   // Add new number entry
   const addNumberEntry = () => {
@@ -120,17 +137,6 @@ const RandomModal: React.FC<RandomModalProps> = ({
     ));
   };
 
-  const formatted = (num: string): string => {
-    if (num === "100") return "00";
-    if (/^\d$/.test(num)) return `0${num}`;
-    return num.padStart(2, "0");
-  };
-
-  // Reverse a number string
-  const reverseNumber = (numStr: string): string => {
-    return numStr.padStart(2, "0").split('').reverse().join('');
-  };
-
   // Generate transactions for QuickEntry
   const generateTransactions = () => {
     const transactions: any[] = [];
@@ -153,8 +159,8 @@ const RandomModal: React.FC<RandomModalProps> = ({
           });
         }
 
-        // PLT Amount transaction (for reversed number)
-        if (pltAmountValue > 0) {
+        // PLT Amount transaction (for reversed number, skip if both digits are same)
+        if (pltAmountValue > 0 && !isSameDigits(trimmed)) {
           const reversedNumber = reverseNumber(formattedNum);
           transactions.push({
             id: generateId(),

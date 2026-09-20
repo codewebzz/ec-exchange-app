@@ -24,11 +24,19 @@ const FromToModal = ({ visible, onClose, onSave, title = "From-To" }: any) => {
   const amountRef = React.useRef<TextInput>(null);
   const pltAmountRef = React.useRef<TextInput>(null);
 
+  // Helper to check if both digits of a number are the same (e.g. 00, 11, 22, 33, 44...)
+  const isSameDigits = (num: number | string): boolean => {
+    let str = num.toString().trim();
+    if (str === '100') return true;
+    str = str.padStart(2, '0');
+    return str.length === 2 && str[0] === str[1];
+  };
+
   // Function to reverse digits of a number
   const reverseNumber = (num: number): number => {
-    const str = num.toString();
+    const str = num.toString().padStart(2, '0');
     const reversed = str.split('').reverse().join('');
-    return parseInt(reversed);
+    return parseInt(reversed, 10);
   };
 
   // Calculate summary when inputs change
@@ -105,8 +113,8 @@ const FromToModal = ({ visible, onClose, onSave, title = "From-To" }: any) => {
         }
       });
 
-      // If PLT amount is specified, add transaction for reversed number
-      if (pltAmountNum > 0) {
+      // If PLT amount is specified, add transaction for reversed number (skip if both digits are same)
+      if (pltAmountNum > 0 && !isSameDigits(i)) {
         const reversedNumber = reverseNumber(i);
         transactions.push({
           id: `fromto_plt_${Date.now()}_${i}_${Math.random()}`,
@@ -146,7 +154,7 @@ const FromToModal = ({ visible, onClose, onSave, title = "From-To" }: any) => {
 
     for (let i = fromNum; i <= toNum; i++) {
       mainNumbers.push(i);
-      if (pltAmount) {
+      if (pltAmount && !isSameDigits(i)) {
         pltNumbers.push(reverseNumber(i));
       }
     }
@@ -274,7 +282,7 @@ const FromToModal = ({ visible, onClose, onSave, title = "From-To" }: any) => {
                 {pltAmount && (
                   <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Total PLT Amount</Text>
-                    <Text style={styles.summaryValue}>₹{(totalNumbers * parseFloat(pltAmount || 0)).toFixed(2)}</Text>
+                    <Text style={styles.summaryValue}>₹{(previewNumbers.plt.length * parseFloat(pltAmount || '0')).toFixed(2)}</Text>
                   </View>
                 )}
               </View>

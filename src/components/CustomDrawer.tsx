@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,11 @@ import { DrawerContentScrollView } from '@react-navigation/drawer';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { scale } from 'react-native-size-matters';
 import { COLORS } from '../assets/colors';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { clearAuth } from '../redux/reducers/authToken';
+import { clearUserDetails, fetchUserDetails } from '../redux/reducers/userSlice';
+import { clearPermissions } from '../redux/reducers/permissionsSlice';
+import { clearShiftPermissions } from '../redux/reducers/shiftPermissionsSlice';
 import { usePermissions } from '../hooks/usePermissions';
 import { PERMISSIONS } from '../helper/permissions';
 
@@ -70,6 +73,23 @@ const CustomDrawer = (props: any) => {
   const dispatch = useDispatch();
   const { hasPermission } = usePermissions();
   const [changePasswordVisible, setChangePasswordVisible] = useState(false);
+
+  const userDetails = useSelector((state: any) => state?.user?.userDetails);
+  const token = useSelector((state: any) => state?.authorization?.token);
+
+  useEffect(() => {
+    if (!userDetails && token) {
+      dispatch(fetchUserDetails() as any);
+    }
+  }, [userDetails, token, dispatch]);
+
+  const userRole = (typeof userDetails?.user_role === 'object'
+    ? userDetails?.user_role?.name
+    : userDetails?.user_role || userDetails?.role || '').toString();
+  const companyName = (typeof userDetails?.company_name === 'object'
+    ? userDetails?.company_name?.name
+    : userDetails?.company_name || userDetails?.company?.name || '').toString();
+  const username = (userDetails?.username || userDetails?.name || '').toString();
 
   const allSections = [
     {
@@ -209,7 +229,7 @@ const CustomDrawer = (props: any) => {
         // Top-level route (e.g. Dashboard) — always show
         return section;
       }
-      const visibleItems = section.items.filter(
+      const visibleItems = (section.items as any[]).filter(
         (item: any) => !item.permission || hasPermission(item.permission)
       );
       return { ...section, items: visibleItems };
@@ -228,6 +248,32 @@ const CustomDrawer = (props: any) => {
     >
       <View style={styles.header}>
         <Text style={styles.headerText}>EcExchange</Text>
+        {(!!userRole || !!companyName || !!username) && (
+          <View style={styles.userCard}>
+            <View style={styles.userAvatarContainer}>
+              <Icon name="account-circle" size={38} color="#94A3B8" />
+            </View>
+            <View style={styles.userInfo}>
+              {!!companyName && (
+                <Text style={styles.userText} numberOfLines={1}>
+                  <Text style={styles.userLabel}>Company: </Text>
+                  <Text style={styles.userValue}>{companyName}</Text>
+                </Text>
+              )}
+              {!!userRole && (
+                <Text style={styles.userText} numberOfLines={1}>
+                  <Text style={styles.userLabel}>Role: </Text>
+                  <Text style={styles.userRoleValue}>{userRole}</Text>
+                </Text>
+              )}
+              {!!username && (
+                <Text style={styles.userSubText} numberOfLines={1}>
+                  {username}
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
       </View>
       <View style={styles.sectionsContainer}>
         {sections.map((section, index) => (
@@ -251,6 +297,9 @@ const CustomDrawer = (props: any) => {
           style={[styles.sectionHeader, { marginTop: 12 }]}
           onPress={() => {
             dispatch(clearAuth());
+            dispatch(clearUserDetails());
+            dispatch(clearPermissions());
+            dispatch(clearShiftPermissions());
             // RootStack will react to token removal and show Login
             props.navigation.closeDrawer();
           }}
@@ -291,8 +340,54 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.WHITE,
   },
+  userCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1E293B',
+    borderRadius: 8,
+    paddingVertical: scale(8),
+    paddingHorizontal: scale(10),
+    marginTop: scale(12),
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  userAvatarContainer: {
+    marginRight: scale(10),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  userInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  userText: {
+    fontSize: 13,
+    color: '#E2E8F0',
+    marginBottom: 2,
+  },
+  userLabel: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  userValue: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  userRoleValue: {
+    color: '#38BDF8',
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  userSubText: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginTop: 1,
+  },
   sectionsContainer: {
-    paddingVertical: scale(30),
+    paddingVertical: scale(20),
     backgroundColor: COLORS.BUTTONBG,
   },
   sectionHeader: {

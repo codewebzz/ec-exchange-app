@@ -4,7 +4,8 @@ import LinearGradient from "react-native-linear-gradient";
 import { useCountdown } from "../hooks/useCountdown";
 
 const ShiftCard = ({ card, navigation }: any) => {
-  const isDeclared = card.is_declared === true;
+  const hasResult = card?.declared_number !== undefined && card?.declared_number !== null && card?.declared_number !== '';
+  const isDeclared = card.is_declared === true || hasResult;
 
   // ⏳ countdown only when NOT declared
   const countdown = !isDeclared ? useCountdown(card.timeLimit) : null;
@@ -13,8 +14,10 @@ const ShiftCard = ({ card, navigation }: any) => {
     ? ["#0ea05c", "#11c178"]
     : ["#f97316", "#f59e0b"];
 
-  const badgeBg = isDeclared ? "#d1fae5" : "#fff1e6";
-  const badgeText = isDeclared ? "#065f46" : "#c2410c";
+  const isEnded = countdown === "No time left & Not declared yet";
+
+  const badgeBg = isDeclared ? "#d1fae5" : (isEnded ? "#fee2e2" : "#fff1e6");
+  const badgeText = isDeclared ? "#065f46" : (isEnded ? "#991b1b" : "#c2410c");
 
   const formatDate = (value?: string) => {
     if (!value) return '-';
@@ -30,14 +33,10 @@ const ShiftCard = ({ card, navigation }: any) => {
   };
 
   const getBadgeText = () => {
-    if (card?.declared_number) return `${card.declared_number}`;
     if (isDeclared) return 'Declared';
-    if (!countdown) return 'Live';
-    if (countdown === "No time left & Not declared yet") return 'Ended';
-    return countdown;
+    if (isEnded) return 'Ended';
+    return 'Live';
   };
-
-  const isEnded = countdown === "No time left & Not declared yet";
 
   return (
     <View style={styles.cityCard}>
@@ -65,6 +64,23 @@ const ShiftCard = ({ card, navigation }: any) => {
           </View>
           <Text style={styles.cityDate}>{formatDate(card.open_date)}</Text>
         </LinearGradient>
+
+        {/* Result / Status Section */}
+        {isDeclared ? (
+          <View style={styles.resultContainer}>
+            <Text style={styles.resultLabel}>RESULT</Text>
+            <Text style={styles.resultValue} numberOfLines={1}>
+              {hasResult ? `${card.declared_number}` : '-'}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.timerContainer}>
+            <Text style={styles.timerLabel}>{isEnded ? "STATUS" : "TIME LEFT"}</Text>
+            <Text style={[styles.timerValue, isEnded && styles.timerValueEnded]} numberOfLines={1}>
+              {isEnded ? "Time Ended" : (countdown || "Live")}
+            </Text>
+          </View>
+        )}
 
         {/* Body */}
         <View style={styles.cityCardBody}>
@@ -127,6 +143,64 @@ const styles = StyleSheet.create({
   liveChipText: {
     fontWeight: '700',
     fontSize: 10,
+  },
+  resultContainer: {
+    marginHorizontal: 8,
+    marginTop: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: '#ecfdf5',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#a7f3d0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 56,
+  },
+  resultLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#059669',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  resultValue: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#047857',
+    marginTop: 1,
+  },
+  timerContainer: {
+    marginHorizontal: 8,
+    marginTop: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: '#fff7ed',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fed7aa',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 56,
+  },
+  timerLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#c2410c',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  timerValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ea580c',
+    marginTop: 1,
+  },
+  timerValueEnded: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#dc2626',
+    marginTop: 1,
   },
   cityCardBody: {
     flexDirection: 'row',

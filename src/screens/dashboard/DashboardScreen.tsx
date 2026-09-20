@@ -231,7 +231,6 @@ const DashboardScreen = ({ navigation }: any) => {
               </View>
             )}
 
-            {/* <PermissionGuard permission={PERMISSIONS.DASHBOARD_SHIFT_VIEW.value} fallback={null}> */}
             <View style={styles.topRow}>
               {shiftLoading ? (
                 <View style={styles.shiftLoading}>
@@ -239,9 +238,6 @@ const DashboardScreen = ({ navigation }: any) => {
                 </View>
               ) : Array.isArray(shiftDataRes) && shiftDataRes.length > 0 ? (
                 shiftDataRes.map((card: any) => {
-                  // #region agent log
-                  fetch('http://127.0.0.1:7242/ingest/2e33dffb-7baa-4cb6-aa5f-9efc22abb991', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'DashboardScreen.tsx:167', message: 'Rendering ShiftCard', data: { hasNavigation: !!navigation, navigationType: typeof navigation, willPassNavigation: true }, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' }) }).catch(() => { });
-                  // #endregion
                   return (
                     <ShiftCard
                       key={card.id?.toString() ?? card.name}
@@ -256,7 +252,6 @@ const DashboardScreen = ({ navigation }: any) => {
                 </View>
               )}
             </View>
-            {/* </PermissionGuard> */}
 
             <View style={styles.sectionsRow}>
               <PermissionGuard permission={PERMISSIONS.DASHBOARD_RECENT_LEDGERS_VIEW.value} fallback={null}>

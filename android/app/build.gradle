@@ -1,3 +1,9 @@
+import groovy.json.JsonSlurper
+
+// Centralized version configuration from package.json
+def packageJsonFile = new File(rootDir, "../package.json")
+def packageJson = new JsonSlurper().parseText(packageJsonFile.text)
+
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
@@ -83,8 +89,8 @@ android {
         applicationId "com.ecexchange"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode (packageJson.versionCode ?: 1) as Integer
+        versionName packageJson.version as String
     }
     signingConfigs {
         debug {

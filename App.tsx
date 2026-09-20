@@ -26,21 +26,47 @@ const App = () => {
       const platform = Platform.OS === 'ios' ? 'ios' : 'android';
       const version = APP_CONFIG.version;
       const res = await APIService.CheckAppVersion(platform, version);
-      if (res && typeof res.is_latest === 'boolean') {
-        setLatestVersion(res.latest_version || '');
-        if (res.is_latest) {
+
+      if (!res || res?.error || res?.success === false) {
+        const errorMsg = res?.error || res?.message || 'Unable to verify app version';
+        Toast.show({
+          type: 'error',
+          text1: 'Version Check Failed',
+          text2: errorMsg,
+          position: 'bottom',
+        });
+        if (versionCheckPassed === null) {
           setVersionCheckPassed(true);
-        } else {
-          setVersionCheckPassed(false);
         }
+        return;
+      }
+
+      const needsUpdate = res?.needs_update ?? (res?.is_latest === false);
+
+      if (needsUpdate) {
+        setLatestVersion(res?.latest_version != null ? String(res.latest_version) : '');
+        setVersionCheckPassed(false);
       } else {
-        // In case of unexpected format, don't block user
         setVersionCheckPassed(true);
       }
-    } catch (error) {
-      console.warn('Version check error, allowing app to load:', error);
-      // If network fails during initial check, let app proceed so user isn't stuck offline
-      setVersionCheckPassed(true);
+    } catch (error: any) {
+      console.warn('Version check error:', error);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Unable to check app version';
+
+      Toast.show({
+        type: 'error',
+        text1: 'Version Check Failed',
+        text2: errorMessage,
+        position: 'bottom',
+      });
+
+      // If initial check fails, allow app to proceed so user isn't stuck offline
+      if (versionCheckPassed === null) {
+        setVersionCheckPassed(true);
+      }
     }
   };
 
@@ -53,43 +79,38 @@ const App = () => {
     checkAppVersion();
   }, []);
 
-  // Show splash animation while initializing
-  if (showSplash || versionCheckPassed === null) {
-    return <SplashScreen onAnimationComplete={handleSplashComplete} />;
-  }
-
-  // If app is not the latest version, show the friendly update required screen
-  if (versionCheckPassed === false) {
-    return (
-      <UpdateRequiredScreen
-        clientVersion={APP_CONFIG.version}
-        latestVersion={latestVersion}
-        onRetry={checkAppVersion}
-      />
-    );
-  }
-
   return (
     <SafeAreaProvider>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      >
-        <NavigationContainer>
-          <Provider store={store}>
-            <SocketProvider>
-              <GlobalLoaderProvider>
-                <StatusBar barStyle="light-content" backgroundColor={COLORS.HEADERBG} />
-                <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
-                  <RootStack />
-                </GradientBackground>
-                <Toast config={toastConfig} />
-              </GlobalLoaderProvider>
-            </SocketProvider>
-          </Provider>
-        </NavigationContainer>
-      </KeyboardAvoidingView>
+      {showSplash || versionCheckPassed === null ? (
+        <SplashScreen onAnimationComplete={handleSplashComplete} />
+      ) : versionCheckPassed === false ? (
+        <UpdateRequiredScreen
+          clientVersion={APP_CONFIG.version}
+          latestVersion={latestVersion}
+          downloadUrl={APP_CONFIG.downloadApkUrl}
+          onRetry={checkAppVersion}
+        />
+      ) : (
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        >
+          <NavigationContainer>
+            <Provider store={store}>
+              <SocketProvider>
+                <GlobalLoaderProvider>
+                  <StatusBar barStyle="light-content" backgroundColor={COLORS.HEADERBG} />
+                  <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
+                    <RootStack />
+                  </GradientBackground>
+                </GlobalLoaderProvider>
+              </SocketProvider>
+            </Provider>
+          </NavigationContainer>
+        </KeyboardAvoidingView>
+      )}
+      <Toast config={toastConfig} />
     </SafeAreaProvider>
   );
 };

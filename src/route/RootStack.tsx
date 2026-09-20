@@ -8,6 +8,7 @@ import Login from '../screens/auth/Login';
 import DrawerStack from './DrawerStack';
 import { fetchUserPermissions, clearPermissions } from '../redux/reducers/permissionsSlice';
 import { fetchShiftPermissions, clearShiftPermissions } from '../redux/reducers/shiftPermissionsSlice';
+import { fetchUserDetails, clearUserDetails } from '../redux/reducers/userSlice';
 
 const Stack = createNativeStackNavigator();
 
@@ -15,15 +16,17 @@ const RootStack = () => {
   const token = useSelector((state: any) => state?.authorization?.token);
   const dispatch = useDispatch();
 
-  // Fetch permissions whenever a valid token is present
+  // Fetch permissions and user details whenever a valid token is present
   React.useEffect(() => {
     if (token) {
       dispatch(fetchUserPermissions() as any);
       dispatch(fetchShiftPermissions() as any);
+      dispatch(fetchUserDetails() as any);
     } else {
-      // Clear stale permissions on logout
+      // Clear stale state on logout
       dispatch(clearPermissions());
       dispatch(clearShiftPermissions());
+      dispatch(clearUserDetails());
     }
   }, [token, dispatch]);
 

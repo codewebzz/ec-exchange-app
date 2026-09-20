@@ -7,6 +7,8 @@ import vapsiVoucher from './reducers/vapsiVoucherSlice';
 import authTokenReducer from './reducers/authToken';
 import permissionsReducer from './reducers/permissionsSlice';
 import shiftPermissionsReducer from './reducers/shiftPermissionsSlice';
+import userReducer from './reducers/userSlice';
+
 export const store = configureStore({
   reducer: {
     company: companyReducer,
@@ -17,6 +19,7 @@ export const store = configureStore({
     authorization: authTokenReducer,
     permissions: permissionsReducer,
     shiftPermissions: shiftPermissionsReducer,
+    user: userReducer,
   },
 })
 

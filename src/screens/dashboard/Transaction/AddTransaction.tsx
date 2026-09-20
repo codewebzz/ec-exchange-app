@@ -89,9 +89,35 @@ const AddTransaction = ({ navigation, route }: any) => {
   const [ledgerData, setLedgerData] = useState<any[]>([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [isFanter, setIsFanter] = useState(false);
+  const [isLedgerAutoSelected, setIsLedgerAutoSelected] = useState(false);
+  const isAutoSelected = isFanter || isLedgerAutoSelected;
 
   const [modeData, setModeData] = useState<any[]>([]);
   const [modeLoading, setModeLoading] = useState(false);
+
+  const selectedLedgerLabel = useMemo(() => {
+    if (!selectedLedger) return '';
+    const found = (ledgerData as any[]).find(
+      (it: any) => it.value?.toString() === selectedLedger.toString()
+    );
+    const name = found?.label || selectedLedger;
+    return typeof name === 'string' ? name.toUpperCase() : name;
+  }, [selectedLedger, ledgerData]);
+
+  const selectedModeLabel = useMemo(() => {
+    let modeText = '';
+    if (selectedMode) {
+      const found = (modeData as any[]).find(
+        (it: any) => it.value?.toString() === selectedMode.toString()
+      );
+      if (found?.label) modeText = found.label;
+    }
+    if (!modeText && modeData.length === 1) {
+      modeText = modeData[0].label;
+    }
+    if (!modeText) modeText = selectedMode || '';
+    return typeof modeText === 'string' ? modeText.toUpperCase() : modeText;
+  }, [selectedMode, modeData]);
 
   // Fetch ledger data on component mount
   useEffect(() => {
@@ -146,10 +172,13 @@ const AddTransaction = ({ navigation, route }: any) => {
             const fanterCheck = role === 'ledger_fanter' || role === 'fanter' || role === 'fantar' || (!!role && (role.includes('fanter') || role.includes('fantar')));
             setIsFanter(fanterCheck);
 
-            if (fanterCheck && transformedLedgers.length > 0 && !selectedLedger && !editMode) {
+            const shouldAutoSelect = (fanterCheck || transformedLedgers.length === 1) && transformedLedgers.length > 0 && !selectedLedger && !editMode;
+
+            if (shouldAutoSelect) {
               const firstLedger = transformedLedgers[0];
               if (firstLedger && firstLedger.value) {
                 setSelectedLedger(firstLedger.value);
+                setIsLedgerAutoSelected(true);
                 if (firstLedger.meta) {
                   setRate(String(firstLedger.meta?.rate ?? ''));
                   setLimit(String(firstLedger.meta?.limit ?? ''));
@@ -200,6 +229,7 @@ const AddTransaction = ({ navigation, route }: any) => {
       setShowJantri(false);
       setLedgerOpen(false);
       setModeOpen(false);
+      setIsLedgerAutoSelected(false);
       navigation.setParams({
         editMode: false,
         transactionData: null,
@@ -249,6 +279,12 @@ const AddTransaction = ({ navigation, route }: any) => {
           setSelectedMode(transformedModes[0].value);
         }
         console.log('Transformed mode items:', transformedModes);
+
+        if (transformedModes.length === 1) {
+          setTimeout(() => {
+            quickEntryRef.current?.focus();
+          }, 300);
+        }
       } else {
         console.log('No mode data found or API error');
         setModeData([]);
@@ -661,71 +697,94 @@ const AddTransaction = ({ navigation, route }: any) => {
 
 
                   <View style={styles.selectionSection}>
-                    <View style={{ flex: 1.5, zIndex: 3000 }}>
-                      <CustomDropdown
-                        label="Select Ledger"
-                        open={ledgerOpen}
-                        value={selectedLedger}
-                        items={ledgerData}
-                        disabled={isFanter}
-                        setOpen={setLedgerOpen}
-                        setValue={(val: any) => {
-                          const selectedVal = typeof val === 'function' ? val() : val;
-                          setSelectedLedger(selectedVal);
-                          const found = (ledgerData as any[]).find((it: any) => it.value === selectedVal);
-                          const meta = found?.meta || null;
-                          if (meta) {
-                            setRate(String(meta?.rate ?? ''));
-                            setLimit(String(meta?.limit ?? ''));
-                            setCap(String(meta?.capping ?? ''));
-                            setSelectedLedgerPatti(meta?.patti);
-                          } else {
-                            setRate('');
-                            setLimit('');
-                            setCap('');
-                            setSelectedLedgerPatti("");
-                          }
+                    {isAutoSelected ? (
+                      <View style={{ flex: 1.5 }}>
+                        <Text style={styles.fieldLabel}>Ledger</Text>
+                        <View style={styles.textDisplayBox}>
+                          <Text style={styles.textDisplayText} numberOfLines={1}>
+                            {selectedLedgerLabel || (ledgerLoading ? "Loading..." : "Select Ledger")}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <View style={{ flex: 1.5, zIndex: 3000 }}>
+                        <CustomDropdown
+                          label="Select Ledger"
+                          open={ledgerOpen}
+                          value={selectedLedger}
+                          items={ledgerData}
+                          disabled={isFanter}
+                          setOpen={setLedgerOpen}
+                          setValue={(val: any) => {
+                            const selectedVal = typeof val === 'function' ? val() : val;
+                            setSelectedLedger(selectedVal);
+                            setIsLedgerAutoSelected(false);
+                            const found = (ledgerData as any[]).find((it: any) => it.value === selectedVal);
+                            const meta = found?.meta || null;
+                            if (meta) {
+                              setRate(String(meta?.rate ?? ''));
+                              setLimit(String(meta?.limit ?? ''));
+                              setCap(String(meta?.capping ?? ''));
+                              setSelectedLedgerPatti(meta?.patti);
+                            } else {
+                              setRate('');
+                              setLimit('');
+                              setCap('');
+                              setSelectedLedgerPatti("");
+                            }
 
-                          // Fetch modes for the selected ledger
-                          if (selectedVal) {
-                            setSelectedMode('');
-                            fetchModeData(selectedVal);
-                          } else {
-                            setModeData([]);
-                            setSelectedMode('');
-                          }
+                            // Fetch modes for the selected ledger
+                            if (selectedVal) {
+                              setSelectedMode('');
+                              fetchModeData(selectedVal);
+                            } else {
+                              setModeData([]);
+                              setSelectedMode('');
+                            }
 
-                          // Auto-open mode dropdown after selecting ledger
-                          setTimeout(() => setModeOpen(true), 200);
-                        }}
-                        setItems={() => { }}
-                        placeholder={ledgerLoading ? "Loading..." : "Select Ledger"}
-                        zIndex={3000}
-                      />
-                    </View>
+                            // Auto-open mode dropdown after selecting ledger
+                            setTimeout(() => setModeOpen(true), 200);
+                          }}
+                          setItems={() => { }}
+                          placeholder={ledgerLoading ? "Loading..." : "Select Ledger"}
+                          zIndex={3000}
+                        />
+                      </View>
+                    )}
 
-                    <View style={{ flex: 1, marginLeft: scale(10), zIndex: 2000 }}>
-                      <CustomDropdown
-                        label="Select Mode"
-                        open={modeOpen}
-                        value={selectedMode}
-                        items={modeData}
-                        setOpen={setModeOpen}
-                        setValue={(val: any) => {
-                          const selectedVal = typeof val === 'function' ? val() : val;
-                          setSelectedMode(selectedVal);
-                          // Auto-focus QuickEntry number field after selecting mode
-                          if (selectedVal) {
-                            setTimeout(() => {
-                              quickEntryRef.current?.focus();
-                            }, 300);
-                          }
-                        }}
-                        setItems={() => { }}
-                        placeholder={modeLoading ? "Loading..." : "Select Mode"}
-                        zIndex={2000}
-                      />
-                    </View>
+                    {isAutoSelected && (modeLoading || modeData.length === 1) ? (
+                      <View style={{ flex: 1, marginLeft: scale(10) }}>
+                        <Text style={styles.fieldLabel}>Mode</Text>
+                        <View style={styles.textDisplayBox}>
+                          <Text style={styles.textDisplayText} numberOfLines={1}>
+                            {modeLoading ? "Loading..." : (selectedModeLabel || "Select Mode")}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <View style={{ flex: 1, marginLeft: scale(10), zIndex: 2000 }}>
+                        <CustomDropdown
+                          label="Select Mode"
+                          open={modeOpen}
+                          value={selectedMode}
+                          items={modeData}
+                          setOpen={setModeOpen}
+                          setValue={(val: any) => {
+                            const selectedVal = typeof val === 'function' ? val() : val;
+                            setSelectedMode(selectedVal);
+                            // Auto-focus QuickEntry number field after selecting mode
+                            if (selectedVal) {
+                              setTimeout(() => {
+                                quickEntryRef.current?.focus();
+                              }, 300);
+                            }
+                          }}
+                          setItems={() => { }}
+                          placeholder={modeLoading ? "Loading..." : "Select Mode"}
+                          zIndex={2000}
+                        />
+                      </View>
+                    )}
                   </View>
 
                   {selectedLedgerPatti && (
@@ -1097,6 +1156,31 @@ const styles = StyleSheet.create({
     zIndex: 3000,
     flexDirection: 'row',
     alignItems: 'flex-start',
+  },
+  fieldLabel: {
+    marginBottom: scale(2),
+    fontSize: scale(12),
+    color: '#333',
+    fontWeight: '800',
+  },
+  textDisplayBox: {
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 8,
+    minHeight: scale(43),
+    justifyContent: 'center',
+    paddingHorizontal: scale(12),
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  textDisplayText: {
+    fontSize: scale(13),
+    fontWeight: '600',
+    color: COLORS.BLACK,
   },
   pattiContainer: {
     marginHorizontal: 16,

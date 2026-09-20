@@ -64,12 +64,6 @@ export const PermissionsSelector: React.FC<Props> = ({ selectedPermissions, onPe
             color: "#3F51B5",
             submodules: [
                 {
-                    name: "Shift Cards",
-                    permissions: [
-                        { id: PERMISSIONS.DASHBOARD_SHIFT_VIEW.value, name: "View" },
-                    ]
-                },
-                {
                     name: "Recent Ledgers",
                     permissions: [
                         { id: PERMISSIONS.DASHBOARD_RECENT_LEDGERS_VIEW.value, name: "View" },

@@ -1,5 +1,5 @@
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   ScrollView,
@@ -197,7 +197,7 @@ const DeclareResultSection = ({
       } else {
         Alert.alert('Error', response?.message || 'Failed to declare result');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Declare API Error:', error?.response);
       Alert.alert('Error', 'An error occurred while declaring the result');
     } finally {
@@ -431,7 +431,7 @@ const LivePredaction = ({ navigation }: any) => {
       } else {
         Alert.alert('No Data', 'No ledger details found for this number.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Detail API Error:', error?.response);
       Alert.alert('Error', 'Failed to fetch prediction details');
     } finally {
@@ -469,25 +469,12 @@ const LivePredaction = ({ navigation }: any) => {
 
                 // Refresh data
                 if (selectedShift) {
-                  const apiData = {
-                    shift_id: selectedShift,
-                    date: getFormattedDate(selectedDate),
-                  };
-                  const [liveRes, declaredRes] = await Promise.allSettled([
-                    APIService.LiveResult(apiData, ''),
-                    APIService.GetDecelearedTransaction({ shift_id: selectedShift })
-                  ]);
-                  if (liveRes.status === 'fulfilled' && liveRes.value?.success) {
-                    setLiveResultData(liveRes.value.data || liveRes.value);
-                  }
-                  if (declaredRes.status === 'fulfilled' && declaredRes.value?.success) {
-                    setDeclaredData(declaredRes.value.data || []);
-                  }
+                  await fetchPredictionData(selectedShift, selectedDate);
                 }
               } else {
                 Alert.alert('Error', response?.message || `Failed to ${type}`);
               }
-            } catch (error) {
+            } catch (error: any) {
               console.error(`Error during ${type}:`, error);
               Alert.alert('Error', `An error occurred during ${type}`);
             } finally {
@@ -499,6 +486,37 @@ const LivePredaction = ({ navigation }: any) => {
     );
   };
 
+  // Fetch prediction and declared results
+  const fetchPredictionData = useCallback(async (shiftId = selectedShift, date = selectedDate) => {
+    if (!shiftId) return;
+
+    try {
+      const apiData = {
+        shift_id: shiftId,
+        date: getFormattedDate(date),
+      };
+
+      const [liveRes, declaredRes] = await Promise.allSettled([
+        APIService.LiveResult(apiData, ''),
+        APIService.GetDecelearedTransaction({ shift_id: shiftId })
+      ]);
+
+      if (liveRes.status === 'fulfilled' && (liveRes.value as any)?.success) {
+        setLiveResultData((liveRes.value as any).data || liveRes.value);
+        console.log('Live result data received:', (liveRes.value as any).data || liveRes.value);
+      }
+
+      if (declaredRes.status === 'fulfilled' && (declaredRes.value as any)?.success) {
+        setDeclaredData((declaredRes.value as any).data || []);
+        console.log('Declared transactions received:', (declaredRes.value as any).data);
+      } else {
+        setDeclaredData([]);
+      }
+    } catch (error: any) {
+      console.error('Error fetching prediction data:', error);
+    }
+  }, [selectedShift, selectedDate]);
+
   // Handle filter submit
   const handleFilterSubmit = async () => {
     // Validate required fields
@@ -509,35 +527,8 @@ const LivePredaction = ({ navigation }: any) => {
 
     try {
       setIsLoading(true);
-
-      // Prepare API data
-      const apiData = {
-        shift_id: selectedShift,
-        date: getFormattedDate(selectedDate),
-      };
-
-      console.log('Filter submitted:', apiData);
-
-      // Call LiveResult API & declared transactions API concurrently
-      const [liveRes, declaredRes] = await Promise.allSettled([
-        APIService.LiveResult(apiData, ''),
-        APIService.GetDecelearedTransaction({ shift_id: selectedShift })
-      ]);
-
-      if (liveRes.status === 'fulfilled' && liveRes.value?.success) {
-        setLiveResultData(liveRes.value.data || liveRes.value);
-        console.log('Live result data received:', liveRes.value.data || liveRes.value);
-      } else {
-        Alert.alert('Error', 'Failed to fetch live prediction data');
-      }
-
-      if (declaredRes.status === 'fulfilled' && declaredRes.value?.success) {
-        setDeclaredData(declaredRes.value.data || []);
-        console.log('Declared transactions received:', declaredRes.value.data);
-      } else {
-        setDeclaredData([]);
-      }
-    } catch (error) {
+      await fetchPredictionData(selectedShift, selectedDate);
+    } catch (error: any) {
       console.error('API Error:', error);
       Alert.alert('Error', 'Failed to fetch live prediction data');
     } finally {
@@ -555,7 +546,7 @@ const LivePredaction = ({ navigation }: any) => {
   };
 
   // Fetch shift data from API
-  const fetchShiftData = async () => {
+  const fetchShiftData = useCallback(async () => {
     try {
       setShiftLoading(true);
       const response = await APIService.GetShiftDropDownDataData();
@@ -573,34 +564,30 @@ const LivePredaction = ({ navigation }: any) => {
         console.log('No shift data found or API error');
         setShiftItems([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching shift data:', error);
       setShiftItems([]);
     } finally {
       setShiftLoading(false);
     }
-  };
+  }, []);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchShiftData();
-    if (selectedShift) {
-      const apiData = {
-        shift_id: selectedShift,
-        date: getFormattedDate(selectedDate),
-      };
-
-      await Promise.allSettled([
-        APIService.LiveResult(apiData, '').then(res => {
-          if (res?.success) setLiveResultData(res.data || res);
-        }),
-        APIService.GetDecelearedTransaction({ shift_id: selectedShift }).then(res => {
-          if (res?.success) setDeclaredData(res.data || []);
-        })
-      ]);
+    try {
+      const refreshTasks: Promise<any>[] = [fetchShiftData()];
+      if (selectedShift) {
+        refreshTasks.push(fetchPredictionData(selectedShift, selectedDate));
+      }
+      await Promise.allSettled(refreshTasks);
+    } catch (error) {
+      console.error('Error during refresh:', error);
+    } finally {
+      setTimeout(() => {
+        setRefreshing(false);
+      }, 150);
     }
-    setRefreshing(false);
-  };
+  }, [selectedShift, selectedDate, fetchShiftData, fetchPredictionData]);
 
   console.log(liveResultData, "liveResultData")
 
@@ -620,7 +607,7 @@ const LivePredaction = ({ navigation }: any) => {
             </TouchableOpacity>
           </ScreenHeader>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false} nestedScrollEnabled={true} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.BUTTONBG]} tintColor={COLORS.BUTTONBG} />}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.BUTTONBG]} tintColor={COLORS.BUTTONBG} />}>
             {/* Search Input */}
             <View style={styles.searchContainer}>
               <TextInput
@@ -646,20 +633,7 @@ const LivePredaction = ({ navigation }: any) => {
               onDeclareSuccess={async () => {
                 // Refresh data on successful declaration
                 if (selectedShift) {
-                  const apiData = {
-                    shift_id: selectedShift,
-                    date: getFormattedDate(selectedDate),
-                  };
-                  const [liveRes, declaredRes] = await Promise.allSettled([
-                    APIService.LiveResult(apiData, ''),
-                    APIService.GetDecelearedTransaction({ shift_id: selectedShift })
-                  ]);
-                  if (liveRes.status === 'fulfilled' && liveRes.value?.success) {
-                    setLiveResultData(liveRes.value.data || liveRes.value);
-                  }
-                  if (declaredRes.status === 'fulfilled' && declaredRes.value?.success) {
-                    setDeclaredData(declaredRes.value.data || []);
-                  }
+                  await fetchPredictionData(selectedShift, selectedDate);
                 }
               }}
             />

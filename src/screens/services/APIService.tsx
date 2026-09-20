@@ -807,9 +807,9 @@ const APIService = {
     }
   },
 
-  CheckAppVersion: async (platform: string, appVersion: string): Promise<any> => {
+  CheckAppVersion: async (platform: string, appVersion: string | number): Promise<any> => {
     try {
-      const res = await AxiosService.get('api/app/is-latest', {
+      const res = await AxiosService.get('api/app/version', {
         platform,
         version: appVersion,
       });

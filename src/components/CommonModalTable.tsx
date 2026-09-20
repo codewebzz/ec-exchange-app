@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { scale } from 'react-native-size-matters';
+import { COLORS } from '../assets/colors';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -372,15 +373,16 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
           >
             {/* Table Card */}
             <View style={styles.tableCard}>
-              {/* Table Header with Export Icon */}
+              {/* Table Header with Send Button */}
               <View style={styles.tableCardHeader}>
                 <View style={styles.tableHeaderLeft} />
                 <TouchableOpacity
-                  onPress={handleExport}
-                  style={styles.exportButton}
+                  onPress={handleShare}
+                  style={styles.sendButton}
                   hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
                 >
-                  <Icon name="content-copy" size={scale(20)} color="#57607a" />
+                  <Icon name="send" size={scale(15)} color={COLORS.WHITE} />
+                  <Text style={styles.sendButtonText}>Send</Text>
                 </TouchableOpacity>
               </View>
 
@@ -502,24 +504,6 @@ const CommonModalTable: React.FC<CommonModalTableProps> = ({
               </View>
             )}
           </ScrollView>
-
-          {/* Footer Buttons */}
-          <View style={styles.bottomButtons}>
-            <TouchableOpacity
-              style={styles.copyButton}
-              onPress={handleShare}
-            >
-              <Icon name="share" size={scale(18)} color="#57607a" />
-              <Text style={styles.copyButtonText}>Share</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.closeBottomButton}
-              onPress={onClose}
-            >
-              <Text style={styles.closeBottomButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
     </Modal>
@@ -610,8 +594,19 @@ const styles = StyleSheet.create({
   tableHeaderLeft: {
     flex: 1,
   },
-  exportButton: {
-    padding: scale(4),
+  sendButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.SUCCESSGREEN,
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(6),
+    borderRadius: scale(6),
+    gap: scale(5),
+  },
+  sendButtonText: {
+    color: COLORS.WHITE,
+    fontSize: scale(12),
+    fontWeight: '600',
   },
   table: {
     minWidth: scale(1200),
@@ -720,43 +715,6 @@ const styles = StyleSheet.create({
     fontSize: scale(18),
     fontWeight: '700',
     color: '#1d2238',
-  },
-  bottomButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: scale(16),
-    paddingVertical: scale(12),
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-  },
-  copyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: scale(8),
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: scale(16),
-    paddingVertical: scale(10),
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  copyButtonText: {
-    color: '#57607a',
-    fontSize: scale(14),
-    fontWeight: '600',
-  },
-  closeBottomButton: {
-    backgroundColor: '#1d2238',
-    paddingHorizontal: scale(24),
-    paddingVertical: scale(10),
-    borderRadius: 8,
-  },
-  closeBottomButtonText: {
-    color: '#FFFFFF',
-    fontSize: scale(14),
-    fontWeight: '600',
   },
 });
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -18,30 +18,47 @@ const DOWNLOAD_URL = APP_CONFIG.downloadApkUrl;
 interface UpdateRequiredScreenProps {
   clientVersion: string;
   latestVersion?: string;
+  downloadUrl?: string;
   onRetry?: () => void;
 }
 
 const UpdateRequiredScreen: React.FC<UpdateRequiredScreenProps> = ({
   clientVersion,
   latestVersion,
+  downloadUrl,
   onRetry,
 }) => {
+  const [copied, setCopied] = useState(false);
+
   const handleDownload = async () => {
+    const targetUrl = downloadUrl || DOWNLOAD_URL;
     try {
-      const supported = await Linking.canOpenURL(DOWNLOAD_URL);
+      const supported = await Linking.canOpenURL(targetUrl);
       if (supported) {
-        await Linking.openURL(DOWNLOAD_URL);
+        await Linking.openURL(targetUrl);
       } else {
-        await Linking.openURL(DOWNLOAD_URL);
+        await Linking.openURL(targetUrl);
       }
     } catch (err) {
       console.error('Failed to open download URL:', err);
     }
   };
 
+  const handleCopyLink = () => {
+    const targetUrl = downloadUrl || DOWNLOAD_URL;
+    try {
+      const { Clipboard } = require('react-native');
+      Clipboard.setString(targetUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch (err) {
+      console.warn('Failed to copy link:', err);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor="#0b1220" barStyle="light-content" />
+      <StatusBar backgroundColor="#0b1221" barStyle="light-content" />
 
       {/* Card */}
       <View style={styles.card}>
@@ -77,6 +94,23 @@ const UpdateRequiredScreen: React.FC<UpdateRequiredScreenProps> = ({
         >
           <Ionicons name="download-outline" size={20} color="#FFFFFF" style={styles.downloadIcon} />
           <Text style={styles.downloadButtonText}>Download Latest Update</Text>
+        </TouchableOpacity>
+
+        {/* Copy Download Link Button */}
+        <TouchableOpacity
+          style={[styles.copyButton, copied && styles.copyButtonActive]}
+          onPress={handleCopyLink}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name={copied ? 'checkmark-circle-outline' : 'copy-outline'}
+            size={18}
+            color={copied ? '#10B981' : '#38BDF8'}
+            style={styles.copyIcon}
+          />
+          <Text style={[styles.copyButtonText, copied && styles.copyButtonTextActive]}>
+            {copied ? 'Download Link Copied!' : 'Copy Download Link'}
+          </Text>
         </TouchableOpacity>
 
         {/* Optional Retry check */}
@@ -203,6 +237,34 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.25)',
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 10,
+  },
+  copyButtonActive: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+  },
+  copyIcon: {
+    marginRight: 8,
+  },
+  copyButtonText: {
+    color: '#38BDF8',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  copyButtonTextActive: {
+    color: '#10B981',
+    fontWeight: '600',
   },
   retryButton: {
     marginTop: 14,
