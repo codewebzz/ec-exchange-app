@@ -84,7 +84,7 @@ const ChangePasswordModal: React.FC<Props> = ({ visible, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <Modal
