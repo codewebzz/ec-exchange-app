@@ -33,6 +33,7 @@ import GradientBackground from '../../../components/GradientBackground';
 import { PermissionGuard } from '../../../components/PermissionGuard';
 import ScreenHeader from '../../../components/ScreenHeader';
 import { PERMISSIONS } from '../../../helper/permissions';
+import { useSelector } from 'react-redux';
 import APIService from '../../services/APIService';
 import CountdownHeaderTitle from './addTransaction/CountdownHeaderTitle';
 import JantriEmbedded from './addTransaction/JantriEmbedded';
@@ -86,11 +87,25 @@ const AddTransaction = ({ navigation, route }: any) => {
   const quickEntryRef = React.useRef<any>(null);
 
   // Dropdown data
+  const reduxUserDetails = useSelector((state: any) => state?.user?.userDetails);
+  const reduxRoleRaw = (
+    typeof reduxUserDetails?.user_role === 'object'
+      ? reduxUserDetails?.user_role?.name
+      : reduxUserDetails?.user_role || reduxUserDetails?.role || ''
+  ).toString().toLowerCase();
+
+  const isReduxFanter =
+    reduxRoleRaw === 'ledger_fanter' ||
+    reduxRoleRaw === 'fanter' ||
+    reduxRoleRaw === 'fantar' ||
+    (!!reduxRoleRaw && (reduxRoleRaw.includes('fanter') || reduxRoleRaw.includes('fantar')));
+
   const [ledgerData, setLedgerData] = useState<any[]>([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [isFanter, setIsFanter] = useState(false);
+  const isLedgerFanter = isFanter || isReduxFanter;
   const [isLedgerAutoSelected, setIsLedgerAutoSelected] = useState(false);
-  const isAutoSelected = isFanter || isLedgerAutoSelected;
+  const isAutoSelected = isLedgerFanter || isLedgerAutoSelected;
 
   const [modeData, setModeData] = useState<any[]>([]);
   const [modeLoading, setModeLoading] = useState(false);
@@ -168,8 +183,16 @@ const AddTransaction = ({ navigation, route }: any) => {
         APIService.GetMyDetails()
           .then((userRes: any) => {
             const user = userRes?.data || userRes;
-            const role = user?.user_role?.toString().toLowerCase();
-            const fanterCheck = role === 'ledger_fanter' || role === 'fanter' || role === 'fantar' || (!!role && (role.includes('fanter') || role.includes('fantar')));
+            const role = (
+              typeof user?.user_role === 'object'
+                ? user?.user_role?.name
+                : user?.user_role || user?.role || ''
+            ).toString().toLowerCase();
+            const fanterCheck =
+              role === 'ledger_fanter' ||
+              role === 'fanter' ||
+              role === 'fantar' ||
+              (!!role && (role.includes('fanter') || role.includes('fantar')));
             setIsFanter(fanterCheck);
 
             const shouldAutoSelect = (fanterCheck || transformedLedgers.length === 1) && transformedLedgers.length > 0 && !selectedLedger && !editMode;
@@ -713,7 +736,7 @@ const AddTransaction = ({ navigation, route }: any) => {
                           open={ledgerOpen}
                           value={selectedLedger}
                           items={ledgerData}
-                          disabled={isFanter}
+                          disabled={isLedgerFanter}
                           setOpen={setLedgerOpen}
                           setValue={(val: any) => {
                             const selectedVal = typeof val === 'function' ? val() : val;
@@ -804,12 +827,14 @@ const AddTransaction = ({ navigation, route }: any) => {
                     />
                   </View>
 
-                  <View style={styles.formSection}>
-                    <AddNumbersForm
-                      onNumbersAdd={handleNumbersAdd}
-                      onTransactionAdd={handleTransactionAdd}
-                    />
-                  </View>
+                  {!isLedgerFanter && (
+                    <View style={styles.formSection}>
+                      <AddNumbersForm
+                        onNumbersAdd={handleNumbersAdd}
+                        onTransactionAdd={handleTransactionAdd}
+                      />
+                    </View>
+                  )}
                 </>
               )}
 

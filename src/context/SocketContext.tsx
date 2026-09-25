@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { clearAuth } from '../redux/reducers/authToken';
 import LogoutTimer from '../components/LogoutTimer';
 import AxiosService from '../screens/services/AxiosService';
+import { SOCKET_URL as ENV_SOCKET_URL } from '@env';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -17,7 +18,7 @@ interface SocketProviderProps {
   children: React.ReactNode;
 }
 
-const SOCKET_URL = 'ws://ec2-51-21-190-78.eu-north-1.compute.amazonaws.com:8000';
+const SOCKET_URL = ENV_SOCKET_URL;
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [isLoggedOut, setIsLoggedOut] = useState(false);

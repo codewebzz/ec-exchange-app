@@ -265,7 +265,7 @@ const QuickEntryForm = React.forwardRef(({ externalTransactions = [], onTransact
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>No transactions yet</Text>
             <Text style={styles.emptyStateSubtext}>
-              Add numbers using Quick Entry or Add Numbers form
+              Add numbers using Quick Entry
             </Text>
           </View>
         ) : (

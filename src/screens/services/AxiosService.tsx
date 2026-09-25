@@ -3,9 +3,9 @@ import { store } from '../../redux/store';
 import Toast from 'react-native-toast-message';
 import { reset } from '../../helper/NavigationService';
 import { GlobalLoaderController } from '../../context/GlobalLoaderContext';
+import { BASE_URL } from '@env';
 
-// const DEFAULT_BASE_URL = 'http://ec2-51-21-190-78.eu-north-1.compute.amazonaws.com:8000/';
-const DEFAULT_BASE_URL = 'https://jc110.online/';
+const DEFAULT_BASE_URL = BASE_URL;
 
 let axiosInstance: AxiosInstance = createAxiosInstance();
 let pendingRequestCount = 0;
