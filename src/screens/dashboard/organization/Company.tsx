@@ -55,11 +55,11 @@ const Company = ({ navigation }: any) => {
   const [isOpenBottomSheet, setIsOpenBottomSheet] = React.useState(false);
   const [searchText, setSearchText] = React.useState('');
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
-  console.log(selectedCompany,"selectedCompanyselectedCompany")
+  console.log(selectedCompany, "selectedCompanyselectedCompany")
   const company = useSelector((state: any) => state?.company);
   const dispatch = useDispatch();
   const [visible, setVisible] = useState(false);
- 
+
 
   const bottomSheetRef = React.useRef<BottomSheet>(null);
   const handleSheetChange = (index: number) => {
@@ -99,7 +99,7 @@ const Company = ({ navigation }: any) => {
   const handleCreateCompany = async (values: any) => {
     try {
       const payload = {
-        company_name:values?.companyName,
+        company_name: values?.companyName,
         print_name: values?.printName,
         short_name: values?.shortName,
         country: values?.country,
@@ -113,7 +113,7 @@ const Company = ({ navigation }: any) => {
         password: values?.password,
       };
       console.log('Company payload:', payload);
-      const response =isEditing?await APIService.UpdateCompany(payload,selectedCompany?.id) :await APIService.CreateCompany(payload);
+      const response = isEditing ? await APIService.UpdateCompany(payload, selectedCompany?.id) : await APIService.CreateCompany(payload);
       if (response?.success) {
         setIsOpenBottomSheet(false);
 
@@ -147,279 +147,279 @@ const Company = ({ navigation }: any) => {
       setRefreshing(false);
     }
   };
-   const handleFormSubmit = (values: any, { resetForm }: any) => {
-    
-      handleCreateCompany(values);
-   
+  const handleFormSubmit = (values: any, { resetForm }: any) => {
+
+    handleCreateCompany(values);
+
   };
-   const handleEditShift = (item: any) => {
+  const handleEditShift = (item: any) => {
     setSelectedCompany(item);
     setIsEditing(true);
     setIsOpenBottomSheet(true);
   };
   const handleToggleActive = async (item: any) => {
-  console.log(item,"[][][][][][]")
-  try {
-    const userId = item?.id;
-    const isCurrentlyActive = item?.is_active;
+    console.log(item, "[][][][][][]")
+    try {
+      const userId = item?.id;
+      const isCurrentlyActive = item?.is_active;
 
-    if (!userId) return;
+      if (!userId) return;
 
-    const response = isCurrentlyActive
-      ? await APIService.ToggleCompanyDeActive(userId)
-      : await APIService.ToggleCompanyActive(userId);
+      const response = isCurrentlyActive
+        ? await APIService.ToggleCompanyDeActive(userId)
+        : await APIService.ToggleCompanyActive(userId);
 
-    if (response?.success) {
-       getCompany();
+      if (response?.success) {
+        getCompany();
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: response?.message || `User ${isCurrentlyActive ? 'deactivated' : 'activated'} successfully`,
+          position: 'bottom',
+        });
+
+
+      }
+    } catch (error) {
+      console.error('Toggle active/inactive failed', error);
       Toast.show({
-        type: 'success',
-        text1: 'Success',
-        text2: response?.message || `User ${isCurrentlyActive ? 'deactivated' : 'activated'} successfully`,
+        type: 'error',
+        text1: 'Error',
+        text2: 'Something went wrong while updating status.',
         position: 'bottom',
       });
-
-     
     }
-  } catch (error) {
-    console.error('Toggle active/inactive failed', error);
-    Toast.show({
-      type: 'error',
-      text1: 'Error',
-      text2: 'Something went wrong while updating status.',
-      position: 'bottom',
-    });
-  }
-};
+  };
   return (
     <PermissionGuard permission={PERMISSIONS.ORGANIZATION_COMPANY_VIEW.value}>
-    <GestureHandlerRootView style={{flex:1}}>
-         <GradientBackground colors={[ "#fdf0d0","#e0efea"]} locations={[0,30]}>
-      <SafeAreaView
-        style={style.safeAreaContainer}
-        edges={['top', 'left', 'right']}
-      >
-        <ScreenHeader
-          title={'Company'}
-          navigation={navigation}
-          hideBackButton={true} showDrawerButton={true}
-        />
-        <View style={style.container}>
-          <View
-            style={{
-              marginVertical: scale(10),
-              marginHorizontal: scale(15),
-              alignItems: 'center',
-              flexDirection: 'row',
-              gap: scale(10),
-            }}
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
+          <SafeAreaView
+            style={style.safeAreaContainer}
+            edges={['top', 'left', 'right']}
           >
-            <View style={{ flex: 1 }}>
-              <CustomTextInput
-                placeholder="Search..."
-                value={searchText}
-                onChangeText={setSearchText}
-                placeholderTextColor={'#999'}
-              />
-            </View>
-            <View style={{ width: scale(10) }} />
-            {hasPermission(PERMISSIONS.ORGANIZATION_COMPANY_ADD.value) && (
-            <View style={{ width: '40%' }}>
-              <CustomButton
-                textColor={COLORS.WHITE}
-                title="+ Add (F2)"
-                onPress={() => {
-                  setIsOpenBottomSheet(true);
-                  setSelectedCompany(null);
-                  setIsEditing(false)
-                }}
-              />
-            </View>
-            )}
-          </View>
-          <ScrollView style={{ padding: 16 }} keyboardShouldPersistTaps="handled">
-            <DeclareStatusCard
-              data={getData.filter((item: any) => {
-                if (!searchText?.trim()) return true;
-                const terms = searchText.toLowerCase().split(/\s+/).filter(Boolean);
-                const fields = [item?.company_name, item?.print_name, item?.short_name, item?.country, item?.state, item?.mobile, item?.mail, item?.username];
-                return terms.every((t: string) => fields.some(f => String(f || '').toLowerCase().startsWith(t)));
-              })}
-              config={[
-                { key: 'company_name', label: 'CompanyName' },
-                { key: 'print_name', label: 'Print Name' },
-                { key: 'short_name', label: 'Short Name' },
-                { key: 'country', label: 'Country' },
-                { key: 'state', label: 'State' },
-                { key: 'mobile', label: 'Mobile' },
-                { key: 'mail', label: 'Email' },
-                { key: 'username', label: 'Username' },
-                { key: 'created_by', label: 'Added By' },
-                { key: 'updated_by', label: 'Updated By' },
-              ]}
-              isButtonOne={false}
-              actionOneLabel={hasPermission(PERMISSIONS.ORGANIZATION_COMPANY_EDIT.value) ? "Is Active" : undefined}
-              actionTwoLabel={hasPermission(PERMISSIONS.ORGANIZATION_COMPANY_EDIT.value) ? "Action" : undefined}
-                //  onActionOne={handleToggleActive}
-             onActionTwo={hasPermission(PERMISSIONS.ORGANIZATION_COMPANY_EDIT.value) ? (item: any) => {
-                handleEditShift(item);
-              } : undefined}
-              refreshing={refreshing}
-              onRefresh={getData && getData.length > 0 ? onRefresh : undefined}
+            <ScreenHeader
+              title={'Company'}
+              navigation={navigation}
+              hideBackButton={true} showDrawerButton={true}
             />
-          </ScrollView>
-          {isOpenBottomSheet && (
-            <BottomSheet
-              backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
-              ref={bottomSheetRef}
-              style={{ borderWidth: 1, borderRadius: scale(10) }}
-              index={0}
-              snapPoints={snapPoints}
-              enableDynamicSizing={false}
-              onChange={handleSheetChange}
-              backdropComponent={renderBackdrop}
-              enablePanDownToClose={true}
-              onClose={() => {
-                setIsOpenBottomSheet(false);
-              }}
-            >
+            <View style={style.container}>
               <View
                 style={{
-                  flexDirection: 'row',
+                  marginVertical: scale(10),
+                  marginHorizontal: scale(15),
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: scale(20),
-                  paddingBottom: scale(10),
+                  flexDirection: 'row',
+                  gap: scale(10),
                 }}
               >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
+                <View style={{ flex: 1 }}>
+                  <CustomTextInput
+                    placeholder="Search..."
+                    value={searchText}
+                    onChangeText={setSearchText}
+                    placeholderTextColor={'#999'}
+                  />
+                </View>
+                <View style={{ width: scale(10) }} />
+                {hasPermission(PERMISSIONS.ORGANIZATION_COMPANY_ADD.value) && (
+                  <View style={{ width: '40%' }}>
+                    <CustomButton
+                      textColor={COLORS.WHITE}
+                      title="+ Add (F2)"
+                      onPress={() => {
+                        setIsOpenBottomSheet(true);
+                        setSelectedCompany(null);
+                        setIsEditing(false)
+                      }}
+                    />
+                  </View>
+                )}
+              </View>
+              <ScrollView style={{ padding: 16 }} keyboardShouldPersistTaps="handled">
+                <DeclareStatusCard
+                  data={getData.filter((item: any) => {
+                    if (!searchText?.trim()) return true;
+                    const terms = searchText.toLowerCase().split(/\s+/).filter(Boolean);
+                    const fields = [item?.company_name, item?.print_name, item?.short_name, item?.country, item?.state, item?.mobile, item?.mail, item?.username];
+                    return terms.every((t: string) => fields.some(f => String(f || '').toLowerCase().startsWith(t)));
+                  })}
+                  config={[
+                    { key: 'company_name', label: 'CompanyName' },
+                    { key: 'print_name', label: 'Print Name' },
+                    { key: 'short_name', label: 'Short Name' },
+                    { key: 'country', label: 'Country' },
+                    { key: 'state', label: 'State' },
+                    { key: 'mobile', label: 'Mobile' },
+                    { key: 'mail', label: 'Email' },
+                    { key: 'username', label: 'Username' },
+                    { key: 'created_by', label: 'Added By' },
+                    { key: 'updated_by', label: 'Updated By' },
+                  ]}
+                  isButtonOne={false}
+                  actionOneLabel={hasPermission(PERMISSIONS.ORGANIZATION_COMPANY_EDIT.value) ? "Is Active" : undefined}
+                  actionTwoLabel={hasPermission(PERMISSIONS.ORGANIZATION_COMPANY_EDIT.value) ? "Action" : undefined}
+                  //  onActionOne={handleToggleActive}
+                  onActionTwo={hasPermission(PERMISSIONS.ORGANIZATION_COMPANY_EDIT.value) ? (item: any) => {
+                    handleEditShift(item);
+                  } : undefined}
+                  refreshing={refreshing}
+                  onRefresh={getData && getData.length > 0 ? onRefresh : undefined}
+                />
+              </ScrollView>
+              {isOpenBottomSheet && (
+                <BottomSheet
+                  backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
+                  ref={bottomSheetRef}
+                  style={{ borderWidth: 1, borderRadius: scale(10) }}
+                  index={0}
+                  snapPoints={snapPoints}
+                  enableDynamicSizing={false}
+                  onChange={handleSheetChange}
+                  backdropComponent={renderBackdrop}
+                  enablePanDownToClose={true}
+                  onClose={() => {
+                    setIsOpenBottomSheet(false);
                   }}
                 >
-                  <Text
+                  <View
                     style={{
-                      fontSize: scale(16),
-                      fontWeight: '600',
-                      color: COLORS.BLACK,
-                      marginEnd: scale(5),
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingHorizontal: scale(20),
+                      paddingBottom: scale(10),
                     }}
                   >
-                    Add Company |
-                    <Text
+                    <View
                       style={{
-                        fontSize: scale(12),
-                        fontWeight: '500',
-                        color: COLORS.BLACK,
-                        marginEnd: scale(5),
+                        flexDirection: 'row',
+                        alignItems: 'center',
                       }}
                     >
-                      Manage your companies
-                    </Text>
-                  </Text>
-                </View>
-                <TouchableOpacity onPress={handleClosePress}>
-                  <Icon name="cancel" size={scale(20)} />
-                </TouchableOpacity>
-              </View>
-              <BottomSheetScrollView
-                style={{
-                  padding: 16,
-                  backgroundColor: COLORS.BGFILESCOLOR,
-                  flex: 1,
-                }}
-                keyboardShouldPersistTaps="handled"
-              >
-                <Formik
-                  initialValues={{
-                    companyName: selectedCompany?.company_name || '',
-                    printName: selectedCompany?.print_name || '',
-                    shortName: selectedCompany?.short_name || '',
-                    country: selectedCompany?.country || '',
-                    state: selectedCompany?.state || '',
-                    pincode: selectedCompany?.pincode || '',
-                    pan: selectedCompany?.pan || '',
-                    mobile: selectedCompany?.mobile || '',
-                    email: selectedCompany?.mail || '',
-                    username: selectedCompany?.username || '',
-                    password: '',
-                    address:selectedCompany?.address || ''
-                  }}
-                  validationSchema={AddCompanySchema}
-                   onSubmit={handleFormSubmit}
-                >
-                  {({
-                    handleChange,
-                    handleSubmit,
-                    values,
-                    errors,
-                    touched,
-                    setFieldValue,
-                  }) => (
-                    <View style={{ paddingVertical: scale(20) }}>
-                      <CustomTextInput
-                        label="Company Name"
-                        value={values.companyName}
-                        onChangeText={handleChange('companyName')}
-                        error={
-                          typeof errors.companyName === 'string'
-                            ? errors.companyName
-                            : undefined
-                        }
-                      />
-                      <View style={style.flexDoubleColumb}>
-                        <View style={style.flexSingleColumb}>
+                      <Text
+                        style={{
+                          fontSize: scale(16),
+                          fontWeight: '600',
+                          color: COLORS.BLACK,
+                          marginEnd: scale(5),
+                        }}
+                      >
+                        Add Company |
+                        <Text
+                          style={{
+                            fontSize: scale(12),
+                            fontWeight: '500',
+                            color: COLORS.BLACK,
+                            marginEnd: scale(5),
+                          }}
+                        >
+                          Manage your companies
+                        </Text>
+                      </Text>
+                    </View>
+                    <TouchableOpacity onPress={handleClosePress}>
+                      <Icon name="cancel" size={scale(20)} />
+                    </TouchableOpacity>
+                  </View>
+                  <BottomSheetScrollView
+                    style={{
+                      padding: 16,
+                      backgroundColor: COLORS.BGFILESCOLOR,
+                      flex: 1,
+                    }}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    <Formik
+                      initialValues={{
+                        companyName: selectedCompany?.company_name || '',
+                        printName: selectedCompany?.print_name || '',
+                        shortName: selectedCompany?.short_name || '',
+                        country: selectedCompany?.country || '',
+                        state: selectedCompany?.state || '',
+                        pincode: selectedCompany?.pincode || '',
+                        pan: selectedCompany?.pan || '',
+                        mobile: selectedCompany?.mobile || '',
+                        email: selectedCompany?.mail || '',
+                        username: selectedCompany?.username || '',
+                        password: '',
+                        address: selectedCompany?.address || ''
+                      }}
+                      validationSchema={AddCompanySchema}
+                      onSubmit={handleFormSubmit}
+                    >
+                      {({
+                        handleChange,
+                        handleSubmit,
+                        values,
+                        errors,
+                        touched,
+                        setFieldValue,
+                      }) => (
+                        <View style={{ paddingVertical: scale(20) }}>
                           <CustomTextInput
-                            label="Print Name"
-                            value={values.printName}
-                            onChangeText={handleChange('printName')}
+                            label="Company Name"
+                            value={values.companyName}
+                            onChangeText={handleChange('companyName')}
                             error={
-                              typeof errors.printName === 'string'
-                                ? errors.printName
+                              typeof errors.companyName === 'string'
+                                ? errors.companyName
                                 : undefined
                             }
                           />
-                        </View>
-                        <View style={style.flexSingleColumb}>
+                          <View style={style.flexDoubleColumb}>
+                            <View style={style.flexSingleColumb}>
+                              <CustomTextInput
+                                label="Print Name"
+                                value={values.printName}
+                                onChangeText={handleChange('printName')}
+                                error={
+                                  typeof errors.printName === 'string'
+                                    ? errors.printName
+                                    : undefined
+                                }
+                              />
+                            </View>
+                            <View style={style.flexSingleColumb}>
+                              <CustomTextInput
+                                label="Short Name"
+                                value={values.shortName}
+                                onChangeText={handleChange('shortName')}
+                                error={
+                                  typeof errors.shortName === 'string'
+                                    ? errors.shortName
+                                    : undefined
+                                }
+                              />
+                            </View>
+                          </View>
+                          <View style={style.flexDoubleColumb}>
+                            <View style={style.flexSingleColumb}>
+                              <CustomTextInput
+                                label="Country"
+                                value={values.country}
+                                onChangeText={handleChange('country')}
+                                error={
+                                  typeof errors.country === 'string'
+                                    ? errors.country
+                                    : undefined
+                                }
+                              />
+                            </View>
+                            <View style={style.flexSingleColumb}>
+                              <CustomTextInput
+                                label="State"
+                                value={values.state}
+                                onChangeText={handleChange('state')}
+                                error={
+                                  typeof errors.state === 'string'
+                                    ? errors.state
+                                    : undefined
+                                }
+                              />
+                            </View>
+                          </View>
                           <CustomTextInput
-                            label="Short Name"
-                            value={values.shortName}
-                            onChangeText={handleChange('shortName')}
-                            error={
-                              typeof errors.shortName === 'string'
-                                ? errors.shortName
-                                : undefined
-                            }
-                          />
-                        </View>
-                      </View>
-                      <View style={style.flexDoubleColumb}>
-                        <View style={style.flexSingleColumb}>
-                          <CustomTextInput
-                            label="Country"
-                            value={values.country}
-                            onChangeText={handleChange('country')}
-                            error={
-                              typeof errors.country === 'string'
-                                ? errors.country
-                                : undefined
-                            }
-                          />
-                        </View>
-                        <View style={style.flexSingleColumb}>
-                          <CustomTextInput
-                            label="State"
-                            value={values.state}
-                            onChangeText={handleChange('state')}
-                            error={
-                              typeof errors.state === 'string'
-                                ? errors.state
-                                : undefined
-                            }
-                          />
-                        </View>
-                      </View>
-                        <CustomTextInput
                             label="Address"
                             value={values.address}
                             onChangeText={handleChange('address')}
@@ -428,102 +428,102 @@ const Company = ({ navigation }: any) => {
                                 ? errors.address
                                 : undefined
                             }
-                        />
-                      <View style={style.flexDoubleColumb}>
-                        <View style={style.flexSingleColumb}>
-                          <CustomTextInput
-                            label="PinCode"
-                            value={values.pincode}
-                            onChangeText={handleChange('pincode')}
-                            error={
-                              typeof errors.pincode === 'string'
-                                ? errors.pincode
-                                : undefined
-                            }
                           />
-                        </View>
-                        <View style={style.flexSingleColumb}>
-                          <CustomTextInput
-                            label="PAN"
-                            value={values.pan}
-                            onChangeText={handleChange('pan')}
-                            error={
-                              typeof errors.pan === 'string'
-                                ? errors.pan
-                                : undefined
-                            }
-                          />
-                        </View>
-                      </View>
+                          <View style={style.flexDoubleColumb}>
+                            <View style={style.flexSingleColumb}>
+                              <CustomTextInput
+                                label="PinCode"
+                                value={values.pincode}
+                                onChangeText={handleChange('pincode')}
+                                error={
+                                  typeof errors.pincode === 'string'
+                                    ? errors.pincode
+                                    : undefined
+                                }
+                              />
+                            </View>
+                            <View style={style.flexSingleColumb}>
+                              <CustomTextInput
+                                label="PAN"
+                                value={values.pan}
+                                onChangeText={handleChange('pan')}
+                                error={
+                                  typeof errors.pan === 'string'
+                                    ? errors.pan
+                                    : undefined
+                                }
+                              />
+                            </View>
+                          </View>
 
-                      <CustomTextInput
-                        label="Mobile"
-                        value={values.mobile}
-                        onChangeText={handleChange('mobile')}
-                        error={
-                          typeof errors.mobile === 'string'
-                            ? errors.mobile
-                            : undefined
-                        }
-                        keyboardType='number-pad'
-                        maxLength={10}
-                      />
-                      <CustomTextInput
-                        label="Email"
-                        value={values.email}
-                        onChangeText={handleChange('email')}
-                        error={
-                          typeof errors.email === 'string'
-                            ? errors.email
-                            : undefined
-                        }
-                      />
-                      <View style={style.flexDoubleColumb}>
-                        <View style={style.flexSingleColumb}>
                           <CustomTextInput
-                            label="User Name"
-                            value={values.username}
-                            onChangeText={handleChange('username')}
+                            label="Mobile"
+                            value={values.mobile}
+                            onChangeText={handleChange('mobile')}
                             error={
-                              typeof errors.username === 'string'
-                                ? errors.username
+                              typeof errors.mobile === 'string'
+                                ? errors.mobile
+                                : undefined
+                            }
+                            keyboardType='number-pad'
+                            maxLength={10}
+                          />
+                          <CustomTextInput
+                            label="Email"
+                            value={values.email}
+                            onChangeText={handleChange('email')}
+                            error={
+                              typeof errors.email === 'string'
+                                ? errors.email
                                 : undefined
                             }
                           />
-                        </View>
-                        <View style={style.flexSingleColumb}>
-                          <CustomTextInput
-                            label="Password"
-                            value={values.password}
-                            onChangeText={handleChange('password')}
-                            error={
-                              typeof errors.password === 'string'
-                                ? errors.password
-                                : undefined
-                            }
-                          />
-                        </View>
-                      </View>
+                          <View style={style.flexDoubleColumb}>
+                            <View style={style.flexSingleColumb}>
+                              <CustomTextInput
+                                label="User Name"
+                                value={values.username}
+                                onChangeText={handleChange('username')}
+                                error={
+                                  typeof errors.username === 'string'
+                                    ? errors.username
+                                    : undefined
+                                }
+                              />
+                            </View>
+                            <View style={style.flexSingleColumb}>
+                              <CustomTextInput
+                                label="Password"
+                                value={values.password}
+                                onChangeText={handleChange('password')}
+                                error={
+                                  typeof errors.password === 'string'
+                                    ? errors.password
+                                    : undefined
+                                }
+                              />
+                            </View>
+                          </View>
 
-                      <View style={{ marginVertical: scale(10) }}>
-                        <CustomButton
-                          title="Save"
-                          onPress={() => {
-                            handleSubmit();
-                          }}
-                          textColor={COLORS.WHITE}
-                        />
-                      </View>
-                    </View>
-                  )}
-                </Formik>
-              </BottomSheetScrollView>
-            </BottomSheet>
-          )}
-        </View>
-      </SafeAreaView>
-      </GradientBackground>
-    </GestureHandlerRootView>
+                          <View style={{ marginVertical: scale(10) }}>
+                            <CustomButton
+                              title="Save"
+                              onPress={() => {
+                                handleSubmit();
+                              }}
+                              textColor={COLORS.WHITE}
+                            />
+                          </View>
+                        </View>
+                      )}
+                    </Formik>
+                  </BottomSheetScrollView>
+                </BottomSheet>
+              )}
+            </View>
+          </SafeAreaView>
+        </GradientBackground>
+      </GestureHandlerRootView>
     </PermissionGuard>
   );
 };

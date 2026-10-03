@@ -19,6 +19,7 @@ import ScreenHeader from '../../../components/ScreenHeader';
 import TableGrid from '../../../components/TableGridView';
 import { PERMISSIONS } from '../../../helper/permissions';
 import { usePermissions } from '../../../hooks/usePermissions';
+import { useFocusEffect } from '@react-navigation/native';
 import useSearchBar from '../../../hooks/useSearchBar';
 import APIService from '../../services/APIService';
 
@@ -291,6 +292,7 @@ const LimitVoucher = ({ navigation }: any) => {
                 setSelectedCompany(null);
 
                 // Refresh the data after successful creation
+                await fetchLedgerData();
                 await handleFilterSearch();
                 handleClosePress();
             }
@@ -326,6 +328,7 @@ const LimitVoucher = ({ navigation }: any) => {
                 setSelectedCompany(null);
 
                 // Refresh the data after successful update
+                await fetchLedgerData();
                 await handleFilterSearch();
                 handleClosePress();
             }
@@ -359,6 +362,7 @@ const LimitVoucher = ({ navigation }: any) => {
 
                             if (response?.success) {
                                 // Refresh the data after successful deletion
+                                await fetchLedgerData();
                                 await handleFilterSearch();
                             }
                         } catch (error) {
@@ -372,9 +376,13 @@ const LimitVoucher = ({ navigation }: any) => {
             ]
         );
     };
-    useEffect(() => {
-        fetchLedgerData();
-    }, []);
+    // Load initial data on component mount and focus
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchLedgerData();
+            handleFilterSearch();
+        }, [])
+    );
 
     const fetchLedgerData = async () => {
         try {
@@ -466,9 +474,12 @@ const LimitVoucher = ({ navigation }: any) => {
                                 style={{ flex: 1 }}
                                 keyboardShouldPersistTaps="handled"
                                 refreshControl={
-                                    <RefreshControl
-                                        refreshing={loading && limitData.length > 0}
-                                        onRefresh={handleFilterSearch}
+                                <RefreshControl
+                                        refreshing={loading}
+                                        onRefresh={() => {
+                                            fetchLedgerData();
+                                            handleFilterSearch();
+                                        }}
                                         colors={[COLORS.BUTTONBG]}
                                     />
                                 }

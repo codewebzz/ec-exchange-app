@@ -4,7 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
   StyleSheet,
   Alert,
 } from 'react-native';
@@ -270,15 +270,18 @@ const QuickEntryForm = React.forwardRef(({ externalTransactions = [], onTransact
           </View>
         ) : (
           <View style={styles.transactionListContainer}>
-            <FlatList
-              data={allTransactions}
-              renderItem={renderTransaction}
-              keyExtractor={(item) => item.id}
+            <ScrollView
               style={styles.transactionList}
               showsVerticalScrollIndicator={true}
-              scrollEnabled={true}
+              persistentScrollbar={true}
               nestedScrollEnabled={true}
-            />
+            >
+              {allTransactions.map((item) => (
+                <React.Fragment key={item.id}>
+                  {renderTransaction({ item })}
+                </React.Fragment>
+              ))}
+            </ScrollView>
           </View>
         )}
       </View>

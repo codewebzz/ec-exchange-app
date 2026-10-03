@@ -33,6 +33,7 @@ interface Module {
 type Props = {
     selectedPermissions: string[];
     onPermissionsChange: (permissions: string[]) => void;
+    roleName?: string;
 };
 
 const Checkbox = ({ checked, onPress, disabled, label }: any) => (
@@ -56,8 +57,9 @@ const Checkbox = ({ checked, onPress, disabled, label }: any) => (
     </TouchableOpacity>
 );
 
-export const PermissionsSelector: React.FC<Props> = ({ selectedPermissions, onPermissionsChange }) => {
-    const modules = useMemo<Module[]>(() => [
+export const PermissionsSelector: React.FC<Props> = ({ selectedPermissions, onPermissionsChange, roleName }) => {
+    const modules = useMemo<Module[]>(() => {
+        const allModules = [
         {
             name: "Dashboard",
             icon: "dashboard",
@@ -280,7 +282,13 @@ export const PermissionsSelector: React.FC<Props> = ({ selectedPermissions, onPe
                 },
             ]
         }
-    ], []);
+        ];
+
+        if (roleName?.toLowerCase() === 'ledger_fanter' || roleName?.toLowerCase().includes('fanter')) {
+            return allModules.filter(m => m.name !== "Dashboard");
+        }
+        return allModules;
+    }, [roleName]);
 
     const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 

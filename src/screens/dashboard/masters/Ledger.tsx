@@ -273,13 +273,24 @@ const Ledger = ({ navigation }: any) => {
           break;
       }
 
-      const response = await APIService.GetLeadger(apiParams);
+      let response = await APIService.GetLeadger(apiParams);
 
-      if (response?.success) {
-        setData(response?.data);
+      if ((!response?.data || (Array.isArray(response?.data) && response.data.length === 0)) && selectedStatus === 'Active') {
+        const fallbackRes = await APIService.GetLeadger({});
+        if (fallbackRes?.data && Array.isArray(fallbackRes.data) && fallbackRes.data.length > 0) {
+          response = fallbackRes;
+        }
+      }
+
+      if (response?.data) {
+        setData(response.data);
+      } else if (response?.success && response?.data) {
+        setData(response.data);
+      } else if (Array.isArray(response)) {
+        setData(response);
       }
     } catch (error) {
-      console.error('Shift fetch failed', error);
+      console.error('Ledger fetch failed', error);
     }
   };
 
@@ -317,7 +328,7 @@ const Ledger = ({ navigation }: any) => {
           text2: response?.message,
           position: 'bottom',
         });
-        getLeadger();
+        await getLeadger();
       } else {
         // Handle API response error (success: false)
         throw new Error(response?.message || 'Failed to create ledger');
@@ -446,6 +457,7 @@ const Ledger = ({ navigation }: any) => {
       } else {
         // Create new ledger
         await handleCreateLeadger(commonPayload);
+        await getLeadger();
         // Reset form after successful create
         resetForm();
         // Clear dropdowns after successful create

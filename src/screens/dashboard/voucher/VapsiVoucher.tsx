@@ -19,6 +19,7 @@ import ScreenHeader from '../../../components/ScreenHeader';
 import { PermissionGuard } from '../../../components/PermissionGuard';
 import { PERMISSIONS } from '../../../helper/permissions';
 import { usePermissions } from '../../../hooks/usePermissions';
+import { useFocusEffect } from '@react-navigation/native';
 import useSearchBar from '../../../hooks/useSearchBar';
 import APIService from '../../services/APIService';
 
@@ -290,6 +291,7 @@ const VapsiVoucher = ({ navigation }: any) => {
                 setSelectedCompany(null);
 
                 // Refresh the data after successful creation
+                await fetchLedgerData();
                 await handleFilterSearch();
                 handleClosePress();
             }
@@ -325,6 +327,7 @@ const VapsiVoucher = ({ navigation }: any) => {
                 setSelectedCompany(null);
 
                 // Refresh the data after successful update
+                await fetchLedgerData();
                 await handleFilterSearch();
                 handleClosePress();
             }
@@ -358,6 +361,7 @@ const VapsiVoucher = ({ navigation }: any) => {
 
                             if (response?.success) {
                                 // Refresh the data after successful deletion
+                                await fetchLedgerData();
                                 await handleFilterSearch();
                             }
                         } catch (error) {
@@ -371,9 +375,13 @@ const VapsiVoucher = ({ navigation }: any) => {
             ]
         );
     };
-    useEffect(() => {
-        fetchLedgerData();
-    }, []);
+    // Load initial data on component mount and focus
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchLedgerData();
+            handleFilterSearch();
+        }, [])
+    );
     const fetchLedgerData = async () => {
         try {
             // setLedgerLoading(true);
@@ -404,11 +412,7 @@ const VapsiVoucher = ({ navigation }: any) => {
             // setLedgerLoading(false);
         }
     };
-    // Load initial data on component mount
-    useEffect(() => {
-        // Only fetch dropdown data, don't auto-fetch report data
-        fetchLedgerData();
-    }, []);
+    // (removed duplicate hook)
 
     // Search functionality
     const { query, setQuery, filteredItems } = useSearchBar<any>(vapsiData, {
@@ -418,441 +422,444 @@ const VapsiVoucher = ({ navigation }: any) => {
 
     return (
         <PermissionGuard permission={PERMISSIONS.VOUCHER_VAPSI_VIEW.value}>
-    <GestureHandlerRootView style={{ flex: 1 }}>
-            <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
-                <SafeAreaView style={style.safeAreaContainer} edges={['top', 'left', 'right']}>
-                    <ScreenHeader
-                        title={"Vapsi Voucher"}
-                        navigation={navigation}
-                        hideBackButton={true}
-                        showDrawerButton={true}
-                    >
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(10) }}>
-                            <TouchableOpacity onPress={() => {
-                                setShowSearch(!showSearch);
-                                if (showSearch) {
-                                    setQuery('');
-                                }
-                            }}>
-                                <Icon name={showSearch ? 'close' : 'search'} color={COLORS.WHITE} size={scale(20)} />
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => {
-                                setIsFilterBottomSheetOpen(true);
-                            }}>
-                                <Icon name={'filter-list-alt'} color={COLORS.WHITE} size={scale(20)} />
-                            </TouchableOpacity>
-                        </View>
-                    </ScreenHeader>
-                    <View style={style.container}>
-                        {showSearch ? (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(10), marginHorizontal: scale(15), marginVertical: scale(10) }}>
-                                <View style={{ flex: 1 }}>
-                                    <CustomTextInput
-                                        placeholder="Search by party name, opposite party, or remark..."
-                                        value={query}
-                                        onChangeText={setQuery}
-                                        style={{ backgroundColor: COLORS.WHITE, minHeight: 40, borderRadius: 8, paddingHorizontal: 12, elevation: 10 }}
-                                    />
-                                </View>
-                                <TouchableOpacity onPress={() => { setQuery(''); setShowSearch(false); }}>
-                                    <Icons name={'close-circle'} size={22} color={"red"} />
+            <GestureHandlerRootView style={{ flex: 1 }}>
+                <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
+                    <SafeAreaView style={style.safeAreaContainer} edges={['top', 'left', 'right']}>
+                        <ScreenHeader
+                            title={"Vapsi Voucher"}
+                            navigation={navigation}
+                            hideBackButton={true}
+                            showDrawerButton={true}
+                        >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(10) }}>
+                                <TouchableOpacity onPress={() => {
+                                    setShowSearch(!showSearch);
+                                    if (showSearch) {
+                                        setQuery('');
+                                    }
+                                }}>
+                                    <Icon name={showSearch ? 'close' : 'search'} color={COLORS.WHITE} size={scale(20)} />
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => {
+                                    setIsFilterBottomSheetOpen(true);
+                                }}>
+                                    <Icon name={'filter-list-alt'} color={COLORS.WHITE} size={scale(20)} />
                                 </TouchableOpacity>
                             </View>
-                        ) : (
-                            <View style={{ marginVertical: scale(10), marginHorizontal: scale(15), alignItems: "flex-end" }}>
-                                {hasPermission(PERMISSIONS.VOUCHER_VAPSI_ADD.value) && (
-                                <CustomButton
-                                    textColor={COLORS.WHITE}
-                                    title="+ Add (F2)"
-                                    onPress={() => {
-                                        setIsOpenBottomSheet(true);
-                                        setSelectedCompany(null);
-                                        // Reset dropdown values for new voucher
-                                        setPartyDropdownValue(null);
-                                        setDropdownValue('1');
-                                        setOppositPartyDropdownValue(null);
-                                    }}
-                                    style={{ width: '50%' }}
-                                />
-                                )}
-                            </View>
-                        )}
+                        </ScreenHeader>
+                        <View style={style.container}>
+                            {showSearch ? (
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: scale(10), marginHorizontal: scale(15), marginVertical: scale(10) }}>
+                                    <View style={{ flex: 1 }}>
+                                        <CustomTextInput
+                                            placeholder="Search by party name, opposite party, or remark..."
+                                            value={query}
+                                            onChangeText={setQuery}
+                                            style={{ backgroundColor: COLORS.WHITE, minHeight: 40, borderRadius: 8, paddingHorizontal: 12, elevation: 10 }}
+                                        />
+                                    </View>
+                                    <TouchableOpacity onPress={() => { setQuery(''); setShowSearch(false); }}>
+                                        <Icons name={'close-circle'} size={22} color={"red"} />
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <View style={{ marginVertical: scale(10), marginHorizontal: scale(15), alignItems: "flex-end" }}>
+                                    {hasPermission(PERMISSIONS.VOUCHER_VAPSI_ADD.value) && (
+                                        <CustomButton
+                                            textColor={COLORS.WHITE}
+                                            title="+ Add (F2)"
+                                            onPress={() => {
+                                                setIsOpenBottomSheet(true);
+                                                setSelectedCompany(null);
+                                                // Reset dropdown values for new voucher
+                                                setPartyDropdownValue(null);
+                                                setDropdownValue('1');
+                                                setOppositPartyDropdownValue(null);
+                                            }}
+                                            style={{ width: '50%' }}
+                                        />
+                                    )}
+                                </View>
+                            )}
 
-                        <ScrollView
-                            style={{ flex: 1 }}
-                            keyboardShouldPersistTaps="handled"
-                            refreshControl={
-                                <RefreshControl
-                                    refreshing={loading && vapsiData.length > 0}
-                                    onRefresh={handleFilterSearch}
-                                    colors={[COLORS.BUTTONBG]}
-                                />
-                            }
-                        >
-                            <View style={{ padding: scale(16) }}>
-                                <TableGrid
-                                    loading={loading}
-                                    data={filteredItems}
-                                    showTotal={true}
-                                    columns={[
-                                        { key: 'sno', label: 'S.No.', width: 50 },
-                                        { key: 'partyAndBalance', label: 'Party', width: 120 },
-                                        { key: 'date', label: 'Date', width: 100 },
-                                        { key: 'crAnddr', label: 'Cr/Dr', width: 80 },
-                                        { key: 'amount', label: 'Amount', width: 80, numeric: true },
-                                        { key: 'oppositeParty', label: 'Opposite Party', width: 120 },
-                                        { key: 'remark', label: 'Remark', width: 150 },
-                                        {
-                                            key: 'action',
-                                            label: 'Action',
-                                            width: 100,
-                                            renderCell: (row) => (
-                                                <View style={{ flexDirection: 'row', gap: scale(10) }}>
-                                                    {hasPermission(PERMISSIONS.VOUCHER_VAPSI_EDIT.value) && (
-                                                    <TouchableOpacity
-                                                        onPress={() => {
-                                                            setSelectedCompany(row);
-                                                            // Set dropdown values for edit mode
-                                                            if (row.originalData?.user_id?.id) {
-                                                                setPartyDropdownValue(row.originalData.user_id.id.toString());
-                                                            }
-                                                            if (row.originalData?.lena_dena?.id) {
-                                                                setDropdownValue(row.originalData.lena_dena.id.toString());
-                                                            }
-                                                            if (row.originalData?.opposite_user_id?.id) {
-                                                                setOppositPartyDropdownValue(row.originalData.opposite_user_id.id.toString());
-                                                            }
-                                                            setIsOpenBottomSheet(true);
-                                                        }}
-                                                    >
-                                                        <Icon name="pencil" size={18} color={COLORS.BUTTONBG} />
-                                                    </TouchableOpacity>
-                                                    )}
-                                                    {hasPermission(PERMISSIONS.VOUCHER_VAPSI_DELETE.value) && (
-                                                    <TouchableOpacity onPress={() => handleDeleteVapsiVoucher(row)}>
-                                                        <Icon name="trash" size={18} color="red" />
-                                                    </TouchableOpacity>
-                                                    )}
-                                                </View>
-                                            )
-                                        }
-                                    ]}
-                                />
-                            </View>
-                        </ScrollView>
-
-                        {isOpenBottomSheet && (
-                            <BottomSheet
-                                backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
-                                ref={bottomSheetRef}
-                                style={{ borderWidth: 1, borderRadius: scale(10) }}
-                                index={0}
-                                snapPoints={snapPoints}
-                                enableDynamicSizing={false}
-                                onChange={handleSheetChange}
-                                backdropComponent={renderBackdrop}
-                                enablePanDownToClose={true}
-                                onClose={() => {
-                                    setIsOpenBottomSheet(false);
-                                }}
+                            <ScrollView
+                                style={{ flex: 1 }}
+                                keyboardShouldPersistTaps="handled"
+                                refreshControl={
+                                    <RefreshControl
+                                        refreshing={loading}
+                                        onRefresh={() => {
+                                            fetchLedgerData();
+                                            handleFilterSearch();
+                                        }}
+                                        colors={[COLORS.BUTTONBG]}
+                                    />
+                                }
                             >
-                                <View
-                                    style={{
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        paddingHorizontal: scale(20),
-                                        paddingBottom: scale(10),
+                                <View style={{ padding: scale(16) }}>
+                                    <TableGrid
+                                        loading={loading}
+                                        data={filteredItems}
+                                        showTotal={true}
+                                        columns={[
+                                            { key: 'sno', label: 'S.No.', width: 50 },
+                                            { key: 'partyAndBalance', label: 'Party', width: 120 },
+                                            { key: 'date', label: 'Date', width: 100 },
+                                            { key: 'crAnddr', label: 'Cr/Dr', width: 80 },
+                                            { key: 'amount', label: 'Amount', width: 80, numeric: true },
+                                            { key: 'oppositeParty', label: 'Opposite Party', width: 120 },
+                                            { key: 'remark', label: 'Remark', width: 150 },
+                                            {
+                                                key: 'action',
+                                                label: 'Action',
+                                                width: 100,
+                                                renderCell: (row) => (
+                                                    <View style={{ flexDirection: 'row', gap: scale(10) }}>
+                                                        {hasPermission(PERMISSIONS.VOUCHER_VAPSI_EDIT.value) && (
+                                                            <TouchableOpacity
+                                                                onPress={() => {
+                                                                    setSelectedCompany(row);
+                                                                    // Set dropdown values for edit mode
+                                                                    if (row.originalData?.user_id?.id) {
+                                                                        setPartyDropdownValue(row.originalData.user_id.id.toString());
+                                                                    }
+                                                                    if (row.originalData?.lena_dena?.id) {
+                                                                        setDropdownValue(row.originalData.lena_dena.id.toString());
+                                                                    }
+                                                                    if (row.originalData?.opposite_user_id?.id) {
+                                                                        setOppositPartyDropdownValue(row.originalData.opposite_user_id.id.toString());
+                                                                    }
+                                                                    setIsOpenBottomSheet(true);
+                                                                }}
+                                                            >
+                                                                <Icon name="pencil" size={18} color={COLORS.BUTTONBG} />
+                                                            </TouchableOpacity>
+                                                        )}
+                                                        {hasPermission(PERMISSIONS.VOUCHER_VAPSI_DELETE.value) && (
+                                                            <TouchableOpacity onPress={() => handleDeleteVapsiVoucher(row)}>
+                                                                <Icon name="trash" size={18} color="red" />
+                                                            </TouchableOpacity>
+                                                        )}
+                                                    </View>
+                                                )
+                                            }
+                                        ]}
+                                    />
+                                </View>
+                            </ScrollView>
+
+                            {isOpenBottomSheet && (
+                                <BottomSheet
+                                    backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
+                                    ref={bottomSheetRef}
+                                    style={{ borderWidth: 1, borderRadius: scale(10) }}
+                                    index={0}
+                                    snapPoints={snapPoints}
+                                    enableDynamicSizing={false}
+                                    onChange={handleSheetChange}
+                                    backdropComponent={renderBackdrop}
+                                    enablePanDownToClose={true}
+                                    onClose={() => {
+                                        setIsOpenBottomSheet(false);
                                     }}
                                 >
                                     <View
                                         style={{
                                             flexDirection: 'row',
                                             alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            paddingHorizontal: scale(20),
+                                            paddingBottom: scale(10),
                                         }}
                                     >
-                                        <Text
+                                        <View
                                             style={{
-                                                fontSize: scale(14),
-                                                fontWeight: '600',
-                                                color: COLORS.BLACK,
-                                                marginEnd: scale(5),
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
                                             }}
                                         >
-                                            Add Vapsi Voucher |
                                             <Text
                                                 style={{
-                                                    fontSize: scale(10),
-                                                    fontWeight: '500',
+                                                    fontSize: scale(14),
+                                                    fontWeight: '600',
                                                     color: COLORS.BLACK,
                                                     marginEnd: scale(5),
                                                 }}
                                             >
-                                                {' '}
-                                                Manage your vapsi vouchers
+                                                Add Vapsi Voucher |
+                                                <Text
+                                                    style={{
+                                                        fontSize: scale(10),
+                                                        fontWeight: '500',
+                                                        color: COLORS.BLACK,
+                                                        marginEnd: scale(5),
+                                                    }}
+                                                >
+                                                    {' '}
+                                                    Manage your vapsi vouchers
+                                                </Text>
                                             </Text>
-                                        </Text>
+                                        </View>
+                                        <TouchableOpacity onPress={handleClosePress}>
+                                            <Icon name="cancel" size={scale(20)} />
+                                        </TouchableOpacity>
                                     </View>
-                                    <TouchableOpacity onPress={handleClosePress}>
-                                        <Icon name="cancel" size={scale(20)} />
-                                    </TouchableOpacity>
-                                </View>
-                                <BottomSheetScrollView
-                                    style={{
-                                        padding: 16,
-                                        backgroundColor: COLORS.BGFILESCOLOR,
-                                        flex: 1,
-                                    }}
-                                    keyboardShouldPersistTaps="handled"
-                                >
-                                    <Formik
-                                        initialValues={{
-                                            date: selectedCompany?.originalData?.date || selectedCompany?.date || formatDateForAPI(new Date()),
-                                            partyAndBalance: selectedCompany?.originalData?.user_id?.id?.toString() || selectedCompany?.partyAndBalance || '',
-                                            crAnddr: selectedCompany?.originalData?.lena_dena?.id?.toString() || selectedCompany?.crAnddr || '1',
-                                            amount: selectedCompany?.originalData?.amount?.toString() || selectedCompany?.amount || '',
-                                            oppositeParty: selectedCompany?.originalData?.opposite_user_id?.id?.toString() || selectedCompany?.oppositeParty || '',
-                                            remark: selectedCompany?.originalData?.remark || selectedCompany?.remark || '',
+                                    <BottomSheetScrollView
+                                        style={{
+                                            padding: 16,
+                                            backgroundColor: COLORS.BGFILESCOLOR,
+                                            flex: 1,
                                         }}
-                                        enableReinitialize={true}
-                                        validationSchema={AddStaffSchema}
-                                        onSubmit={(values, { resetForm }) => {
-                                            console.log('Form Data:', values);
-
-                                            if (selectedCompany) {
-                                                // Update existing voucher
-                                                handleUpdateVapsiVoucher(values);
-                                            } else {
-                                                // Create new voucher
-                                                handleCreateVapsiVoucher(values);
-                                            }
-
-                                            // Reset form and dropdowns
-                                            resetForm();
-                                            setPartyDropdownValue(null);
-                                            setDropdownValue('1');
-                                            setOppositPartyDropdownValue(null);
-                                        }}
+                                        keyboardShouldPersistTaps="handled"
                                     >
-                                        {({
-                                            handleChange,
-                                            handleSubmit,
-                                            values,
-                                            errors,
-                                            touched,
-                                            setFieldValue,
-                                        }) => (
-                                            <View style={{ paddingVertical: scale(20) }}>
-                                                <CustomDateTimePicker
-                                                    label="Date"
-                                                    value={values.date}
-                                                    setFieldValue={setFieldValue}
-                                                    fieldName="date"
-                                                    mode={'date'}
-                                                />
-                                                <CustomDropdown
-                                                    label={`Party & Balance ${values.partyAndBalance ? `(${PartydropdownItems.find(i => i.value === values.partyAndBalance)?.closing_balance || '0'})` : ''}`}
-                                                    open={openPartyDropdown}
-                                                    value={PartydropdownValue}
-                                                    items={PartydropdownItems}
-                                                    setOpen={setOpenPartyDropdown}
-                                                    setValue={(val: any) => {
-                                                        const selectedValue = val();
-                                                        setPartyDropdownValue(selectedValue);
-                                                        setFieldValue('partyAndBalance', selectedValue);
+                                        <Formik
+                                            initialValues={{
+                                                date: selectedCompany?.originalData?.date || selectedCompany?.date || formatDateForAPI(new Date()),
+                                                partyAndBalance: selectedCompany?.originalData?.user_id?.id?.toString() || selectedCompany?.partyAndBalance || '',
+                                                crAnddr: selectedCompany?.originalData?.lena_dena?.id?.toString() || selectedCompany?.crAnddr || '1',
+                                                amount: selectedCompany?.originalData?.amount?.toString() || selectedCompany?.amount || '',
+                                                oppositeParty: selectedCompany?.originalData?.opposite_user_id?.id?.toString() || selectedCompany?.oppositeParty || '',
+                                                remark: selectedCompany?.originalData?.remark || selectedCompany?.remark || '',
+                                            }}
+                                            enableReinitialize={true}
+                                            validationSchema={AddStaffSchema}
+                                            onSubmit={(values, { resetForm }) => {
+                                                console.log('Form Data:', values);
 
-                                                        // Auto-set opposite party if not set, matching web logic
-                                                        if (selectedValue && !values.oppositeParty) {
+                                                if (selectedCompany) {
+                                                    // Update existing voucher
+                                                    handleUpdateVapsiVoucher(values);
+                                                } else {
+                                                    // Create new voucher
+                                                    handleCreateVapsiVoucher(values);
+                                                }
+
+                                                // Reset form and dropdowns
+                                                resetForm();
+                                                setPartyDropdownValue(null);
+                                                setDropdownValue('1');
+                                                setOppositPartyDropdownValue(null);
+                                            }}
+                                        >
+                                            {({
+                                                handleChange,
+                                                handleSubmit,
+                                                values,
+                                                errors,
+                                                touched,
+                                                setFieldValue,
+                                            }) => (
+                                                <View style={{ paddingVertical: scale(20) }}>
+                                                    <CustomDateTimePicker
+                                                        label="Date"
+                                                        value={values.date}
+                                                        setFieldValue={setFieldValue}
+                                                        fieldName="date"
+                                                        mode={'date'}
+                                                    />
+                                                    <CustomDropdown
+                                                        label={`Party & Balance ${values.partyAndBalance ? `(${PartydropdownItems.find(i => i.value === values.partyAndBalance)?.closing_balance || '0'})` : ''}`}
+                                                        open={openPartyDropdown}
+                                                        value={PartydropdownValue}
+                                                        items={PartydropdownItems}
+                                                        setOpen={setOpenPartyDropdown}
+                                                        setValue={(val: any) => {
+                                                            const selectedValue = val();
+                                                            setPartyDropdownValue(selectedValue);
+                                                            setFieldValue('partyAndBalance', selectedValue);
+
+                                                            // Auto-set opposite party if not set, matching web logic
+                                                            if (selectedValue && !values.oppositeParty) {
+                                                                setOppositPartyDropdownValue(selectedValue);
+                                                                setFieldValue('oppositeParty', selectedValue);
+                                                            }
+                                                        }}
+                                                        setItems={setPartyDropdownItems}
+                                                        error={errors.partyAndBalance}
+                                                    />
+                                                    <CustomDropdown
+                                                        label="Cd/Dr"
+                                                        open={openDropdown}
+                                                        value={values.crAnddr}
+                                                        items={dropdownItems}
+                                                        setOpen={setOpenDropdown}
+                                                        setValue={(val: any) => {
+                                                            const selectedValue = val();
+                                                            setDropdownValue(selectedValue);
+                                                            setFieldValue('crAnddr', selectedValue);
+                                                        }}
+                                                        setItems={setDropdownItems}
+                                                        error={errors.crAnddr}
+                                                    />
+                                                    <CustomTextInput
+                                                        label='Amount'
+                                                        value={values.amount}
+                                                        keyboardType='numeric'
+                                                        onChangeText={handleChange('amount')}
+                                                        error={touched.amount && typeof errors.amount === 'string' ? errors.amount : undefined}
+                                                    />
+                                                    <CustomDropdown
+                                                        label="Opposite Party"
+                                                        open={openOppositPartyDropdown}
+                                                        value={values.oppositeParty}
+                                                        items={OppositPartydropdownItems.map(item => ({
+                                                            ...item,
+                                                            label: item.value === values.partyAndBalance ? 'Vapsi' : item.label
+                                                        }))}
+                                                        setOpen={setOpenOppositPartyDropdown}
+                                                        setValue={(val: any) => {
+                                                            const selectedValue = val();
                                                             setOppositPartyDropdownValue(selectedValue);
                                                             setFieldValue('oppositeParty', selectedValue);
-                                                        }
-                                                    }}
-                                                    setItems={setPartyDropdownItems}
-                                                    error={errors.partyAndBalance}
-                                                />
-                                                <CustomDropdown
-                                                    label="Cd/Dr"
-                                                    open={openDropdown}
-                                                    value={values.crAnddr}
-                                                    items={dropdownItems}
-                                                    setOpen={setOpenDropdown}
-                                                    setValue={(val: any) => {
-                                                        const selectedValue = val();
-                                                        setDropdownValue(selectedValue);
-                                                        setFieldValue('crAnddr', selectedValue);
-                                                    }}
-                                                    setItems={setDropdownItems}
-                                                    error={errors.crAnddr}
-                                                />
-                                                <CustomTextInput
-                                                    label='Amount'
-                                                    value={values.amount}
-                                                    keyboardType='numeric'
-                                                    onChangeText={handleChange('amount')}
-                                                    error={touched.amount && typeof errors.amount === 'string' ? errors.amount : undefined}
-                                                />
-                                                <CustomDropdown
-                                                    label="Opposite Party"
-                                                    open={openOppositPartyDropdown}
-                                                    value={values.oppositeParty}
-                                                    items={OppositPartydropdownItems.map(item => ({
-                                                        ...item,
-                                                        label: item.value === values.partyAndBalance ? 'Vapsi' : item.label
-                                                    }))}
-                                                    setOpen={setOpenOppositPartyDropdown}
-                                                    setValue={(val: any) => {
-                                                        const selectedValue = val();
-                                                        setOppositPartyDropdownValue(selectedValue);
-                                                        setFieldValue('oppositeParty', selectedValue);
-                                                    }}
-                                                    setItems={setOppositPartyDropdownItems}
-                                                    error={errors.oppositeParty}
-                                                />
-                                                <CustomTextInput
-                                                    label='Remark'
-                                                    value={values.remark}
-                                                    onChangeText={handleChange('remark')}
-                                                    error={touched.remark && typeof errors.remark === 'string' ? errors.remark : undefined}
-                                                />
-                                                <View style={{ marginVertical: scale(10) }}>
-                                                    <CustomButton
-                                                        title="Save"
-                                                        onPress={() => {
-                                                            handleSubmit();
                                                         }}
-                                                        textColor={COLORS.WHITE}
+                                                        setItems={setOppositPartyDropdownItems}
+                                                        error={errors.oppositeParty}
                                                     />
+                                                    <CustomTextInput
+                                                        label='Remark'
+                                                        value={values.remark}
+                                                        onChangeText={handleChange('remark')}
+                                                        error={touched.remark && typeof errors.remark === 'string' ? errors.remark : undefined}
+                                                    />
+                                                    <View style={{ marginVertical: scale(10) }}>
+                                                        <CustomButton
+                                                            title="Save"
+                                                            onPress={() => {
+                                                                handleSubmit();
+                                                            }}
+                                                            textColor={COLORS.WHITE}
+                                                        />
+                                                    </View>
                                                 </View>
-                                            </View>
-                                        )}
-                                    </Formik>
-                                </BottomSheetScrollView>
-                            </BottomSheet>
-                        )}
+                                            )}
+                                        </Formik>
+                                    </BottomSheetScrollView>
+                                </BottomSheet>
+                            )}
 
-                        {/* Filter Bottom Sheet */}
-                        {isFilterBottomSheetOpen && (
-                            <BottomSheet
-                                backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
-                                ref={filterBottomSheetRef}
-                                style={{ borderWidth: 1, borderRadius: scale(10) }}
-                                index={0}
-                                snapPoints={snapPoints}
-                                enableDynamicSizing={false}
-                                onChange={(index: number) => {
-                                    Keyboard.dismiss();
-                                    if (index === -1) {
+                            {/* Filter Bottom Sheet */}
+                            {isFilterBottomSheetOpen && (
+                                <BottomSheet
+                                    backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
+                                    ref={filterBottomSheetRef}
+                                    style={{ borderWidth: 1, borderRadius: scale(10) }}
+                                    index={0}
+                                    snapPoints={snapPoints}
+                                    enableDynamicSizing={false}
+                                    onChange={(index: number) => {
+                                        Keyboard.dismiss();
+                                        if (index === -1) {
+                                            setIsFilterBottomSheetOpen(false);
+                                        } else {
+                                            setIsFilterBottomSheetOpen(true);
+                                        }
+                                    }}
+                                    backdropComponent={renderBackdrop}
+                                    enablePanDownToClose={true}
+                                    onClose={() => {
                                         setIsFilterBottomSheetOpen(false);
-                                    } else {
-                                        setIsFilterBottomSheetOpen(true);
-                                    }
-                                }}
-                                backdropComponent={renderBackdrop}
-                                enablePanDownToClose={true}
-                                onClose={() => {
-                                    setIsFilterBottomSheetOpen(false);
-                                }}
-                            >
-                                <View
-                                    style={{
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        paddingHorizontal: scale(20),
-                                        paddingBottom: scale(10),
                                     }}
                                 >
                                     <View
                                         style={{
                                             flexDirection: 'row',
                                             alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            paddingHorizontal: scale(20),
+                                            paddingBottom: scale(10),
                                         }}
                                     >
-                                        <Text
+                                        <View
                                             style={{
-                                                fontSize: scale(14),
-                                                fontWeight: '600',
-                                                color: COLORS.BLACK,
-                                                marginEnd: scale(5),
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
                                             }}
                                         >
-                                            Filter Vapsi Vouchers |
                                             <Text
                                                 style={{
-                                                    fontSize: scale(10),
-                                                    fontWeight: '500',
+                                                    fontSize: scale(14),
+                                                    fontWeight: '600',
                                                     color: COLORS.BLACK,
                                                     marginEnd: scale(5),
                                                 }}
                                             >
-                                                {' '}
-                                                Select date range to filter
-                                            </Text>
-                                        </Text>
-                                    </View>
-                                    <TouchableOpacity onPress={handleFilterClosePress}>
-                                        <Icon name="cancel" size={scale(20)} />
-                                    </TouchableOpacity>
-                                </View>
-                                <BottomSheetScrollView
-                                    style={{
-                                        padding: 16,
-                                        backgroundColor: COLORS.BGFILESCOLOR,
-                                        flex: 1,
-                                    }}
-                                >
-                                    <View style={{ paddingVertical: scale(20) }}>
-                                        <CustomDateTimePicker
-                                            label="From Date"
-                                            value={filterFromDate}
-                                            setFieldValue={handleFromDateChange}
-                                            fieldName="fromDate"
-                                            mode={'date'}
-                                        />
-
-                                        <CustomDateTimePicker
-                                            label="To Date"
-                                            value={filterToDate}
-                                            setFieldValue={handleToDateChange}
-                                            fieldName="toDate"
-                                            mode={'date'}
-                                        />
-
-                                        <View style={{ marginVertical: scale(10) }}>
-                                            <Text style={{ fontSize: scale(12), color: COLORS.BLACK, marginBottom: scale(5) }}>
-                                                From: {filterFromDate && filterFromDate instanceof Date ? filterFromDate.toDateString() : 'Not set'}
-                                            </Text>
-                                            <Text style={{ fontSize: scale(12), color: COLORS.BLACK, marginBottom: scale(10) }}>
-                                                To: {filterToDate && filterToDate instanceof Date ? filterToDate.toDateString() : 'Not set'}
+                                                Filter Vapsi Vouchers |
+                                                <Text
+                                                    style={{
+                                                        fontSize: scale(10),
+                                                        fontWeight: '500',
+                                                        color: COLORS.BLACK,
+                                                        marginEnd: scale(5),
+                                                    }}
+                                                >
+                                                    {' '}
+                                                    Select date range to filter
+                                                </Text>
                                             </Text>
                                         </View>
-
-                                        <View style={{ marginVertical: scale(10), flexDirection: 'row', justifyContent: 'space-between' }}>
-                                            <CustomButton
-                                                title="Reset Dates"
-                                                onPress={() => {
-                                                    setFilterFromDate(new Date());
-                                                    setFilterToDate(new Date());
-                                                }}
-                                                textColor={COLORS.WHITE}
-                                                style={{ width: '48%' }}
-                                            />
-                                            <CustomButton
-                                                title={loading ? "Searching..." : "Search"}
-                                                onPress={handleFilterSearch}
-                                                textColor={COLORS.WHITE}
-                                                style={{ width: '48%' }}
-                                            />
-                                        </View>
+                                        <TouchableOpacity onPress={handleFilterClosePress}>
+                                            <Icon name="cancel" size={scale(20)} />
+                                        </TouchableOpacity>
                                     </View>
-                                </BottomSheetScrollView>
-                            </BottomSheet>
-                        )}
-                    </View>
-                </SafeAreaView>
-            </GradientBackground>
-        </GestureHandlerRootView>
-    </PermissionGuard>
+                                    <BottomSheetScrollView
+                                        style={{
+                                            padding: 16,
+                                            backgroundColor: COLORS.BGFILESCOLOR,
+                                            flex: 1,
+                                        }}
+                                    >
+                                        <View style={{ paddingVertical: scale(20) }}>
+                                            <CustomDateTimePicker
+                                                label="From Date"
+                                                value={filterFromDate}
+                                                setFieldValue={handleFromDateChange}
+                                                fieldName="fromDate"
+                                                mode={'date'}
+                                            />
+
+                                            <CustomDateTimePicker
+                                                label="To Date"
+                                                value={filterToDate}
+                                                setFieldValue={handleToDateChange}
+                                                fieldName="toDate"
+                                                mode={'date'}
+                                            />
+
+                                            <View style={{ marginVertical: scale(10) }}>
+                                                <Text style={{ fontSize: scale(12), color: COLORS.BLACK, marginBottom: scale(5) }}>
+                                                    From: {filterFromDate && filterFromDate instanceof Date ? filterFromDate.toDateString() : 'Not set'}
+                                                </Text>
+                                                <Text style={{ fontSize: scale(12), color: COLORS.BLACK, marginBottom: scale(10) }}>
+                                                    To: {filterToDate && filterToDate instanceof Date ? filterToDate.toDateString() : 'Not set'}
+                                                </Text>
+                                            </View>
+
+                                            <View style={{ marginVertical: scale(10), flexDirection: 'row', justifyContent: 'space-between' }}>
+                                                <CustomButton
+                                                    title="Reset Dates"
+                                                    onPress={() => {
+                                                        setFilterFromDate(new Date());
+                                                        setFilterToDate(new Date());
+                                                    }}
+                                                    textColor={COLORS.WHITE}
+                                                    style={{ width: '48%' }}
+                                                />
+                                                <CustomButton
+                                                    title={loading ? "Searching..." : "Search"}
+                                                    onPress={handleFilterSearch}
+                                                    textColor={COLORS.WHITE}
+                                                    style={{ width: '48%' }}
+                                                />
+                                            </View>
+                                        </View>
+                                    </BottomSheetScrollView>
+                                </BottomSheet>
+                            )}
+                        </View>
+                    </SafeAreaView>
+                </GradientBackground>
+            </GestureHandlerRootView>
+        </PermissionGuard>
     );
 };
 const style = StyleSheet.create({

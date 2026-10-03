@@ -360,6 +360,9 @@ const RolePermissions = ({ navigation }: any) => {
                           <PermissionsSelector
                             selectedPermissions={permissionStates}
                             onPermissionsChange={setPermissionStates}
+                            roleName={isDefaultPermissions 
+                              ? roleDropdownData.find(r => r.value === dropdownValue)?.label 
+                              : (typeof selectedParty?.staff_role === 'object' ? selectedParty?.staff_role?.name : selectedParty?.staff_role)}
                           />
 
                           <CustomButton

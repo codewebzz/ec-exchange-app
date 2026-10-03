@@ -229,12 +229,12 @@ export const Transaction = ({ navigation }: any) => {
       renderAction: (item: any) => (
         <View style={styles.actionButtonsContainer}>
           {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_COPY.value) && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.copyButton]}
-            onPress={() => handleCopyTransaction(item)}
-          >
-            <Ionicons name="copy-outline" size={16} color="#FF8C00" />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.copyButton]}
+              onPress={() => handleCopyTransaction(item)}
+            >
+              <Ionicons name="copy-outline" size={16} color="#FF8C00" />
+            </TouchableOpacity>
           )}
           <TouchableOpacity
             style={[styles.actionButton, styles.viewButton]}
@@ -243,20 +243,20 @@ export const Transaction = ({ navigation }: any) => {
             <Ionicons name="eye-outline" size={16} color="#007AFF" />
           </TouchableOpacity>
           {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_EDIT.value) && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.editButton]}
-            onPress={() => handleEditTransaction(item)}
-          >
-            <Ionicons name="pencil-outline" size={16} color="#007AFF" />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.editButton]}
+              onPress={() => handleEditTransaction(item)}
+            >
+              <Ionicons name="pencil-outline" size={16} color="#007AFF" />
+            </TouchableOpacity>
           )}
           {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_DELETE.value) && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.deleteButton]}
-            onPress={() => handleDeleteTransaction(item)}
-          >
-            <Ionicons name="trash-outline" size={16} color="#FF3B30" />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.deleteButton]}
+              onPress={() => handleDeleteTransaction(item)}
+            >
+              <Ionicons name="trash-outline" size={16} color="#FF3B30" />
+            </TouchableOpacity>
           )}
         </View>
       ),
@@ -602,354 +602,354 @@ export const Transaction = ({ navigation }: any) => {
 
   return (
     <PermissionGuard permission={PERMISSIONS.TRANSACTIONS_TRANSACTION_VIEW.value}>
-    <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
-      <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
-        <ScreenHeader
-          navigation={navigation}
-          title="EC Exchange"
-          hideBackButton={true} showDrawerButton={true}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: scale(12) }}>
-            <TouchableOpacity onPress={() => setShowSearch((prev) => !prev)}>
-              <Ionicons name={showSearch ? 'close' : 'search'} size={24} color={COLORS.WHITE} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setIsFilterBottomSheetOpen(true)}>
-              <Ionicons name="filter" size={24} color={COLORS.WHITE} />
-            </TouchableOpacity>
-          </View>
-        </ScreenHeader>
+      <GradientBackground colors={["#fdf0d0", "#e0efea"]} locations={[0, 30]}>
+        <SafeAreaView style={styles.safeAreaContainer} edges={['top', 'left', 'right']}>
+          <ScreenHeader
+            navigation={navigation}
+            title="EC Exchange"
+            hideBackButton={true} showDrawerButton={true}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: scale(12) }}>
+              <TouchableOpacity onPress={() => setShowSearch((prev) => !prev)}>
+                <Ionicons name={showSearch ? 'close' : 'search'} size={24} color={COLORS.WHITE} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setIsFilterBottomSheetOpen(true)}>
+                <Ionicons name="filter" size={24} color={COLORS.WHITE} />
+              </TouchableOpacity>
+            </View>
+          </ScreenHeader>
 
-        {showSearch ? (
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={18} color={COLORS.BLACK} />
-            <TextInput
-              style={styles.searchText}
-              placeholder="Search by party, amount, rate, type..."
-              placeholderTextColor={COLORS.BLACK}
-              value={query}
-              onChangeText={setQuery}
-            />
-          </View>
-        ) : null}
-
-        <ScrollView style={styles.content} keyboardShouldPersistTaps="handled" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.BUTTONBG]} tintColor={COLORS.BUTTONBG} />}>
-          {/* Main Table */}
-          <View style={styles.tableWrapper}>
-            {loadingList ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={COLORS.BUTTONBG} />
-                <Text style={styles.loadingText}>Loading transactions...</Text>
-              </View>
-            ) : (
-              <TableGridView
-                columns={tableColumns}
-                data={filteredItems}
-                headerBgColor={COLORS.BUTTONBG}
-                headerTextColor={COLORS.WHITE}
-                style={{ flex: 1 }}
-                showTotal={true}
-                totalRowLabel="Total"
+          {showSearch ? (
+            <View style={styles.searchBar}>
+              <Ionicons name="search" size={18} color={COLORS.BLACK} />
+              <TextInput
+                style={styles.searchText}
+                placeholder="Search by party, amount, rate, type..."
+                placeholderTextColor={COLORS.BLACK}
+                value={query}
+                onChangeText={setQuery}
               />
-            )}
-          </View>
- 
-          {/* Summary Table */}
-          <View style={styles.summaryTableWrapper}>
-            {/* Table Header with Title and Reset Button */}
-            {!loadingList && (
-              <>
-                {loadingDetails ? (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="small" color={COLORS.BUTTONBG} />
-                    <Text style={styles.loadingText}>
-                      {isViewingDetails ? 'Loading transaction details...' : 'Loading summary...'}
-                    </Text>
-                  </View>
-                ) : summaryTableData.length > 0 ? (
-                  <>
-                    {isViewingDetails && (
-                      <View style={styles.tableHeaderContainer}>
-                        <Text style={styles.tableHeaderTitle}>Transaction Details</Text>
-                        <TouchableOpacity style={styles.resetButton} onPress={resetToOriginalSummary}>
-                          <Ionicons name="refresh" size={16} color={COLORS.WHITE} />
-                          <Text style={styles.resetButtonText}>Reset</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                    <TableGridView
-                      columns={summaryTableColumns}
-                      data={summaryTableData}
-                      headerBgColor={COLORS.BUTTONBG}
-                      headerTextColor={COLORS.WHITE}
-                      style={{ flex: 1 }}
-                      showTotal={true}
-                      totalRowLabel="Total"
-                    />
-                  </>
-                ) : (
-                  <View style={styles.noDataContainer}>
-                    <Text style={styles.noDataText}>
-                      {isViewingDetails ? 'No transaction details found' : 'No summary data available'}
-                    </Text>
-                  </View>
-                )}
-              </>
-            )}
-          </View>
+            </View>
+          ) : null}
 
-          {/* Action Buttons */}
-          <View style={styles.buttonContainer}>
-            {/* Debug info */}
-            {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_ADD.value) && (
-            <CustomButton
-              title="Add"
-              onPress={() => {
-                console.log('Navigating to AddTransaction screen...');
-                navigation.navigate('AddTransaction', {
-                  editMode: false,
-                  transactionData: null,
-                  externalTransactions: [],
-                  items: [],
-                  shiftId: selectedShift,
-                  is_declared: false
-                });
-              }}
-              backgroundColor={isAddButtonActive ? COLORS.BUTTONBG : '#ccc'}
-              textColor={COLORS.WHITE}
-              disabled={!isAddButtonActive}
-              style={{ opacity: isAddButtonActive ? 1 : 0.6 }}
-            />
-            )}
-            {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_JANTRI_VIEW.value) && (
-            <CustomButton
-              title="Jantri View"
-              onPress={handleJantriView}
-              backgroundColor={isJantriViewButtonActive ? COLORS.BUTTONBG : '#ccc'}
-              textColor={COLORS.WHITE}
-              disabled={!isJantriViewButtonActive}
-              //  style={styles.actionButton}
-              style={{ opacity: isJantriViewButtonActive ? 1 : 0.6 }}
-            />
-            )}
-            {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_MAIN_JANTRI.value) && hasShiftPermission(selectedShift) && (
-            <CustomButton
-              title="Main Jantri"
-              onPress={handleMainJantriView}
-              backgroundColor={COLORS.BUTTONBG}
-              textColor={COLORS.WHITE}
-            //  style={styles.actionButton}
-            />
-            )}
-          </View>
+          <ScrollView style={styles.content} keyboardShouldPersistTaps="handled" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.BUTTONBG]} tintColor={COLORS.BUTTONBG} />}>
+            {/* Main Table */}
+            <View style={styles.tableWrapper}>
+              {loadingList ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color={COLORS.BUTTONBG} />
+                  <Text style={styles.loadingText}>Loading transactions...</Text>
+                </View>
+              ) : (
+                <TableGridView
+                  columns={tableColumns}
+                  data={filteredItems}
+                  headerBgColor={COLORS.BUTTONBG}
+                  headerTextColor={COLORS.WHITE}
+                  style={{ flex: 1 }}
+                  showTotal={true}
+                  totalRowLabel="Total"
+                />
+              )}
+            </View>
 
-          {/* Dropdown */}
-          <View style={styles.dropdownContainer}>
-            <CustomDropdown
-              open={activeDeleteOpen}
-              value={activeDeleteShift}
-              items={[{ label: 'Active', value: 'active' },
-              { label: 'Deleted', value: 'deleted' }
-              ]}
-              setOpen={setactiveDeleteOpen}
-              setValue={(val: any) => {
-                console.log('Dropdown setValue called with:', val);
-                if (typeof val === 'function') {
-                  const value = val();
-                  console.log('Extracted value:', value);
-                  handleActiveDeleteChange(value);
+            {/* Summary Table */}
+            <View style={styles.summaryTableWrapper}>
+              {/* Table Header with Title and Reset Button */}
+              {!loadingList && (
+                <>
+                  {loadingDetails ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator size="small" color={COLORS.BUTTONBG} />
+                      <Text style={styles.loadingText}>
+                        {isViewingDetails ? 'Loading transaction details...' : 'Loading summary...'}
+                      </Text>
+                    </View>
+                  ) : summaryTableData.length > 0 ? (
+                    <>
+                      {isViewingDetails && (
+                        <View style={styles.tableHeaderContainer}>
+                          <Text style={styles.tableHeaderTitle}>Transaction Details</Text>
+                          <TouchableOpacity style={styles.resetButton} onPress={resetToOriginalSummary}>
+                            <Ionicons name="refresh" size={16} color={COLORS.WHITE} />
+                            <Text style={styles.resetButtonText}>Reset</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                      <TableGridView
+                        columns={summaryTableColumns}
+                        data={summaryTableData}
+                        headerBgColor={COLORS.BUTTONBG}
+                        headerTextColor={COLORS.WHITE}
+                        style={{ flex: 1 }}
+                        showTotal={true}
+                        totalRowLabel="Total"
+                      />
+                    </>
+                  ) : (
+                    <View style={styles.noDataContainer}>
+                      <Text style={styles.noDataText}>
+                        {isViewingDetails ? 'No transaction details found' : 'No summary data available'}
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.buttonContainer}>
+              {/* Debug info */}
+              {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_ADD.value) && (
+                <CustomButton
+                  title="Add"
+                  onPress={() => {
+                    console.log('Navigating to AddTransaction screen...');
+                    navigation.navigate('AddTransaction', {
+                      editMode: false,
+                      transactionData: null,
+                      externalTransactions: [],
+                      items: [],
+                      shiftId: selectedShift,
+                      is_declared: false
+                    });
+                  }}
+                  backgroundColor={isAddButtonActive ? COLORS.BUTTONBG : '#ccc'}
+                  textColor={COLORS.WHITE}
+                  disabled={!isAddButtonActive}
+                  style={{ opacity: isAddButtonActive ? 1 : 0.6 }}
+                />
+              )}
+              {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_JANTRI_VIEW.value) && (
+                <CustomButton
+                  title="Jantri View"
+                  onPress={handleJantriView}
+                  backgroundColor={isJantriViewButtonActive ? COLORS.BUTTONBG : '#ccc'}
+                  textColor={COLORS.WHITE}
+                  disabled={!isJantriViewButtonActive}
+                  //  style={styles.actionButton}
+                  style={{ opacity: isJantriViewButtonActive ? 1 : 0.6 }}
+                />
+              )}
+              {hasPermission(PERMISSIONS.TRANSACTIONS_TRANSACTION_MAIN_JANTRI.value) && hasShiftPermission(selectedShift) && (
+                <CustomButton
+                  title="Main Jantri"
+                  onPress={handleMainJantriView}
+                  backgroundColor={COLORS.BUTTONBG}
+                  textColor={COLORS.WHITE}
+                //  style={styles.actionButton}
+                />
+              )}
+            </View>
+
+            {/* Dropdown */}
+            <View style={styles.dropdownContainer}>
+              <CustomDropdown
+                open={activeDeleteOpen}
+                value={activeDeleteShift}
+                items={[{ label: 'Active', value: 'active' },
+                { label: 'Deleted', value: 'deleted' }
+                ]}
+                setOpen={setactiveDeleteOpen}
+                setValue={(val: any) => {
+                  console.log('Dropdown setValue called with:', val);
+                  if (typeof val === 'function') {
+                    const value = val();
+                    console.log('Extracted value:', value);
+                    handleActiveDeleteChange(value);
+                  } else {
+                    handleActiveDeleteChange(val);
+                  }
+                }}
+                setItems={() => { }}
+                placeholder="Active"
+              />
+
+            </View>
+          </ScrollView>
+
+          {/* Filter Bottom Sheet */}
+          {isFilterBottomSheetOpen && (
+            <BottomSheet
+              backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
+              ref={filterBottomSheetRef}
+              style={{ borderWidth: 1, borderRadius: scale(10) }}
+              index={0}
+              snapPoints={snapPoints}
+              enableDynamicSizing={false}
+              onChange={(index: number) => {
+                Keyboard.dismiss();
+                if (index === -1) {
+                  setIsFilterBottomSheetOpen(false);
                 } else {
-                  handleActiveDeleteChange(val);
+                  setIsFilterBottomSheetOpen(true);
                 }
               }}
-              setItems={() => { }}
-              placeholder="Active"
-            />
-
-          </View>
-        </ScrollView>
-
-        {/* Filter Bottom Sheet */}
-        {isFilterBottomSheetOpen && (
-          <BottomSheet
-            backgroundStyle={{ backgroundColor: COLORS.BGFILESCOLOR }}
-            ref={filterBottomSheetRef}
-            style={{ borderWidth: 1, borderRadius: scale(10) }}
-            index={0}
-            snapPoints={snapPoints}
-            enableDynamicSizing={false}
-            onChange={(index: number) => {
-              Keyboard.dismiss();
-              if (index === -1) {
+              backdropComponent={renderBackdrop}
+              enablePanDownToClose={true}
+              onClose={() => {
                 setIsFilterBottomSheetOpen(false);
-              } else {
-                setIsFilterBottomSheetOpen(true);
-              }
-            }}
-            backdropComponent={renderBackdrop}
-            enablePanDownToClose={true}
-            onClose={() => {
-              setIsFilterBottomSheetOpen(false);
-            }}
-          >
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: scale(20),
-                paddingBottom: scale(10),
               }}
             >
               <View
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: scale(20),
+                  paddingBottom: scale(10),
                 }}
               >
-                <Text
+                <View
                   style={{
-                    fontSize: scale(14),
-                    fontWeight: '600',
-                    color: COLORS.BLACK,
-                    marginEnd: scale(5),
+                    flexDirection: 'row',
+                    alignItems: 'center',
                   }}
                 >
-                  Search & Filter |
                   <Text
                     style={{
-                      fontSize: scale(10),
-                      fontWeight: '500',
+                      fontSize: scale(14),
+                      fontWeight: '600',
                       color: COLORS.BLACK,
                       marginEnd: scale(5),
                     }}
                   >
-                    {' '}
-                    Filter your transactions
+                    Search & Filter |
+                    <Text
+                      style={{
+                        fontSize: scale(10),
+                        fontWeight: '500',
+                        color: COLORS.BLACK,
+                        marginEnd: scale(5),
+                      }}
+                    >
+                      {' '}
+                      Filter your transactions
+                    </Text>
                   </Text>
-                </Text>
+                </View>
+                <TouchableOpacity onPress={handleFilterClosePress}>
+                  <Ionicons name="close" size={scale(20)} color={COLORS.BLACK} />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity onPress={handleFilterClosePress}>
-                <Ionicons name="close" size={scale(20)} color={COLORS.BLACK} />
-              </TouchableOpacity>
-            </View>
-            <BottomSheetScrollView
-              style={{
-                padding: 16,
-                backgroundColor: COLORS.BGFILESCOLOR,
-                flex: 1,
-              }}
-              keyboardShouldPersistTaps="handled"
-            >
-              <View style={{ paddingVertical: scale(20) }}>
-                <View style={styles.liveTransactionBar}>
-                  <View style={styles.liveIndicator} />
-                  <Text style={styles.liveText}>Live Transaction</Text>
-                </View>
+              <BottomSheetScrollView
+                style={{
+                  padding: 16,
+                  backgroundColor: COLORS.BGFILESCOLOR,
+                  flex: 1,
+                }}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={{ paddingVertical: scale(20) }}>
+                  <View style={styles.liveTransactionBar}>
+                    <View style={styles.liveIndicator} />
+                    <Text style={styles.liveText}>Live Transaction</Text>
+                  </View>
 
-                <CustomDropdown
-                  label="Shift"
-                  open={shiftOpen}
-                  value={selectedShift}
-                  items={shiftItems}
-                  setOpen={setShiftOpen}
-                  setValue={(val: any) => {
-                    console.log('Dropdown setValue called with:', val);
-                    if (typeof val === 'function') {
-                      const value = val();
-                      console.log('Extracted value:', value);
-                      handleShiftChange(value);
-                    } else {
-                      handleShiftChange(val);
-                    }
-                  }}
-                  setItems={() => { }}
-                  placeholder={shiftLoading ? "Loading shifts..." : "Select Shift"}
-                  onOpen={() => {
-                    if (shiftItems.length === 0) {
-                      fetchShiftData();
-                    }
-                  }}
-                />
-
-                <CustomDateTimePicker
-                  label="Date"
-                  value={selectedDate}
-                  setFieldValue={handleDateChange}
-                  fieldName="date"
-                  mode={'date'}
-                />
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Search Party</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="SEARCH PARTY..."
-                    value={searchParty}
-                    onChangeText={setSearchParty}
-                    placeholderTextColor="#999"
+                  <CustomDropdown
+                    label="Shift"
+                    open={shiftOpen}
+                    value={selectedShift}
+                    items={shiftItems}
+                    setOpen={setShiftOpen}
+                    setValue={(val: any) => {
+                      console.log('Dropdown setValue called with:', val);
+                      if (typeof val === 'function') {
+                        const value = val();
+                        console.log('Extracted value:', value);
+                        handleShiftChange(value);
+                      } else {
+                        handleShiftChange(val);
+                      }
+                    }}
+                    setItems={() => { }}
+                    placeholder={shiftLoading ? "Loading shifts..." : "Select Shift"}
+                    onOpen={() => {
+                      if (shiftItems.length === 0) {
+                        fetchShiftData();
+                      }
+                    }}
                   />
-                </View>
 
-                <CustomDropdown
-                  label="Staff"
-                  open={staffOpen}
-                  value={selectedStaff}
-                  items={staffItems}
-                  setOpen={setStaffOpen}
-                  setValue={setSelectedStaff}
-                  setItems={() => { }}
-                  placeholder={staffLoading ? "Loading staff..." : "--STAFF--"}
-                  onOpen={() => {
-                    if (staffItems.length === 0) {
-                      fetchStaffData();
-                    }
-                  }}
-                  showClearButton={true}
-                />
-
-                <View style={{ marginVertical: scale(10) }}>
-                  <CustomButton
-                    title="Search"
-                    onPress={handleFilterClosePress}
-                    backgroundColor={COLORS.BUTTONBG}
-                    textColor={COLORS.WHITE}
+                  <CustomDateTimePicker
+                    label="Date"
+                    value={selectedDate}
+                    setFieldValue={handleDateChange}
+                    fieldName="date"
+                    mode={'date'}
                   />
+
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.inputLabel}>Search Party</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder="SEARCH PARTY..."
+                      value={searchParty}
+                      onChangeText={setSearchParty}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+
+                  <CustomDropdown
+                    label="Staff"
+                    open={staffOpen}
+                    value={selectedStaff}
+                    items={staffItems}
+                    setOpen={setStaffOpen}
+                    setValue={setSelectedStaff}
+                    setItems={() => { }}
+                    placeholder={staffLoading ? "Loading staff..." : "--STAFF--"}
+                    onOpen={() => {
+                      if (staffItems.length === 0) {
+                        fetchStaffData();
+                      }
+                    }}
+                    showClearButton={true}
+                  />
+
+                  <View style={{ marginVertical: scale(10) }}>
+                    <CustomButton
+                      title="Search"
+                      onPress={handleFilterClosePress}
+                      backgroundColor={COLORS.BUTTONBG}
+                      textColor={COLORS.WHITE}
+                    />
+                  </View>
                 </View>
-              </View>
-            </BottomSheetScrollView>
-          </BottomSheet>
-        )}
+              </BottomSheetScrollView>
+            </BottomSheet>
+          )}
 
 
-        {/* Main Jantri Modal */}
-        <MainJantriModal
-          visible={isMainJantriModalVisible}
-          onClose={() => setIsMainJantriModalVisible(false)}
-          title="MAIN JANTRI"
-          shiftId={selectedShift}
-          date={formatDateForAPI(selectedDate)}
-          isDeclared="false"
-        />
+          {/* Main Jantri Modal */}
+          <MainJantriModal
+            visible={isMainJantriModalVisible}
+            onClose={() => setIsMainJantriModalVisible(false)}
+            title="MAIN JANTRI"
+            shiftId={selectedShift}
+            date={formatDateForAPI(selectedDate)}
+            isDeclared="false"
+          />
 
-        {/* Jantri View Modal */}
-        <JantriViewModal
-          visible={isJantriViewModalVisible}
-          onClose={() => setIsJantriViewModalVisible(false)}
-          title={selectedTransaction ? selectedTransaction.party : "JANTRI VIEW"}
-          ledgerId={selectedTransaction?.ledger_id || selectedTransaction?.id}
-          shiftId={selectedShift}
-          date={formatDateForAPI(selectedDate)}
-          initialData={summaryTableData}
-          isDeclared={false}
-        />
-        <CopyModal
-          visible={isCopyModalVisible}
-          onClose={() => { setIsCopyModalVisible(false); setCopyItem(null); }}
-          onSave={handleCopyModalSave}
-          loading={copyLoading}
-        />
-      </SafeAreaView>
-    </GradientBackground>
+          {/* Jantri View Modal */}
+          <JantriViewModal
+            visible={isJantriViewModalVisible}
+            onClose={() => setIsJantriViewModalVisible(false)}
+            title={selectedTransaction ? selectedTransaction.party : "JANTRI VIEW"}
+            ledgerId={selectedTransaction?.ledger_id || selectedTransaction?.id}
+            shiftId={selectedShift}
+            date={formatDateForAPI(selectedDate)}
+            initialData={summaryTableData}
+            isDeclared={false}
+          />
+          <CopyModal
+            visible={isCopyModalVisible}
+            onClose={() => { setIsCopyModalVisible(false); setCopyItem(null); }}
+            onSave={handleCopyModalSave}
+            loading={copyLoading}
+          />
+        </SafeAreaView>
+      </GradientBackground>
     </PermissionGuard>
   );
 };

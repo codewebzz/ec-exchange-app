@@ -298,8 +298,8 @@ const APIService = {
     }),
   GetLeadger: async (params?: object): Promise<any> => {
     try {
-      const res = await AxiosService.get('api/get_all_users', params);
-      return res;
+      const res: any = await AxiosService.get('api/get_all_users', params);
+      return { ...res, success: res?.success ?? true };
     } catch (err: any) {
       console.log('GetStaff Error:', err?.response?.data || err.message);
       throw err;
@@ -487,9 +487,13 @@ const APIService = {
       throw err;
     }
   },
-  GetLedgerDropDownDataData: async (params?: object, transaction_id?: number): Promise<any> => {
+  GetLedgerDropDownDataData: async (params?: any, transaction_id?: number): Promise<any> => {
     try {
-      const res = await AxiosService.get(`api/master/get_all_ledger_names?show_self=1`);
+      const cleanParams = params ? { ...params } : undefined;
+      if (cleanParams && 'show_self' in cleanParams) {
+        delete cleanParams.show_self;
+      }
+      const res = await AxiosService.get(`api/master/get_all_ledger_names`, cleanParams && Object.keys(cleanParams).length > 0 ? cleanParams : undefined);
       return res;
     } catch (err: any) {
       console.log('GetLedgerDropDownDataData Error:', err?.response?.data || err.message);

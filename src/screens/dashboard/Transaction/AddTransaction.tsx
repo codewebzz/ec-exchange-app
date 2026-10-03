@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import AAModal from './addTransaction/AAModal';
 import ABModal from './addTransaction/ABModal';
 import AddNumbersForm from './addTransaction/AddNumberForm';
@@ -238,7 +239,27 @@ const AddTransaction = ({ navigation, route }: any) => {
     }
   }, [selectedLedger, ledgerData]);
 
-  // Reset state and params on unmount and blur
+  // Force reset state when screen comes into focus in Add Mode
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!editMode) {
+        setAllTransactions([]);
+        setSelectedLedger('');
+        setSelectedMode('');
+        setModeData([]);
+        setRate('');
+        setLimit('');
+        setCap('');
+        setSelectedLedgerPatti('');
+        setShowJantri(false);
+        setLedgerOpen(false);
+        setModeOpen(false);
+        setIsLedgerAutoSelected(false);
+      }
+    }, [editMode])
+  );
+
+  // Reset state on unmount and blur
   useEffect(() => {
     const resetScreen = () => {
       setAllTransactions([]);
@@ -253,12 +274,6 @@ const AddTransaction = ({ navigation, route }: any) => {
       setLedgerOpen(false);
       setModeOpen(false);
       setIsLedgerAutoSelected(false);
-      navigation.setParams({
-        editMode: false,
-        transactionData: null,
-        externalTransactions: undefined,
-        items: undefined,
-      });
     };
 
     const unsubscribe = navigation.addListener('blur', resetScreen);
@@ -468,6 +483,8 @@ const AddTransaction = ({ navigation, route }: any) => {
         source: t.source || 'From List',
       }));
       setAllTransactions(normalized);
+    } else if (!editMode) {
+      setAllTransactions([]);
     }
 
     if (editMode && transactionData) {
@@ -499,6 +516,18 @@ const AddTransaction = ({ navigation, route }: any) => {
       } else if (transactionData.rate !== undefined) {
         setRate(String(transactionData.rate ?? ''));
       }
+    } else if (!editMode) {
+      setSelectedLedger('');
+      setSelectedMode('');
+      setModeData([]);
+      setRate('');
+      setLimit('');
+      setCap('');
+      setSelectedLedgerPatti('');
+      setShowJantri(false);
+      setLedgerOpen(false);
+      setModeOpen(false);
+      setIsLedgerAutoSelected(false);
     }
   }, [externalTransactions, items, editMode, transactionData]);
 

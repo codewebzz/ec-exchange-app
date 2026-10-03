@@ -12,7 +12,7 @@ export const BasicFormFields = ({ values, errors, touched, handleChange, dropdow
 
       <CustomTextInput
         ref={realNameRef}
-        label={<Text>Name <Text style={{color: 'red'}}>*</Text></Text>}
+        label={<Text>Name <Text style={{ color: 'red' }}>*</Text></Text>}
         value={values.realName}
         onChangeText={handleChange('realName')}
         error={touched.realName && typeof errors.realName === 'string' ? errors.realName : undefined}

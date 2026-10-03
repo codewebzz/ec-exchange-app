@@ -132,7 +132,7 @@ const RandomModal: React.FC<RandomModalProps> = ({
   // Update number entry
   const updateNumberEntry = (id: string, value: string) => {
     const normalized = normalizeNumberInput(value);
-    setNumberEntries(numberEntries.map(entry => 
+    setNumberEntries(numberEntries.map(entry =>
       entry.id === id ? { ...entry, number: normalized } : entry
     ));
   };
@@ -181,7 +181,7 @@ const RandomModal: React.FC<RandomModalProps> = ({
   const handleSave = () => {
     // Validate that at least one number is entered
     const validEntries = numberEntries.filter(entry => entry.number.trim());
-    
+
     if (validEntries.length === 0) {
       Alert.alert('Error', 'Please enter at least one number');
       return;
@@ -232,8 +232,8 @@ const RandomModal: React.FC<RandomModalProps> = ({
           </View>
 
           {/* Content */}
-          <ScrollView 
-            style={styles.content} 
+          <ScrollView
+            style={styles.content}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
@@ -264,10 +264,14 @@ const RandomModal: React.FC<RandomModalProps> = ({
                           return;
                         }
                       }}
-                      returnKeyType={index === numberEntries.length - 1 ? "next" : "next"}
+                      returnKeyType="next"
                       onSubmitEditing={() => {
                         if (index === numberEntries.length - 1) {
-                          amountRef.current?.focus();
+                          if (entry.number.trim()) {
+                            addNumberEntry();
+                          } else {
+                            amountRef.current?.focus();
+                          }
                         } else {
                           // Focus next number entry
                           const nextId = numberEntries[index + 1].id;
@@ -284,34 +288,34 @@ const RandomModal: React.FC<RandomModalProps> = ({
                         <Text style={styles.removeButtonText}>🗑</Text>
                       </TouchableOpacity>
                     )}
-                     {/* Add button (only show on the very last entry) */}
-                {index === numberEntries.length - 1 && (
-                  <Pressable 
-                    onPress={(e) => {
-                      // Only allow press if current input has a number
-                      if (entry.number.trim()) {
-                        e.stopPropagation();
-                        addNumberEntry();
-                      }
-                    }}
-                    disabled={!entry.number.trim()}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    style={({ pressed }) => [
-                      styles.addButton,
-                      !entry.number.trim() && styles.addButtonDisabled,
-                      pressed && entry.number.trim() && styles.addButtonPressed
-                    ]}
-                  >
-                    <Text style={[
-                      styles.addButtonText,
-                      !entry.number.trim() && styles.addButtonTextDisabled
-                    ]}>+</Text>
-                  </Pressable>
-                )}
+                    {/* Add button (only show on the very last entry) */}
+                    {index === numberEntries.length - 1 && (
+                      <Pressable
+                        onPress={(e) => {
+                          // Only allow press if current input has a number
+                          if (entry.number.trim()) {
+                            e.stopPropagation();
+                            addNumberEntry();
+                          }
+                        }}
+                        disabled={!entry.number.trim()}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        style={({ pressed }) => [
+                          styles.addButton,
+                          !entry.number.trim() && styles.addButtonDisabled,
+                          pressed && entry.number.trim() && styles.addButtonPressed
+                        ]}
+                      >
+                        <Text style={[
+                          styles.addButtonText,
+                          !entry.number.trim() && styles.addButtonTextDisabled
+                        ]}>+</Text>
+                      </Pressable>
+                    )}
                   </View>
                 </View>
 
-               
+
               </View>
             ))}
 
@@ -354,7 +358,7 @@ const RandomModal: React.FC<RandomModalProps> = ({
             {/* Total Amount */}
             <View style={styles.totalContainer}>
               <Text style={styles.totalText}>TOTAL AMOUNT: {totalAmount}</Text>
-             
+
             </View>
           </ScrollView>
 
@@ -425,7 +429,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     maxHeight: 500,
-    paddingBottom:100
+    paddingBottom: 100
   },
   entryRow: {
     marginBottom: 20,
@@ -507,7 +511,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 6,
     marginTop: 12,
-    marginBottom:50
+    marginBottom: 50
   },
   totalText: {
     fontSize: 16,
