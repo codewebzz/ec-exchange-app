@@ -293,7 +293,7 @@ const AddTransaction = ({ navigation, route }: any) => {
 
       if (response && response.success && response.data && response.data.length > 0) {
         const transformedModes = response.data.map((item: any) => ({
-          label: item.mode,
+          label: item.mode || item.name,
           value: item.id.toString(),
         }));
         setModeData(transformedModes);
