@@ -9,7 +9,6 @@ export const BasicFormFields = ({ values, errors, touched, handleChange, dropdow
 
   return (
     <>
-
       <CustomTextInput
         ref={realNameRef}
         label={<Text>Name <Text style={{ color: 'red' }}>*</Text></Text>}
