@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { store } from '../../redux/store';
+import { clearAuth } from '../../redux/reducers/authToken';
 import Toast from 'react-native-toast-message';
-import { reset } from '../../helper/NavigationService';
 import { GlobalLoaderController } from '../../context/GlobalLoaderContext';
 import { BASE_URL } from '@env';
 
@@ -9,6 +9,32 @@ const DEFAULT_BASE_URL = BASE_URL;
 
 let axiosInstance: AxiosInstance = createAxiosInstance();
 let pendingRequestCount = 0;
+
+/**
+ * Called when the server says the token is expired/invalid. Clears the whole session
+ * (RootStack then shows Login). Returns false when it must NOT log out:
+ *  - there is no active session (e.g. a wrong-password login attempt), or
+ *  - the failing request was sent with an older token (late response from a previous
+ *    session must not kick out a freshly logged-in user).
+ */
+function handleExpiredSession(config?: any): boolean {
+  const currentToken = store.getState().authorization?.token;
+  if (!currentToken) return false;
+
+  const headers = config?.headers;
+  const sentAuth =
+    typeof headers?.get === 'function' ? headers.get('Authorization') : headers?.Authorization;
+  if (sentAuth !== `Bearer ${currentToken}`) return false;
+
+  store.dispatch(clearAuth());
+  Toast.show({
+    type: 'error',
+    text1: 'Session Expired',
+    text2: 'Please login again.',
+    position: 'top',
+  });
+  return true;
+}
 
 /**
  * Dynamically create a new axios instance (useful if token or baseURL changes).
@@ -76,13 +102,7 @@ function createAxiosInstance(baseURL = DEFAULT_BASE_URL): AxiosInstance {
         response?.data?.message;
 
       if (typeof msg === 'string' && msg.includes('Unauthorized')) {
-        Toast.show({
-          type: 'error',
-          text1: 'Session Expired',
-          text2: 'Please login again.',
-          position: 'top',
-        });
-        reset('Login');
+        handleExpiredSession(response.config);
         throw new Error('Unauthorized');
       }
 
@@ -93,6 +113,11 @@ function createAxiosInstance(baseURL = DEFAULT_BASE_URL): AxiosInstance {
       pendingRequestCount = Math.max(0, pendingRequestCount - 1);
       if (pendingRequestCount === 0) {
         GlobalLoaderController.hide();
+      }
+
+      // Expired / invalid token (HTTP 401): log the user out instead of just toasting
+      if (error.response?.status === 401 && handleExpiredSession(error.config)) {
+        return Promise.reject(error);
       }
 
       let msg = error.response?.data?.message || error.response?.data?.Description;

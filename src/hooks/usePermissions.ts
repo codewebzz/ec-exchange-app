@@ -3,13 +3,17 @@ import { useSelector } from 'react-redux';
 
 type PermissionValue = string;
 
+// Stable reference: a new [] per selector call makes useSelector see a changed
+// value on every render, causing an infinite re-render loop.
+const EMPTY_PERMISSIONS: PermissionValue[] = [];
+
 /**
  * Hook that provides permission-checking utilities.
  * Reads from the Redux permissions store (mirrors the web's usePermissionStore).
  */
 export const usePermissions = () => {
     const userPermissions: PermissionValue[] = useSelector(
-        (state: any) => state?.permissions?.userPermissions ?? []
+        (state: any) => state?.permissions?.userPermissions ?? EMPTY_PERMISSIONS
     );
     const isLoading: boolean = useSelector(
         (state: any) => state?.permissions?.isLoading ?? false

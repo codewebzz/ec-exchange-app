@@ -1,5 +1,11 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import APIService from '../../screens/services/APIService';
+import {
+    STALE_SESSION,
+    getSessionToken,
+    isStaleSession,
+    withRetry,
+} from '../sessionGuard';
 
 interface ShiftPermissionsState {
     shiftPermissions: number[];
@@ -15,9 +21,18 @@ const initialState: ShiftPermissionsState = {
 
 export const fetchShiftPermissions = createAsyncThunk(
     'shiftPermissions/fetchShiftPermissions',
-    async (_, { rejectWithValue }) => {
+    async (_, { rejectWithValue, getState }) => {
+        const startToken = getSessionToken(getState);
         try {
-            const res = await APIService.GetMyShiftPermissions();
+            const res = await withRetry(
+                () => APIService.GetMyShiftPermissions(),
+                getState,
+                startToken,
+                (r: any) => !r?.success,
+            );
+            if (isStaleSession(getState, startToken)) {
+                return rejectWithValue(STALE_SESSION);
+            }
             if (!res?.success) {
                 return rejectWithValue(res?.message || 'Failed to fetch shift permissions');
             }
@@ -26,6 +41,9 @@ export const fetchShiftPermissions = createAsyncThunk(
             }
             return [];
         } catch (err: any) {
+            if (err?.message === STALE_SESSION || isStaleSession(getState, startToken)) {
+                return rejectWithValue(STALE_SESSION);
+            }
             return rejectWithValue(err?.message || 'Failed to fetch shift permissions');
         }
     }
@@ -57,6 +75,7 @@ const shiftPermissionsSlice = createSlice({
                 state.error = null;
             })
             .addCase(fetchShiftPermissions.rejected, (state, action) => {
+                if (action.payload === STALE_SESSION) return;
                 state.isLoading = false;
                 state.error = action.payload as string;
             });

@@ -49,6 +49,33 @@ const withFreshKey = (Component: React.ComponentType<any>) => {
   };
 };
 
+// IMPORTANT: wrap once at module level. Calling withFreshKey() inside render creates a
+// new component type on every render, which remounts every screen and causes an infinite
+// update loop ("Maximum update depth exceeded") in release builds.
+const FreshDashboard = withFreshKey(DashboardScreen);
+const FreshShift = withFreshKey(Shift);
+const FreshStaff = withFreshKey(Staff);
+const FreshAgent = withFreshKey(Agent);
+const FreshLedger = withFreshKey(Ledger);
+const FreshCompany = withFreshKey(Company);
+const FreshJournalVoucher = withFreshKey(JournalVoucher);
+const FreshLimitVoucher = withFreshKey(LimitVoucher);
+const FreshVapsiVoucher = withFreshKey(VapsiVoucher);
+const FreshDaily = withFreshKey(Daily);
+const FreshAllShift = withFreshKey(AllShift);
+const FreshSettling = withFreshKey(Settling);
+const FreshTPC = withFreshKey(TPC);
+const FreshProfitLoss = withFreshKey(ProfitLoss);
+const FreshLimitBalance = withFreshKey(LimitBalance);
+const FreshResultHistory = withFreshKey(ResultHistory);
+const FreshTransactionStack = withFreshKey(TransactionStackNavigator);
+const FreshDeclareTransaction = withFreshKey(DeclareTransaction);
+const FreshAddTransaction = withFreshKey(AddTransaction);
+const FreshJantariResult = withFreshKey(JantariResult);
+const FreshCollectionResult = withFreshKey(CollectionResult);
+const FreshLivePredaction = withFreshKey(LivePredaction);
+const FreshRolePermissions = withFreshKey(RolePermissions);
+
 const renderCustomDrawer = (props: any) => <CustomDrawer {...props} />;
 
 export default function DrawerStack() {
@@ -59,29 +86,29 @@ export default function DrawerStack() {
         headerShown: false,
       }}
     >
-      <Drawer.Screen name="Dashboard" component={withFreshKey(DashboardScreen)} />
-      <Drawer.Screen name="Shift" component={withFreshKey(Shift)} />
-      <Drawer.Screen name="Staff" component={withFreshKey(Staff)} />
-      <Drawer.Screen name="Agent" component={withFreshKey(Agent)} />
-      <Drawer.Screen name="Ledger" component={withFreshKey(Ledger)} />
-      <Drawer.Screen name="Company" component={withFreshKey(Company)} />
-      <Drawer.Screen name="JournalVoucher" component={withFreshKey(JournalVoucher)} />
-      <Drawer.Screen name="LimitVoucher" component={withFreshKey(LimitVoucher)} />
-      <Drawer.Screen name="VapsiVoucher" component={withFreshKey(VapsiVoucher)} />
-      <Drawer.Screen name="Daily" component={withFreshKey(Daily)} />
-      <Drawer.Screen name="AllShift" component={withFreshKey(AllShift)} />
-      <Drawer.Screen name="Settling" component={withFreshKey(Settling)} />
-      <Drawer.Screen name="TPC" component={withFreshKey(TPC)} />
-      <Drawer.Screen name="ProfitLoss" component={withFreshKey(ProfitLoss)} />
-      <Drawer.Screen name="LimitBalance" component={withFreshKey(LimitBalance)} />
-      <Drawer.Screen name="ResultHistory" component={withFreshKey(ResultHistory)} />
-      <Drawer.Screen name="Transaction" component={withFreshKey(TransactionStackNavigator)} />
-      <Drawer.Screen name="DeclareTransaction" component={withFreshKey(DeclareTransaction)} />
-      <TransactionStack.Screen name="AddTransaction" component={withFreshKey(AddTransaction)} />
-      <Drawer.Screen name="JantariResult" component={withFreshKey(JantariResult)} />
-      <Drawer.Screen name="CollectionResult" component={withFreshKey(CollectionResult)} />
-      <Drawer.Screen name="LivePredaction" component={withFreshKey(LivePredaction)} />
-      <Drawer.Screen name="RolePermissions" component={withFreshKey(RolePermissions)} />
+      <Drawer.Screen name="Dashboard" component={FreshDashboard} />
+      <Drawer.Screen name="Shift" component={FreshShift} />
+      <Drawer.Screen name="Staff" component={FreshStaff} />
+      <Drawer.Screen name="Agent" component={FreshAgent} />
+      <Drawer.Screen name="Ledger" component={FreshLedger} />
+      <Drawer.Screen name="Company" component={FreshCompany} />
+      <Drawer.Screen name="JournalVoucher" component={FreshJournalVoucher} />
+      <Drawer.Screen name="LimitVoucher" component={FreshLimitVoucher} />
+      <Drawer.Screen name="VapsiVoucher" component={FreshVapsiVoucher} />
+      <Drawer.Screen name="Daily" component={FreshDaily} />
+      <Drawer.Screen name="AllShift" component={FreshAllShift} />
+      <Drawer.Screen name="Settling" component={FreshSettling} />
+      <Drawer.Screen name="TPC" component={FreshTPC} />
+      <Drawer.Screen name="ProfitLoss" component={FreshProfitLoss} />
+      <Drawer.Screen name="LimitBalance" component={FreshLimitBalance} />
+      <Drawer.Screen name="ResultHistory" component={FreshResultHistory} />
+      <Drawer.Screen name="Transaction" component={FreshTransactionStack} />
+      <Drawer.Screen name="DeclareTransaction" component={FreshDeclareTransaction} />
+      <Drawer.Screen name="AddTransaction" component={FreshAddTransaction} />
+      <Drawer.Screen name="JantariResult" component={FreshJantariResult} />
+      <Drawer.Screen name="CollectionResult" component={FreshCollectionResult} />
+      <Drawer.Screen name="LivePredaction" component={FreshLivePredaction} />
+      <Drawer.Screen name="RolePermissions" component={FreshRolePermissions} />
     </Drawer.Navigator>
   );
 }

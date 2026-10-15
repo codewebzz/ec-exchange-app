@@ -1,5 +1,11 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import APIService from '../../screens/services/APIService';
+import {
+    STALE_SESSION,
+    getSessionToken,
+    isStaleSession,
+    withRetry,
+} from '../sessionGuard';
 
 export interface UserDetails {
     id?: number | string;
@@ -30,15 +36,27 @@ const initialState: UserState = {
 
 export const fetchUserDetails = createAsyncThunk(
     'user/fetchUserDetails',
-    async (_, { rejectWithValue }) => {
+    async (_, { rejectWithValue, getState }) => {
+        const startToken = getSessionToken(getState);
         try {
-            const res = await APIService.GetMyDetails();
+            const res = await withRetry(
+                () => APIService.GetMyDetails(),
+                getState,
+                startToken,
+                (r: any) => !(r?.data?.data || r?.data || r),
+            );
+            if (isStaleSession(getState, startToken)) {
+                return rejectWithValue(STALE_SESSION);
+            }
             const user = res?.data?.data || res?.data || res;
             if (!user) {
                 return rejectWithValue('Failed to fetch user details');
             }
             return user;
         } catch (err: any) {
+            if (err?.message === STALE_SESSION || isStaleSession(getState, startToken)) {
+                return rejectWithValue(STALE_SESSION);
+            }
             return rejectWithValue(err?.message || 'Failed to fetch user details');
         }
     }
@@ -70,6 +88,7 @@ const userSlice = createSlice({
                 state.error = null;
             })
             .addCase(fetchUserDetails.rejected, (state, action) => {
+                if (action.payload === STALE_SESSION) return;
                 state.isLoading = false;
                 state.error = action.payload as string;
             });

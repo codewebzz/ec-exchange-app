@@ -4,16 +4,16 @@ import { COLORS } from "../../../assets/colors";
 import { WapsiTable } from "../Leadgertables/WapsiTable";
 import { scale } from "react-native-size-matters";
 
-export const WapsiSection = ({ values, errors, touched, handleChange, tpWapsi, formLogic, inputRefs, setFocusedField }:any) => {
+export const WapsiSection = ({ values, errors, touched, handleChange, tpWapsi, formLogic, inputRefs, setFocusedField }: any) => {
   const { wapsiRef } = inputRefs;
   const handleTPWapsiClick = () => {
     if (!formLogic.validateWapsiAccess()) return;
-    
     tpWapsi.setIsTPWapsiModalOpen(true);
     tpWapsi.setTpWapsiModalData({ partyName: '', wapsiAmount: '' });
     formLogic.setEditingTPWapsiIndex(-1);
   };
 
+  console.log("first")
   return (
     <View>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 12 }}>
@@ -47,11 +47,11 @@ export const WapsiSection = ({ values, errors, touched, handleChange, tpWapsi, f
             alignItems: 'center',
             marginVertical: 12,
             width: '35%',
-            top:scale(7)
+            top: scale(7)
           }}
           onPress={handleTPWapsiClick}
         >
-          <Text style={{ color: COLORS.WHITE, fontWeight: 'bold',fontSize:12}}>
+          <Text style={{ color: COLORS.WHITE, fontWeight: 'bold', fontSize: 12 }}>
             Add TP-Wapsi
           </Text>
         </TouchableOpacity>

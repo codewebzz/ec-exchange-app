@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { useDispatch } from 'react-redux';
 import { usePermissions } from '../hooks/usePermissions';
+import { fetchUserPermissions } from '../redux/reducers/permissionsSlice';
 
 interface PermissionGuardProps {
     /** Single permission value required to view children */
@@ -25,7 +27,8 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
     fallback,
     children,
 }) => {
-    const { hasPermission, hasAnyPermission, hasAllPermissions, isLoading } = usePermissions();
+    const { hasPermission, hasAnyPermission, hasAllPermissions, isLoading, error } = usePermissions();
+    const dispatch = useDispatch();
 
     if (isLoading) {
         return (
@@ -47,6 +50,25 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
         : hasAnyPermission(permissionsToCheck);
 
     if (!hasAccess) {
+        // Permissions failed to load (after automatic retries): offer a manual retry
+        // rather than claiming the user has no access.
+        if (error) {
+            return (
+                <View style={styles.center}>
+                    <View style={styles.card}>
+                        <Text style={styles.icon}>⚠️</Text>
+                        <Text style={styles.title}>Couldn't load permissions</Text>
+                        <Text style={styles.subtitle}>{error}</Text>
+                        <TouchableOpacity
+                            style={styles.retryButton}
+                            onPress={() => dispatch(fetchUserPermissions() as any)}
+                        >
+                            <Text style={styles.retryText}>Retry</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            );
+        }
         if (fallback !== undefined) {
             return <>{fallback}</>;
         }
@@ -104,5 +126,17 @@ const styles = StyleSheet.create({
         color: '#6b7280',
         textAlign: 'center',
         lineHeight: 20,
+    },
+    retryButton: {
+        marginTop: 20,
+        paddingVertical: 10,
+        paddingHorizontal: 28,
+        borderRadius: 8,
+        backgroundColor: '#4f46e5',
+    },
+    retryText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
     },
 });
