@@ -1,7 +1,7 @@
 {
   "name": "EcExchange",
-  "version": "15",
-  "versionCode": 15,
+  "version": "16",
+  "versionCode": 16,
   "private": true,
   "scripts": {
     "android": "react-native run-android",

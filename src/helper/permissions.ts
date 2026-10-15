@@ -14,6 +14,7 @@ export const PERMISSIONS = {
         value: "perm_0f1a2b3c4d",
         dependsOn: undefined
     },
+
     MASTER_SHIFT_ADD: {
         value: "perm_5e6f7a8b9c",
         dependsOn: "perm_0f1a2b3c4d"
@@ -78,6 +79,7 @@ export const PERMISSIONS = {
         value: "perm_edcba54321",
         dependsOn: "perm_0a9b8c7d6e"
     },
+
 
     // Organization Module - Roles & Permissions
     ORGANIZATION_PERMISSIONS_VIEW: {
