@@ -24,7 +24,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
     permission,
     permissions,
     requireAll = false,
-    fallback,
+    fallback = null,
     children,
 }) => {
     const { hasPermission, hasAnyPermission, hasAllPermissions, isLoading, error } = usePermissions();
@@ -33,7 +33,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
     if (isLoading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" color="#4f46e5" />
+                <ActivityIndicator size="small" color="#4f46e5" />
             </View>
         );
     }
@@ -50,40 +50,12 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
         : hasAnyPermission(permissionsToCheck);
 
     if (!hasAccess) {
-        // Permissions failed to load (after automatic retries): offer a manual retry
-        // rather than claiming the user has no access.
-        if (error) {
-            return (
-                <View style={styles.center}>
-                    <View style={styles.card}>
-                        <Text style={styles.icon}>⚠️</Text>
-                        <Text style={styles.title}>Couldn't load permissions</Text>
-                        <Text style={styles.subtitle}>{error}</Text>
-                        <TouchableOpacity
-                            style={styles.retryButton}
-                            onPress={() => dispatch(fetchUserPermissions() as any)}
-                        >
-                            <Text style={styles.retryText}>Retry</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            );
-        }
-        if (fallback !== undefined) {
+        // If an explicit fallback is provided, render it
+        if (fallback !== null && fallback !== undefined) {
             return <>{fallback}</>;
         }
-        return (
-            <View style={styles.center}>
-                <View style={styles.card}>
-                    <Text style={styles.icon}>🔒</Text>
-                    <Text style={styles.title}>Access Restricted</Text>
-                    <Text style={styles.subtitle}>
-                        You don't have permission to view this section.{'\n'}
-                        Contact your administrator.
-                    </Text>
-                </View>
-            </View>
-        );
+        // When no fallback is specified, default to null (hide component like web)
+        return null;
     }
 
     return <>{children}</>;

@@ -180,40 +180,26 @@ const AddTransaction = ({ navigation, route }: any) => {
         setLedgerData(transformedLedgers);
         console.log('Transformed ledger items:', transformedLedgers);
 
-        // Check user details for ledger_fanter role
-        APIService.GetMyDetails()
-          .then((userRes: any) => {
-            const user = userRes?.data || userRes;
-            const role = (
-              typeof user?.user_role === 'object'
-                ? user?.user_role?.name
-                : user?.user_role || user?.role || ''
-            ).toString().toLowerCase();
-            const fanterCheck =
-              role === 'ledger_fanter' ||
-              role === 'fanter' ||
-              role === 'fantar' ||
-              (!!role && (role.includes('fanter') || role.includes('fantar')));
-            setIsFanter(fanterCheck);
+        // Check user details for ledger_fanter role using global Redux store
+        const fanterCheck = isReduxFanter;
+        setIsFanter(fanterCheck);
 
-            const shouldAutoSelect = (fanterCheck || transformedLedgers.length === 1) && transformedLedgers.length > 0 && !selectedLedger && !editMode;
+        const shouldAutoSelect = (fanterCheck || transformedLedgers.length === 1) && transformedLedgers.length > 0 && !selectedLedger && !editMode;
 
-            if (shouldAutoSelect) {
-              const firstLedger = transformedLedgers[0];
-              if (firstLedger && firstLedger.value) {
-                setSelectedLedger(firstLedger.value);
-                setIsLedgerAutoSelected(true);
-                if (firstLedger.meta) {
-                  setRate(String(firstLedger.meta?.rate ?? ''));
-                  setLimit(String(firstLedger.meta?.limit ?? ''));
-                  setCap(String(firstLedger.meta?.capping ?? ''));
-                  setSelectedLedgerPatti(firstLedger.meta?.patti ?? '');
-                }
-                fetchModeData(firstLedger.value);
-              }
+        if (shouldAutoSelect) {
+          const firstLedger = transformedLedgers[0];
+          if (firstLedger && firstLedger.value) {
+            setSelectedLedger(firstLedger.value);
+            setIsLedgerAutoSelected(true);
+            if (firstLedger.meta) {
+              setRate(String(firstLedger.meta?.rate ?? ''));
+              setLimit(String(firstLedger.meta?.limit ?? ''));
+              setCap(String(firstLedger.meta?.capping ?? ''));
+              setSelectedLedgerPatti(firstLedger.meta?.patti ?? '');
             }
-          })
-          .catch((err: any) => console.log('GetMyDetails error in AddTransaction:', err));
+            fetchModeData(firstLedger.value);
+          }
+        }
       } else {
         console.log('No ledger data found or API error');
         setLedgerData([]);

@@ -17,7 +17,7 @@ let pendingRequestCount = 0;
  *  - the failing request was sent with an older token (late response from a previous
  *    session must not kick out a freshly logged-in user).
  */
-function handleExpiredSession(config?: any): boolean {
+function handleExpiredSession(config?: any, errorData?: any): boolean {
   const currentToken = store.getState().authorization?.token;
   if (!currentToken) return false;
 
@@ -26,6 +26,7 @@ function handleExpiredSession(config?: any): boolean {
     typeof headers?.get === 'function' ? headers.get('Authorization') : headers?.Authorization;
   if (sentAuth !== `Bearer ${currentToken}`) return false;
 
+  console.warn('⚠️ [Session Expired] Logging out user due to 401 Unauthorized on:', config?.url, errorData);
   store.dispatch(clearAuth());
   Toast.show({
     type: 'error',
@@ -115,8 +116,15 @@ function createAxiosInstance(baseURL = DEFAULT_BASE_URL): AxiosInstance {
         GlobalLoaderController.hide();
       }
 
+      console.error(`❌ [API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+      });
+
       // Expired / invalid token (HTTP 401): log the user out instead of just toasting
-      if (error.response?.status === 401 && handleExpiredSession(error.config)) {
+      if (error.response?.status === 401 && handleExpiredSession(error.config, error.response?.data)) {
         return Promise.reject(error);
       }
 

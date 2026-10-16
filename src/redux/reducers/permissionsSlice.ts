@@ -23,7 +23,7 @@ const initialState: PermissionsState = {
 
 export const fetchUserPermissions = createAsyncThunk(
     'permissions/fetchUserPermissions',
-    async (_, { rejectWithValue, getState }) => {
+    async (force: boolean | undefined, { rejectWithValue, getState }) => {
         const startToken = getSessionToken(getState);
         try {
             const res = await withRetry(
@@ -34,18 +34,38 @@ export const fetchUserPermissions = createAsyncThunk(
             );
             // Response belongs to a previous login -> never write it into the store
             if (isStaleSession(getState, startToken)) {
+                const currentToken = getSessionToken(getState);
+                console.warn('⚠️ [fetchUserPermissions] Session became stale:', {
+                    startToken: startToken ? `${startToken.slice(0, 15)}...` : '(empty)',
+                    currentToken: currentToken ? `${currentToken.slice(0, 15)}...` : '(empty)',
+                    backendResponse: res,
+                });
                 return rejectWithValue(STALE_SESSION);
             }
             if (!res?.success) {
-                return rejectWithValue(res?.message || 'Failed to fetch permissions');
+                console.error('❌ [fetchUserPermissions BE Error]:', res);
+                return rejectWithValue(res?.message || res?.Description || 'Failed to fetch permissions');
             }
-            return res.permissions as PermissionValue[];
+            return (res.permissions || []) as PermissionValue[];
         } catch (err: any) {
+            console.error('❌ [fetchUserPermissions Catch Error]:', err?.response?.data || err?.message || err);
             if (err?.message === STALE_SESSION || isStaleSession(getState, startToken)) {
                 return rejectWithValue(STALE_SESSION);
             }
-            return rejectWithValue(err?.message || 'Failed to fetch permissions');
+            return rejectWithValue(err?.response?.data?.message || err?.message || 'Failed to fetch permissions');
         }
+    },
+    {
+        condition: (force, { getState }) => {
+            const { permissions } = getState() as any;
+            if (permissions?.isLoading) {
+                return false;
+            }
+            if (permissions?.userPermissions?.length > 0 && !force) {
+                return false;
+            }
+            return true;
+        },
     }
 );
 

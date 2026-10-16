@@ -36,7 +36,7 @@ const initialState: UserState = {
 
 export const fetchUserDetails = createAsyncThunk(
     'user/fetchUserDetails',
-    async (_, { rejectWithValue, getState }) => {
+    async (force: boolean | undefined, { rejectWithValue, getState }) => {
         const startToken = getSessionToken(getState);
         try {
             const res = await withRetry(
@@ -46,19 +46,39 @@ export const fetchUserDetails = createAsyncThunk(
                 (r: any) => !(r?.data?.data || r?.data || r),
             );
             if (isStaleSession(getState, startToken)) {
+                const currentToken = getSessionToken(getState);
+                console.warn('⚠️ [fetchUserDetails] Session became stale:', {
+                    startToken: startToken ? `${startToken.slice(0, 15)}...` : '(empty)',
+                    currentToken: currentToken ? `${currentToken.slice(0, 15)}...` : '(empty)',
+                    backendResponse: res,
+                });
                 return rejectWithValue(STALE_SESSION);
             }
             const user = res?.data?.data || res?.data || res;
             if (!user) {
+                console.error('❌ [fetchUserDetails Failed]: No user data in response:', res);
                 return rejectWithValue('Failed to fetch user details');
             }
             return user;
         } catch (err: any) {
+            console.error('❌ [fetchUserDetails Catch Error]:', err?.response?.data || err?.message || err);
             if (err?.message === STALE_SESSION || isStaleSession(getState, startToken)) {
                 return rejectWithValue(STALE_SESSION);
             }
-            return rejectWithValue(err?.message || 'Failed to fetch user details');
+            return rejectWithValue(err?.response?.data?.message || err?.message || 'Failed to fetch user details');
         }
+    },
+    {
+        condition: (force, { getState }) => {
+            const { user } = getState() as any;
+            if (user?.isLoading) {
+                return false; // Already fetching
+            }
+            if (user?.userDetails && !force) {
+                return false; // Already cached in global storage
+            }
+            return true;
+        },
     }
 );
 

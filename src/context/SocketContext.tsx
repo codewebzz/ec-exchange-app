@@ -26,6 +26,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const dispatch = useDispatch();
   const token = useSelector((state: any) => state?.authorization?.token);
 
+  const reduxUsername = useSelector(
+    (state: any) =>
+      state?.user?.userDetails?.username ||
+      state?.user?.userDetails?.data?.username ||
+      state?.user?.userDetails?.name
+  );
+
   const handleRedirect = useCallback(() => {
     setIsLoggedOut(false);
     dispatch(clearAuth());
@@ -42,17 +49,16 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       return;
     }
 
+    if (socketRef.current) {
+      return;
+    }
+
     const initSocket = async () => {
       try {
-        const response: any = await AxiosService.get('api/my_details');
-
-        console.log("response", response)
-
-        // Adjust according to the exact API response structure of /my_details
-        const userId = response?.data?.username
+        const userId = reduxUsername;
 
         if (!userId || !isMounted) {
-          console.log('No user ID found for socket connection');
+          // Waiting for RootStack to load userDetails into global Redux store
           return;
         }
 
@@ -96,7 +102,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         socketRef.current = null;
       }
     };
-  }, [token]);
+  }, [token, reduxUsername]);
 
   return (
     <SocketContext.Provider value={{ socket: socketRef.current }}>

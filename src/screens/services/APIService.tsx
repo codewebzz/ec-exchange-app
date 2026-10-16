@@ -3,9 +3,11 @@ import AxiosService from './AxiosService';
 const version = 'ver=1.0';
 export interface CommonResponse {
   success?: boolean;
-  refresh_token: string;
+  access_token?: string;
+  refresh_token?: string;
+  data?: any;
   user?: any;
-  message: string;
+  message?: string;
 }
 interface ToggleUserResponse {
   success: boolean;
@@ -793,21 +795,31 @@ const APIService = {
 
   GetMyPermissions: async (): Promise<any> => {
     try {
-      const res = await AxiosService.get('api/get_my_permissions');
+      const res: any = await AxiosService.get('api/get_my_permissions');
       return { ...res, success: true };
     } catch (err: any) {
-      console.log('GetMyPermissions Error:', err?.response?.data || err.message);
-      return { success: false, message: err?.message || 'Failed to fetch permissions' };
+      console.error('❌ [APIService.GetMyPermissions Error]:', JSON.stringify(err?.response?.data || err?.message || err, null, 2));
+      return {
+        ...(err?.response?.data || {}),
+        status: err?.response?.status,
+        success: false,
+        message: err?.response?.data?.message || err?.response?.data?.Description || err?.message || 'Failed to fetch permissions',
+      };
     }
   },
 
   GetMyShiftPermissions: async (): Promise<any> => {
     try {
-      const res = await AxiosService.get('api/my_shift_permissions');
+      const res: any = await AxiosService.get('api/my_shift_permissions');
       return { ...res, success: true };
     } catch (err: any) {
-      console.log('GetMyShiftPermissions Error:', err?.response?.data || err.message);
-      return { success: false, message: err?.message || 'Failed to fetch shift permissions' };
+      console.error('❌ [APIService.GetMyShiftPermissions Error]:', JSON.stringify(err?.response?.data || err?.message || err, null, 2));
+      return {
+        ...(err?.response?.data || {}),
+        status: err?.response?.status,
+        success: false,
+        message: err?.response?.data?.message || err?.response?.data?.Description || err?.message || 'Failed to fetch shift permissions',
+      };
     }
   },
 

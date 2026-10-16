@@ -75,13 +75,8 @@ const CustomDrawer = (props: any) => {
   const [changePasswordVisible, setChangePasswordVisible] = useState(false);
 
   const userDetails = useSelector((state: any) => state?.user?.userDetails);
-  const token = useSelector((state: any) => state?.authorization?.token);
 
-  useEffect(() => {
-    if (!userDetails && token) {
-      dispatch(fetchUserDetails() as any);
-    }
-  }, [userDetails, token, dispatch]);
+  // userDetails is loaded centrally by RootStack with a settling buffer on login
 
   const userRole = (typeof userDetails?.user_role === 'object'
     ? userDetails?.user_role?.name

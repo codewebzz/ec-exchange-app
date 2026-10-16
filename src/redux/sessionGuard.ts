@@ -25,7 +25,7 @@ const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, m
 
 /** Network errors, timeouts, 408/429 and 5xx are worth retrying; other 4xx are not. */
 export const isRetryableError = (err: any): boolean => {
-  const status = err?.response?.status;
+  const status = err?.response?.status ?? err?.status;
   if (status === undefined || status === null) return true; // network error / timeout
   return status === 408 || status === 429 || status >= 500;
 };
@@ -48,6 +48,11 @@ export async function withRetry<T>(
       const res = await task();
       if (isStaleSession(getState, startToken)) return res; // caller handles stale
       if (shouldRetryResult && shouldRetryResult(res) && attempt < MAX_RETRIES) {
+        // Do NOT retry non-retryable 4xx HTTP responses (400, 401, 403, 404, 422, etc.)
+        const status = (res as any)?.status ?? (res as any)?.statusCode;
+        if (typeof status === 'number' && status < 500 && status !== 408 && status !== 429) {
+          return res;
+        }
         // fall through to backoff
       } else {
         return res;

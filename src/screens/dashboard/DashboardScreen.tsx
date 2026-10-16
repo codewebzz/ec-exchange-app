@@ -1,5 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUserDetails } from '../../redux/reducers/userSlice';
 import { ActivityIndicator, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,7 +42,8 @@ const DashboardScreen = ({ navigation }: any) => {
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [shiftLoading, setShiftLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [userDetails, setUserDetails] = useState<any>(null);
+  const dispatch = useDispatch();
+  const userDetails = useSelector((state: any) => state?.user?.userDetails);
   const [changePasswordVisible, setChangePasswordVisible] = useState(false);
 
   const redeclareRows: Array<{
@@ -49,18 +52,6 @@ const DashboardScreen = ({ navigation }: any) => {
     date: string;
     transactions: number;
   }> = [];
-
-  const fetchUserDetails = useCallback(async () => {
-    try {
-      const response = await APIService.GetMyDetails();
-      const user = response?.data || response;
-      if (user) {
-        setUserDetails(user);
-      }
-    } catch (error) {
-      console.error('fetchUserDetails fetch failed', error);
-    }
-  }, []);
 
   const fetchRecentUsers = useCallback(async () => {
     if (!userPermissions.includes(PERMISSIONS.DASHBOARD_RECENT_LEDGERS_VIEW.value)) {
@@ -111,8 +102,7 @@ const DashboardScreen = ({ navigation }: any) => {
     useCallback(() => {
       fetchShiftData();
       fetchRecentUsers();
-      fetchUserDetails();
-    }, [fetchShiftData, fetchRecentUsers, fetchUserDetails])
+    }, [fetchShiftData, fetchRecentUsers])
   );
 
   const onRefresh = useCallback(async () => {
@@ -120,10 +110,10 @@ const DashboardScreen = ({ navigation }: any) => {
     await Promise.all([
       fetchShiftData(),
       fetchRecentUsers(),
-      fetchUserDetails(),
+      dispatch(fetchUserDetails(true) as any),
     ]);
     setRefreshing(false);
-  }, [fetchShiftData, fetchRecentUsers, fetchUserDetails]);
+  }, [fetchShiftData, fetchRecentUsers, dispatch]);
   // const fetchRecentUsers = useCallback(async () => {
   //   const resp = await APIService.getRecentUser();
   //   return Array.isArray(resp?.data) ? resp.data : Array.isArray(resp) ? resp : [];
@@ -317,13 +307,6 @@ const DashboardScreen = ({ navigation }: any) => {
 };
 
 export default DashboardScreen;
-
-const MetricBox = ({ label, value, color }: { label: string; value: string | number; color: string }) => (
-  <View style={[styles.metricBox, { backgroundColor: color }]}>
-    <Text style={styles.metricLabel}>{label}</Text>
-    <Text style={styles.metricValue}>{value}</Text>
-  </View>
-);
 
 const SectionHeader = ({
   title,

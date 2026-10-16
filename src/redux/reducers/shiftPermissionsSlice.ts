@@ -21,7 +21,7 @@ const initialState: ShiftPermissionsState = {
 
 export const fetchShiftPermissions = createAsyncThunk(
     'shiftPermissions/fetchShiftPermissions',
-    async (_, { rejectWithValue, getState }) => {
+    async (force: boolean | undefined, { rejectWithValue, getState }) => {
         const startToken = getSessionToken(getState);
         try {
             const res = await withRetry(
@@ -31,21 +31,41 @@ export const fetchShiftPermissions = createAsyncThunk(
                 (r: any) => !r?.success,
             );
             if (isStaleSession(getState, startToken)) {
+                const currentToken = getSessionToken(getState);
+                console.warn('⚠️ [fetchShiftPermissions] Session became stale:', {
+                    startToken: startToken ? `${startToken.slice(0, 15)}...` : '(empty)',
+                    currentToken: currentToken ? `${currentToken.slice(0, 15)}...` : '(empty)',
+                    backendResponse: res,
+                });
                 return rejectWithValue(STALE_SESSION);
             }
             if (!res?.success) {
-                return rejectWithValue(res?.message || 'Failed to fetch shift permissions');
+                console.error('❌ [fetchShiftPermissions BE Error]:', res);
+                return rejectWithValue(res?.message || res?.Description || 'Failed to fetch shift permissions');
             }
             if (Array.isArray(res?.data)) {
                 return res.data.map((p: any) => p.shift_id) as number[];
             }
             return [];
         } catch (err: any) {
+            console.error('❌ [fetchShiftPermissions Catch Error]:', err?.response?.data || err?.message || err);
             if (err?.message === STALE_SESSION || isStaleSession(getState, startToken)) {
                 return rejectWithValue(STALE_SESSION);
             }
-            return rejectWithValue(err?.message || 'Failed to fetch shift permissions');
+            return rejectWithValue(err?.response?.data?.message || err?.message || 'Failed to fetch shift permissions');
         }
+    },
+    {
+        condition: (force, { getState }) => {
+            const { shiftPermissions } = getState() as any;
+            if (shiftPermissions?.isLoading) {
+                return false;
+            }
+            if (shiftPermissions?.shiftPermissions?.length > 0 && !force) {
+                return false;
+            }
+            return true;
+        },
     }
 );
 

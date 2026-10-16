@@ -23,13 +23,18 @@ const Login = ({ navigation }: any) => {
   const dispatch = useDispatch()
   const handleLogin = async (values: any, setSubmitting: (isSubmitting: boolean) => void) => {
     try {
-      const token = APIService.LoginUser({
+      const result: any = await APIService.LoginUser({
         username: values?.username?.trim(),
         password: values?.password,
       });
-      const result = await token;
-      if (result?.success) {
-        dispatch(setAuthToken(result?.access_token || result?.refresh_token || ''))
+
+      const accessToken =
+        result?.access_token ||
+        result?.data?.access_token ||
+        (typeof result === 'string' ? result : null);
+
+      if ((result?.success || accessToken) && accessToken) {
+        dispatch(setAuthToken(accessToken));
 
         Toast.show({
           type: 'success',
@@ -42,7 +47,7 @@ const Login = ({ navigation }: any) => {
         Toast.show({
           type: 'error',
           text1: 'Error',
-          text2: 'Please Enter Correct Login And Password',
+          text2: result?.message || 'Please Enter Correct Login And Password',
           position: 'bottom',
         });
       }

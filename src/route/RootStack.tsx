@@ -16,18 +16,58 @@ const RootStack = () => {
   const token = useSelector((state: any) => state?.authorization?.token);
   const dispatch = useDispatch();
 
-  // Fetch permissions and user details whenever a valid token is present
+  // Fetch permissions and user details sequentially with a settling buffer when a token is present
   React.useEffect(() => {
-    if (token) {
-      dispatch(fetchUserPermissions() as any);
-      dispatch(fetchShiftPermissions() as any);
-      dispatch(fetchUserDetails() as any);
-    } else {
+    let isMounted = true;
+
+    if (!token) {
       // Clear stale state on logout
       dispatch(clearPermissions());
       dispatch(clearShiftPermissions());
       dispatch(clearUserDetails());
+      return;
     }
+
+    const loadStartupData = async () => {
+      // Settle buffer (1000ms) after login so backend session registers and token is fully active
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 300));
+      if (!isMounted) return;
+
+      try {
+        // Step 1: User details first
+        await dispatch(fetchUserDetails() as any).unwrap();
+      } catch (err) {
+        console.error('❌ [Startup] fetchUserDetails error:', err);
+      }
+
+      if (!isMounted) return;
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 300));
+      if (!isMounted) return;
+
+      try {
+        // Step 2: User permissions
+        await dispatch(fetchUserPermissions() as any).unwrap();
+      } catch (err) {
+        console.error('❌ [Startup] fetchUserPermissions error:', err);
+      }
+
+      if (!isMounted) return;
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 300));
+      if (!isMounted) return;
+
+      try {
+        // Step 3: Shift permissions
+        await dispatch(fetchShiftPermissions() as any).unwrap();
+      } catch (err) {
+        console.error('❌ [Startup] fetchShiftPermissions error:', err);
+      }
+    };
+
+    loadStartupData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [token, dispatch]);
 
   return (
