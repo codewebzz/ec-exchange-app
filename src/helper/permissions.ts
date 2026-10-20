@@ -75,11 +75,12 @@ export const PERMISSIONS = {
         value: "perm_12345abcde",
         dependsOn: "perm_0a9b8c7d6e"
     },
+
+
     ORGANIZATION_COMPANY_EDIT: {
         value: "perm_edcba54321",
         dependsOn: "perm_0a9b8c7d6e"
     },
-
 
     // Organization Module - Roles & Permissions
     ORGANIZATION_PERMISSIONS_VIEW: {
