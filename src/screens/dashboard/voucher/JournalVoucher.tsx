@@ -685,8 +685,8 @@ const JournalVoucher = ({ navigation }: any) => {
                               setPartyDropdownValue(selectedValue);
                               setFieldValue('partyAndBalance', selectedValue);
 
-                              // Auto-set opposite party if not set, matching web logic
-                              if (selectedValue && !values.oppositeParty) {
+                              // Auto-set opposite party everytime first changes
+                              if (selectedValue) {
                                 setOppositPartyDropdownValue(selectedValue);
                                 setFieldValue('oppositeParty', selectedValue);
                               }

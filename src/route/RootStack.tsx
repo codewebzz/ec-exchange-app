@@ -63,7 +63,7 @@ const RootStack = () => {
       }
     };
 
-    loadStartupData();
+    if (token) loadStartupData();
 
     return () => {
       isMounted = false;

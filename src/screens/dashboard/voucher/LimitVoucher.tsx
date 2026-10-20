@@ -655,8 +655,8 @@ const LimitVoucher = ({ navigation }: any) => {
                                                             setPartyDropdownValue(selectedValue);
                                                             setFieldValue('partyAndLimit', selectedValue);
 
-                                                            // Auto-set opposite party if not set, matching web logic
-                                                            if (selectedValue && !values.oppositeParty) {
+                                                            // Auto-set opposite party everytime first changes
+                                                            if (selectedValue) {
                                                                 setOppositPartyDropdownValue(selectedValue);
                                                                 setFieldValue('oppositeParty', selectedValue);
                                                             }

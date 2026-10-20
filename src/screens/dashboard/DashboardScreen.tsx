@@ -74,8 +74,8 @@ const DashboardScreen = ({ navigation }: any) => {
         item?.active_status ? 'Active' : 'Inactive',
       ]);
       setRecentUserRes(formatted);
-    } catch (error) {
-      console.error('Recent fetchRecentUsers fetch failed', error);
+    } catch (error: any) {
+      console.error('Recent fetchRecentUsers fetch failed', error.response);
       setRecentUserRes([]);
     } finally {
       setLedgerLoading(false);
@@ -100,19 +100,23 @@ const DashboardScreen = ({ navigation }: any) => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchShiftData();
-      fetchRecentUsers();
+      const load = async () => {
+        await fetchShiftData();
+        await fetchRecentUsers();
+      };
+      load();
     }, [fetchShiftData, fetchRecentUsers])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([
-      fetchShiftData(),
-      fetchRecentUsers(),
-      dispatch(fetchUserDetails(true) as any),
-    ]);
-    setRefreshing(false);
+    try {
+      await fetchShiftData();
+      await fetchRecentUsers();
+      await dispatch(fetchUserDetails(true) as any);
+    } finally {
+      setRefreshing(false);
+    }
   }, [fetchShiftData, fetchRecentUsers, dispatch]);
   // const fetchRecentUsers = useCallback(async () => {
   //   const resp = await APIService.getRecentUser();
@@ -124,10 +128,6 @@ const DashboardScreen = ({ navigation }: any) => {
   //   return Array.isArray(resp?.data) ? resp.data : Array.isArray(resp) ? resp : [];
   // }, []);
   // const countdown = useCountdown(card.timeLimit);
-  const fetchUndeclared = useCallback(async () => {
-    const resp = await APIService.getallundeclaredtransactionsbydateshift();
-    return Array.isArray(resp?.data) ? resp.data : Array.isArray(resp) ? resp : [];
-  }, []);
   // console.log(fetchRecentUsers(),"fetchRecentUsersfetchRecentUsersfetchRecentUsers")
   //   const fetchDashboardMeta = useCallback(async () => {
   //     try {

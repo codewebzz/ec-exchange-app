@@ -85,6 +85,21 @@ const AllShift = ({ navigation }: any) => {
     }
   };
 
+  const formatDateForAPI = (date: Date | undefined) => {
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+      const currentDate = new Date();
+      const day = currentDate.getDate().toString().padStart(2, '0');
+      const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+      const year = currentDate.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const handleSheetChange = (index: number) => {
     Keyboard.dismiss();
     if (index === -1) {
@@ -112,7 +127,7 @@ const AllShift = ({ navigation }: any) => {
   };
   const [getData, setData] = React.useState<any[]>([]);
   const today = new Date();
-  const formattedDate = today.toLocaleDateString('en-GB');
+  const formattedDate = formatDateForAPI(today);
 
   React.useEffect(() => {
     fetchAgents();
@@ -144,19 +159,22 @@ const AllShift = ({ navigation }: any) => {
 
   // Convert row data to grid format (10x10 grid matching JantariResult design)
 
-  const getAllShiftReport = async (values: any) => {
+  const getAllShiftReport = async (values?: any) => {
     try {
       setLoading(true);
-      const start_date = openDate ? openDate.toLocaleDateString('en-GB') : formattedDate;
-      const end_date = closeDate ? closeDate.toLocaleDateString('en-GB') : formattedDate;
+      const start_date = values?.opendate || formatDateForAPI(openDate) || formattedDate;
+      const end_date = values?.closedate || formatDateForAPI(closeDate) || formattedDate;
+      const agent = values?.agent !== undefined ? values.agent : dropdownValue;
+      const party = values?.party !== undefined ? values.party : dropdownValue2;
+
       const payload: any = {
         start_date,
         end_date,
-        agent: values?.agent || undefined,
+        agent: agent || undefined,
       };
       
-      if (values?.party && values?.party !== 'all') {
-        payload.party = values.party;
+      if (party && party !== 'all') {
+        payload.party = party;
       }
       const response = await APIService.GetAllShiftReport(payload);
       if (response?.success && response?.data) {
@@ -186,8 +204,8 @@ const AllShift = ({ navigation }: any) => {
     if (!selectedRow) return { title: '', dateFrom: '', dateTo: '', columns: [], data: [], summaryCards: [] };
 
     // Format dates to DD/MM/YYYY format
-    const startDate = openDate ? openDate.toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
-    const endDate = closeDate ? closeDate.toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
+    const startDate = formatDateForAPI(openDate);
+    const endDate = formatDateForAPI(closeDate);
 
     // Format title like "345 45/55 3/70" from row data
     const title = selectedRow.name
@@ -317,7 +335,12 @@ const AllShift = ({ navigation }: any) => {
                 showTotal={true}
                 style={{ maxHeight: scale(450) }}
                 onRefresh={() => {
-                  getAllShiftReport({});
+                  getAllShiftReport({
+                    opendate: formatDateForAPI(openDate),
+                    closedate: formatDateForAPI(closeDate),
+                    agent: dropdownValue,
+                    party: dropdownValue2,
+                  });
                 }}
                 refreshing={loading && filteredItems.length > 0}
                 columns={[
@@ -349,8 +372,8 @@ const AllShift = ({ navigation }: any) => {
                   setShowModalTable(true);
                   setModalLoading(true);
                   try {
-                    const start_date = openDate ? openDate.toLocaleDateString('en-GB') : formattedDate;
-                    const end_date = closeDate ? closeDate.toLocaleDateString('en-GB') : formattedDate;
+                    const start_date = formatDateForAPI(openDate);
+                    const end_date = formatDateForAPI(closeDate);
                     const payload = { start_date, end_date };
                     const res = await APIService.GetAllShiftReportById(row.id, payload);
                     if (res?.success && res?.data?.ledger_list) {
@@ -432,66 +455,96 @@ const AllShift = ({ navigation }: any) => {
                     initialValues={{
                       opendate: openDate,
                       closedate: closeDate,
-                      agent: '',
-                      party: 'all',
+                      agent: dropdownValue || '',
+                      party: dropdownValue2 || 'all',
                     }}
+                    enableReinitialize
                     onSubmit={(values) => {
-                      getAllShiftReport(values)
+                      const formValues = {
+                        ...values,
+                        opendate: formatDateForAPI(openDate),
+                        closedate: formatDateForAPI(closeDate),
+                        agent: values?.agent || dropdownValue || undefined,
+                        party: values?.party || dropdownValue2 || 'all',
+                      };
+                      getAllShiftReport(formValues);
                       handleClosePress();
                     }}
                   >
-                    {({ handleSubmit, setFieldValue }) => (
-                      <View style={{ paddingVertical: scale(20) }}>
-                        <CustomDateTimePicker
-                          label="Open Date"
-                          value={openDate}
-                          setFieldValue={handleDateChange}
-                          fieldName="opendate"
-                          mode={'date'}
-                        />
-                        <CustomDateTimePicker
-                          label="Close Date"
-                          value={closeDate}
-                          setFieldValue={handleDateChange}
-                          fieldName="closedate"
-                          mode={'date'}
-                        />
+                    {({ handleSubmit, setFieldValue }) => {
+                      const handleDateChangeWrapper = (fieldName: string, value: any) => {
+                        handleDateChange(fieldName, value);
+                        if (value instanceof Date) {
+                          setFieldValue(fieldName, value);
+                        } else if (typeof value === 'string') {
+                          const parts = value.split('/');
+                          if (parts.length === 3) {
+                            const day = parseInt(parts[0], 10);
+                            const month = parseInt(parts[1], 10) - 1;
+                            const year = parseInt(parts[2], 10);
+                            const date = new Date(year, month, day);
+                            if (!isNaN(date.getTime())) {
+                              setFieldValue(fieldName, date);
+                            }
+                          }
+                        }
+                      };
 
-                        <CustomDropdown
-                          label="Agent"
-                          open={openDropdown}
-                          value={dropdownValue}
-                          items={dropdownItems}
-                          setOpen={setOpenDropdown}
-                          setValue={(val: any) => {
-                            setDropdownValue(val());
-                            setFieldValue('agent', val());
-                          }}
-                          bottomOffset={30}
-                          setItems={setDropdownItems}
-                        />
+                      return (
+                        <View style={{ paddingVertical: scale(20) }}>
+                          <CustomDateTimePicker
+                            label="Open Date"
+                            value={openDate}
+                            setFieldValue={handleDateChangeWrapper}
+                            fieldName="opendate"
+                            mode={'date'}
+                          />
+                          <CustomDateTimePicker
+                            label="Close Date"
+                            value={closeDate}
+                            setFieldValue={handleDateChangeWrapper}
+                            fieldName="closedate"
+                            mode={'date'}
+                          />
 
-                        <CustomDropdown
-                          label="Party"
-                          open={openDropdown2}
-                          value={dropdownValue2}
-                          items={dropdownItems2}
-                          setOpen={setOpenDropdown2}
-                          setValue={(val: any) => {
-                            setDropdownValue2(val());
-                            setFieldValue('party', val());
-                          }}
-                          setItems={setDropdownItems2}
-                        />
+                          <CustomDropdown
+                            label="Agent"
+                            open={openDropdown}
+                            value={dropdownValue}
+                            items={dropdownItems}
+                            setOpen={setOpenDropdown}
+                            setValue={(val: any) => {
+                              const resolvedValue = typeof val === 'function' ? val(dropdownValue) : val;
+                              setDropdownValue(resolvedValue);
+                              setFieldValue('agent', resolvedValue);
+                            }}
+                            bottomOffset={30}
+                            setItems={setDropdownItems}
+                          />
 
-                        <View style={{ marginVertical: scale(10), flexDirection: 'row', alignItems: 'center' }}>
-                          <CustomButton title="Search" onPress={() => {
-                            handleSubmit();
-                          }} textColor={COLORS.WHITE} />
+                          <CustomDropdown
+                            label="Party"
+                            open={openDropdown2}
+                            value={dropdownValue2}
+                            items={dropdownItems2}
+                            setOpen={setOpenDropdown2}
+                            setValue={(val: any) => {
+                              const resolvedValue = typeof val === 'function' ? val(dropdownValue2) : val;
+                              setDropdownValue2(resolvedValue);
+                              setFieldValue('party', resolvedValue);
+                            }}
+                            setItems={setDropdownItems2}
+                          />
 
+                          <View style={{ marginVertical: scale(10), flexDirection: 'row', alignItems: 'center' }}>
+                            <CustomButton title="Search" onPress={() => {
+                              handleSubmit();
+                            }} textColor={COLORS.WHITE} />
+
+                          </View>
                         </View>
-                      </View>
-                    )}
+                      );
+                    }}
                   </Formik>
 
                 </BottomSheetScrollView>
